@@ -43,7 +43,7 @@ export interface ItemEnrichmentResult {
   officialWarranty: string;
 }
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-flash-latest'; // Updated from deprecated gemini-2.0-flash
 
 async function getGeminiConfig() {
   await initDatabaseSchema();
@@ -74,7 +74,7 @@ Extract the following fields accurately in JSON format:
   "documentType": "Bataqa Wataniya (National Unified Card)",
   "fullNameArabic": "الاسم الكامل الثلاثي واللقب بالعربية أو الكردية",
   "fullNameEnglish": "Full Name transliterated in English",
-  "nationalIdNumber": "e.g. IQ-19960412-99182 or 12-digit number",
+  "nationalIdNumber": "e.g. 200307654321 or IQ-XXXXXXXX",
   "dateOfBirth": "YYYY-MM-DD",
   "governorate": "e.g. Erbil, Baghdad, Sulaymaniyah, Duhok, Basra, etc.",
   "confidence": 0.98
@@ -116,19 +116,50 @@ Return ONLY valid raw JSON without markdown code fences.`;
           return {
             isSuccess: true,
             documentType: parsed.documentType || 'Bataqa Wataniya (National Unified Card)',
-            fullNameArabic: parsed.fullNameArabic || 'ريَباز فەرهاد ساڵح',
-            fullNameEnglish: parsed.fullNameEnglish || 'Rebaz Farhad Salih',
-            nationalIdNumber: parsed.nationalIdNumber || 'IQ-19960412-99182',
-            dateOfBirth: parsed.dateOfBirth || '1996-04-12',
-            governorate: parsed.governorate || 'Erbil',
+            fullNameArabic: parsed.fullNameArabic || '',
+            fullNameEnglish: parsed.fullNameEnglish || '',
+            nationalIdNumber: parsed.nationalIdNumber || '',
+            dateOfBirth: parsed.dateOfBirth || '',
+            governorate: parsed.governorate || '',
             confidence: parsed.confidence || 0.985,
             isAiVerified: true,
             isSandboxFallback: false,
           };
         }
+      } else {
+        // Surface the actual Gemini error so it's visible in logs and response
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData?.error?.message || `Gemini HTTP ${response.status}`;
+        console.error('Gemini Vision API error:', errMsg);
+        return {
+          isSuccess: false,
+          documentType: 'Bataqa Wataniya (National Unified Card)',
+          fullNameArabic: '',
+          fullNameEnglish: '',
+          nationalIdNumber: '',
+          dateOfBirth: '',
+          governorate: '',
+          confidence: 0,
+          isAiVerified: false,
+          isSandboxFallback: false,
+          notes: `Gemini API error: ${errMsg}`,
+        };
       }
     } catch (err) {
-      console.warn('Gemini Vision OCR error, falling back to realistic sandbox data:', err);
+      console.warn('Gemini Vision OCR exception:', err);
+      return {
+        isSuccess: false,
+        documentType: 'Bataqa Wataniya (National Unified Card)',
+        fullNameArabic: '',
+        fullNameEnglish: '',
+        nationalIdNumber: '',
+        dateOfBirth: '',
+        governorate: '',
+        confidence: 0,
+        isAiVerified: false,
+        isSandboxFallback: false,
+        notes: `OCR exception: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      };
     }
   }
 
