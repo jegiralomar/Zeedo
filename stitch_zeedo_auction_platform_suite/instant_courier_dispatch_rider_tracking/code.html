@@ -1,0 +1,179 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">  tailwind.config = {    darkMode: "class",    theme: {      extend: {        "colors": {          "on-secondary": "#ffffff",          "background": "#f7f9fb",          "inverse-surface": "#2d3133",          "primary-fixed-dim": "#b8c4ff",          "inverse-primary": "#b8c4ff",          "on-error": "#ffffff",          "on-surface": "#191c1e",          "tertiary-fixed-dim": "#ffb3b6",          "primary": "#00288e",          "outline": "#757684",          "on-primary": "#ffffff",          "surface": "#f7f9fb",          "on-surface-variant": "#444653",          "surface-container-highest": "#e0e3e5",          "surface-container": "#eceef0",          "secondary": "#006c4a",          "on-tertiary-container": "#ffa2a7",          "inverse-on-surface": "#eff1f3",          "tertiary-fixed": "#ffdada",          "tertiary-container": "#9a002b",          "secondary-container": "#82f5c1",          "surface-dim": "#d8dadc",          "on-secondary-fixed": "#002114",          "secondary-fixed-dim": "#68dba9",          "on-background": "#191c1e",          "surface-container-lowest": "#ffffff",          "on-tertiary-fixed": "#40000c",          "on-secondary-fixed-variant": "#005137",          "on-primary-container": "#a8b8ff",          "primary-fixed": "#dde1ff",          "outline-variant": "#c4c5d5",          "surface-container-high": "#e6e8ea",          "on-secondary-container": "#00714e",          "tertiary": "#6f001c",          "surface-container-low": "#f2f4f6",          "on-primary-fixed": "#001453",          "on-tertiary-fixed-variant": "#920028",          "on-error-container": "#93000a",          "secondary-fixed": "#85f8c4",          "on-primary-fixed-variant": "#173bab",          "error-container": "#ffdad6",          "surface-variant": "#e0e3e5",          "primary-container": "#1e40af",          "surface-bright": "#f7f9fb",          "on-tertiary": "#ffffff",          "error": "#ba1a1a",          "surface-tint": "#3755c3"        },        "borderRadius": {          "DEFAULT": "0.25rem",          "lg": "0.5rem",          "xl": "0.75rem",          "full": "9999px"        },        "spacing": {          "space-md": "1rem",          "space-lg": "1.5rem",          "margin": "2rem",          "space-xl": "2.5rem",          "space-xs": "0.25rem",          "space-sm": "0.5rem",          "gutter": "1.5rem"        },        "fontFamily": {          "label-lg": ["Vazirmatn, Inter, sans-serif"],          "label-md": ["Vazirmatn, Inter, sans-serif"],          "headline-md": ["Inter, Noto Sans Arabic, sans-serif"],          "headline-lg": ["Inter, Noto Sans Arabic, sans-serif"],          "body-sm": ["Noto Sans Arabic, Inter, sans-serif"],          "body-md": ["Noto Sans Arabic, Inter, sans-serif"],          "headline-sm": ["Inter, Noto Sans Arabic, sans-serif"],          "label-sm": ["Vazirmatn, Inter, sans-serif"],          "body-lg": ["Noto Sans Arabic, Inter, sans-serif"]        },        "fontSize": {          "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],          "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],          "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],          "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],          "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],          "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],          "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],          "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],          "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]        }      }    }  }</script><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter,+Noto+Sans+Arabic,+sans-serif:wght@100..900&amp;family=Noto+Sans+Arabic,+Inter,+sans-serif:wght@100..900&amp;family=Vazirmatn,+Inter,+sans-serif:wght@100..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head><body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-space-md flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="text-headline-sm font-headline-sm text-primary tracking-tight font-bold">ZEEDO</span></div><div class="flex items-center gap-space-sm"><button class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex flex-col relative w-full px-space-md pt-16 pb-24 bg-surface flex-1"><div class="flex flex-col w-full pb-10 space-y-space-lg">
+<!-- Top Status Bar & Quick Alert -->
+<div class="flex items-center justify-between bg-surface-container-low p-space-md rounded-2xl shadow-sm">
+<div class="flex items-center space-x-space-sm">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+</div>
+<div>
+<h2 class="text-headline-sm text-on-surface">Active Dispatch</h2>
+<p class="text-body-sm text-on-surface-variant">Order #ZEE-88429 • Priority Delivery</p>
+</div>
+</div>
+<span class="px-space-sm py-1 bg-secondary/10 text-secondary rounded-full text-label-md font-medium flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+      Live GPS
+    </span>
+</div>
+<!-- Live Map View Card -->
+<div class="relative w-full h-72 rounded-2xl overflow-hidden shadow-sm bg-surface-container-high flex flex-col justify-between p-space-md" data-location="Downtown Logistics Hub to Grand Avenue, Metropolitan City">
+<!-- Map Background Simulation with CSS Gradient & Grid Pattern -->
+<div class="absolute inset-0 bg-gradient-to-tr from-surface-container-highest via-surface-container to-surface opacity-90"></div>
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle, #757684 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Map Route Simulated Line (SVG) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+<path class="animate-pulse" d="M 60 200 Q 140 120, 220 140 T 320 80" fill="none" stroke="#00288e" stroke-dasharray="6 6" stroke-width="4"></path>
+</svg>
+<!-- Map Pins -->
+<!-- Pickup Pin -->
+<div class="absolute top-16 left-12 flex flex-col items-center">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-[14px]">storefront</span>
+</div>
+<span class="bg-surface/90 px-2 py-0.5 rounded text-[10px] font-medium text-on-surface mt-1 shadow-sm">Hub</span>
+</div>
+<!-- Rider Moving Pin -->
+<div class="absolute top-28 left-44 flex flex-col items-center transition-all duration-700">
+<div class="relative">
+<div class="absolute -inset-2 bg-primary/20 rounded-full animate-ping"></div>
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg relative z-10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">two_wheeler</span>
+</div>
+</div>
+<div class="bg-primary text-on-primary px-2.5 py-1 rounded-full text-label-sm mt-1.5 shadow-md flex items-center gap-1 font-bold">
+<span>Aram S.</span>
+</div>
+</div>
+<!-- Destination Pin -->
+<div class="absolute top-12 right-12 flex flex-col items-center">
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-[14px]">home</span>
+</div>
+<span class="bg-surface/90 px-2 py-0.5 rounded text-[10px] font-medium text-on-surface mt-1 shadow-sm">You</span>
+</div>
+<!-- Floating ETA Pill -->
+<div class="relative z-10 self-center bg-surface/95 backdrop-blur-md px-space-md py-2 rounded-full shadow-lg flex items-center gap-space-sm border border-surface-container-highest">
+<span class="material-symbols-outlined text-primary">schedule</span>
+<div>
+<p class="text-label-sm text-on-surface-variant">Estimated Arrival</p>
+<p class="text-headline-sm text-primary">14 mins away</p>
+</div>
+</div>
+<!-- Map Controls Overlay -->
+<div class="relative z-10 flex justify-between items-end">
+<div class="bg-surface/90 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-sm text-body-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-[16px]">navigation</span>
+        Traffic flowing smoothly
+      </div>
+<button class="w-10 h-10 rounded-full bg-surface text-on-surface flex items-center justify-center shadow-md hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+</div>
+<!-- Rider Profile & Quick Action Card -->
+<div class="bg-surface-container-low rounded-2xl p-space-md shadow-sm flex flex-col space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-space-md">
+<div class="relative">
+<img class="w-14 h-14 rounded-full object-cover shadow-sm" data-alt="Portrait of Aram S., friendly courier rider wearing a dark helmet and reflective safety vest, smiling warmly against a neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB906OhmUvn-B0vKc4N5lSHAXRkIoRh9JDNQ-cj2UqOsdNDHEPxDZToW8LAyOx__6RBx75bRjeDwcLA5Xm27XRdsnursl2vdCkpMvKDAdn4EUC9oVvCZbgVOTWSyTF5Dbcd2nbs3tv8HmJi8tPSh4HFW2JK-B81okIfgT69s-0xSkMJt5eyZx4Lb4etZMXTJXtkjyGcu7JMVJZbsCvKuYbCBzE_2tFlza0x_sAsUD2E1JFxOUuGT4hT">
+<div class="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-secondary border-2 border-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-secondary" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="text-headline-sm text-on-surface">Aram S.</h3>
+<span class="bg-secondary/10 text-secondary text-label-sm px-2 py-0.5 rounded-full font-medium">4.9 ★</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Honda Dio Scooter • Plate #Z-991-XY</p>
+</div>
+</div>
+<div class="flex items-center space-x-space-sm">
+<a class="w-11 h-11 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-sm hover:scale-105 transition-all" href="tel:+123456789">
+<span class="material-symbols-outlined">call</span>
+</a>
+<a class="w-11 h-11 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shadow-sm hover:scale-105 transition-all" href="https://whatsapp.com" target="_blank">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Secure COD PIN Verification Box -->
+<div class="bg-primary-container/10 rounded-2xl p-space-md border border-primary-container/20 flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">lock_open</span>
+<h3 class="text-headline-sm text-on-surface">Secure Handover PIN</h3>
+</div>
+<span class="text-label-md text-on-surface-variant">Cash on Delivery</span>
+</div>
+<p class="text-body-sm text-on-surface-variant">Share this 4-digit verification code with Aram upon parcel inspection.</p>
+<div class="flex justify-between gap-space-sm pt-space-xs">
+<div class="w-14 h-14 bg-surface rounded-xl flex items-center justify-center text-headline-md text-primary font-bold shadow-sm">4</div>
+<div class="w-14 h-14 bg-surface rounded-xl flex items-center justify-center text-headline-md text-primary font-bold shadow-sm">8</div>
+<div class="w-14 h-14 bg-surface rounded-xl flex items-center justify-center text-headline-md text-primary font-bold shadow-sm">2</div>
+<div class="w-14 h-14 bg-surface rounded-xl flex items-center justify-center text-headline-md text-primary font-bold shadow-sm">9</div>
+</div>
+</div>
+<!-- Order Progress Timeline -->
+<div class="bg-surface-container-low rounded-2xl p-space-md shadow-sm flex flex-col space-y-space-md">
+<h3 class="text-headline-sm text-on-surface">Delivery Progress</h3>
+<div class="flex flex-col space-y-space-md relative pl-space-md">
+<!-- Vertical connecting line -->
+<div class="absolute left-[23px] top-3 bottom-3 w-0.5 bg-surface-container-highest"></div>
+<!-- Step 1: Completed -->
+<div class="flex items-start space-x-space-md relative">
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center z-10 shrink-0">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">done</span>
+</div>
+<div>
+<p class="text-label-lg text-on-surface font-semibold">Order Confirmed &amp; Packed</p>
+<p class="text-body-sm text-on-surface-variant">10:45 AM • Hub Central</p>
+</div>
+</div>
+<!-- Step 2: Completed -->
+<div class="flex items-start space-x-space-md relative">
+<div class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center z-10 shrink-0">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">done</span>
+</div>
+<div>
+<p class="text-label-lg text-on-surface font-semibold">Picked up by Aram S.</p>
+<p class="text-body-sm text-on-surface-variant">11:10 AM • Honda Dio assigned</p>
+</div>
+</div>
+<!-- Step 3: Active / In Progress -->
+<div class="flex items-start space-x-space-md relative">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center z-10 shrink-0 shadow-md">
+<span class="w-2 h-2 rounded-full bg-on-primary animate-ping"></span>
+</div>
+<div>
+<p class="text-label-lg text-primary font-semibold">On the Way to Destination</p>
+<p class="text-body-sm text-on-surface-variant">Estimated arrival in 14 mins</p>
+</div>
+</div>
+<!-- Step 4: Pending -->
+<div class="flex items-start space-x-space-md relative">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center z-10 shrink-0">
+<span class="text-[10px] font-bold">4</span>
+</div>
+<div>
+<p class="text-label-lg text-outline">Delivered &amp; Handover</p>
+<p class="text-body-sm text-outline">Awaiting PIN verification</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Action Button -->
+<button class="w-full h-14 bg-primary text-on-primary rounded-full font-label-lg shadow-md hover:bg-primary/90 transition-all flex items-center justify-center gap-space-sm">
+<span class="material-symbols-outlined">support_agent</span>
+    Contact Zeedo Support
+  </button>
+</div></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-1px_8px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-bold"><div class="flex justify-around items-center h-20 px-space-sm"><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 text-on-surface-variant hover:text-on-surface transition-all" data-path="home" href="#"><span class="material-symbols-outlined">home</span><span class="text-label-sm">Home</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 text-on-surface-variant hover:text-on-surface transition-all" data-path="live-bids" href="#"><span class="material-symbols-outlined">gavel</span><span class="text-label-sm">Live Bids</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 text-on-surface-variant hover:text-on-surface transition-all" data-path="saved" href="#"><span class="material-symbols-outlined">bookmark</span><span class="text-label-sm">Saved</span></a><a class="flex flex-col items-center justify-center gap-space-xs w-16 h-16 text-on-surface-variant hover:text-on-surface transition-all" data-path="profile" href="#"><span class="material-symbols-outlined">account_circle</span><span class="text-label-sm">Profile</span></a></div></nav></body></html>
