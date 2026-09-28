@@ -81,6 +81,13 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
     if (isOpen) {
       fetchStatus();
       setSaveSuccess(false);
+      // Re-populate key fields from localStorage so they survive page refresh
+      const savedGemini = localStorage.getItem('zeedo_gemini_key') || '';
+      const savedMeta = localStorage.getItem('zeedo_meta_token') || '';
+      const savedPhoneId = localStorage.getItem('zeedo_meta_phone_id') || '';
+      if (savedGemini) setGeminiKey(savedGemini);
+      if (savedMeta) setMetaToken(savedMeta);
+      if (savedPhoneId) setMetaPhoneId(savedPhoneId);
     }
   }, [isOpen]);
 
@@ -103,6 +110,12 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
       });
 
       if (res.ok) {
+        // Persist to localStorage so fields survive page refresh
+        if (geminiKey.trim()) localStorage.setItem('zeedo_gemini_key', geminiKey.trim());
+        if (metaToken.trim()) localStorage.setItem('zeedo_meta_token', metaToken.trim());
+        if (metaPhoneId.trim()) localStorage.setItem('zeedo_meta_phone_id', metaPhoneId.trim());
+        localStorage.setItem('zeedo_api_mode', apiMode);
+
         setSaveSuccess(true);
         await fetchStatus();
         setTimeout(() => setSaveSuccess(false), 3500);

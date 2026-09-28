@@ -3,6 +3,8 @@
  * Supports Gemini 2.0 Flash / 1.5 Flash for Multimodal Vision OCR and Google Search Grounded Web Enrichment.
  */
 
+import { getSetting, initDatabaseSchema } from './db';
+
 export interface IraqiNationalIdOcrResult {
   isSuccess: boolean;
   documentType: string;
@@ -43,9 +45,11 @@ export interface ItemEnrichmentResult {
 
 const GEMINI_MODEL = 'gemini-2.0-flash';
 
-function getGeminiConfig() {
-  const key = process.env.GEMINI_API_KEY || '';
-  const mode = process.env.ZEEDO_API_MODE || 'sandbox';
+async function getGeminiConfig() {
+  await initDatabaseSchema();
+  // DB takes priority over env vars (user saved via admin modal → Neon Postgres)
+  const key = (await getSetting('gemini_api_key')) || process.env.GEMINI_API_KEY || '';
+  const mode = (await getSetting('api_mode')) || process.env.ZEEDO_API_MODE || 'sandbox';
   return { key, isLive: mode === 'live' && Boolean(key && key.length > 5) };
 }
 
@@ -55,7 +59,7 @@ function getGeminiConfig() {
 export async function ocrIraqiNationalId(
   imageBase64?: string
 ): Promise<IraqiNationalIdOcrResult> {
-  const { key, isLive } = getGeminiConfig();
+  const { key, isLive } = await getGeminiConfig();
 
   // If live mode is enabled, API key is present and image is provided, call real Gemini Vision API
   if (isLive && imageBase64) {
@@ -158,7 +162,7 @@ export async function enrichAuctionItem(
   imageBase64?: string
 ): Promise<ItemEnrichmentResult> {
   const trimmed = query.trim();
-  const { key, isLive } = getGeminiConfig();
+  const { key, isLive } = await getGeminiConfig();
 
   // If live key is configured and live mode enabled, call Gemini API
   if (isLive && trimmed) {
@@ -248,11 +252,11 @@ Return ONLY the raw JSON object without markdown formatting.`;
   }
 
   // Realistic Fallback Intelligence for Iraqi Marketplace Categories
-  return generateDeterministicFallback(trimmed);
+  return generateDeterministicFallback(trimmed, isLive);
 }
 
-function generateDeterministicFallback(query: string): ItemEnrichmentResult {
-  const isFallback = !getGeminiConfig().isLive;
+function generateDeterministicFallback(query: string, isLive = false): ItemEnrichmentResult {
+  const isFallback = !isLive;
   const lower = query.toLowerCase();
 
   if (lower.includes('iphone') || lower.includes('apple') || lower.includes('pro max')) {

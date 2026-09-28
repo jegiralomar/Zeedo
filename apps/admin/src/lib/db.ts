@@ -95,9 +95,50 @@ export async function initDatabaseSchema() {
       );
     `;
 
+    // 5. App Settings Table (key-value store for API keys etc.)
+    await sql`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key VARCHAR(128) PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
     return true;
   } catch (error) {
     console.error('Database schema initialization error:', error);
     return false;
+  }
+}
+
+/**
+ * Read a setting value from the persistent DB settings table.
+ * Falls back to the given defaultValue if not found.
+ */
+export async function getSetting(key: string, defaultValue = ''): Promise<string> {
+  try {
+    const sql = getDb();
+    if (!sql) return defaultValue;
+    const rows = await sql`SELECT value FROM app_settings WHERE key = ${key} LIMIT 1`;
+    return rows[0]?.value ?? defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+/**
+ * Persist a setting value to the DB settings table (upsert).
+ */
+export async function setSetting(key: string, value: string): Promise<void> {
+  try {
+    const sql = getDb();
+    if (!sql) return;
+    await sql`
+      INSERT INTO app_settings (key, value, updated_at)
+      VALUES (${key}, ${value}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `;
+  } catch (err) {
+    console.error('setSetting error:', err);
   }
 }

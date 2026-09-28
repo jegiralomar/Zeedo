@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
-import fs from 'fs';
-import path from 'path';
+import { initDatabaseSchema, getSetting, setSetting } from '@/lib/db';
 
 export async function OPTIONS() {
   return handleCorsOptions();
@@ -12,11 +11,23 @@ function maskKey(key?: string): string {
   return `${key.slice(0, 6)}...${key.slice(-4)}`;
 }
 
+/**
+ * Resolve a config value: DB (user-saved) → env var → fallback
+ */
+async function resolveConfig(dbKey: string, envKey: string, fallback = ''): Promise<string> {
+  await initDatabaseSchema();
+  const fromDb = await getSetting(dbKey);
+  if (fromDb) return fromDb;
+  return process.env[envKey] || fallback;
+}
+
 export async function GET() {
-  const geminiKey = process.env.GEMINI_API_KEY || '';
-  const metaToken = process.env.META_WHATSAPP_TOKEN || '';
-  const metaPhoneId = process.env.META_WHATSAPP_PHONE_NUMBER_ID || '';
-  const mode = process.env.ZEEDO_API_MODE || 'sandbox';
+  const [geminiKey, metaToken, metaPhoneId, mode] = await Promise.all([
+    resolveConfig('gemini_api_key', 'GEMINI_API_KEY'),
+    resolveConfig('meta_whatsapp_token', 'META_WHATSAPP_TOKEN'),
+    resolveConfig('meta_phone_number_id', 'META_WHATSAPP_PHONE_NUMBER_ID'),
+    resolveConfig('api_mode', 'ZEEDO_API_MODE', 'sandbox'),
+  ]);
 
   const geminiConfigured = Boolean(geminiKey && geminiKey.length > 5);
   const whatsappConfigured = Boolean(metaToken && metaPhoneId);
@@ -62,40 +73,37 @@ export async function POST(req: NextRequest) {
       testTarget?: string;
     }>(req);
 
-    // ACTION 1: Save and update credentials from Admin Pop Up Window
+    // ACTION 1: Save credentials persistently to Neon Postgres
     if (body.action === 'save_keys') {
       const { geminiApiKey, metaToken, metaPhoneId, apiMode } = body;
 
-      if (geminiApiKey !== undefined) process.env.GEMINI_API_KEY = geminiApiKey.trim();
-      if (metaToken !== undefined) process.env.META_WHATSAPP_TOKEN = metaToken.trim();
-      if (metaPhoneId !== undefined) process.env.META_WHATSAPP_PHONE_NUMBER_ID = metaPhoneId.trim();
-      if (apiMode !== undefined) process.env.ZEEDO_API_MODE = apiMode;
-
-      // Try writing to .env.local if filesystem is writable
-      try {
-        const envPath = path.resolve(process.cwd(), '.env.local');
-        const envContent = `# ZEEDO BID APP - Updated via Admin Settings Pop Up Window
-GEMINI_API_KEY=${process.env.GEMINI_API_KEY || ''}
-META_WHATSAPP_TOKEN=${process.env.META_WHATSAPP_TOKEN || ''}
-META_WHATSAPP_PHONE_NUMBER_ID=${process.env.META_WHATSAPP_PHONE_NUMBER_ID || ''}
-META_WHATSAPP_TEMPLATE_NAME=${process.env.META_WHATSAPP_TEMPLATE_NAME || 'zeedo_auth_otp'}
-ZEEDO_API_MODE=${process.env.ZEEDO_API_MODE || 'sandbox'}
-`;
-        fs.writeFileSync(envPath, envContent, 'utf-8');
-      } catch (fileErr) {
-        console.warn('Could not write .env.local file directly (read-only container):', fileErr);
+      // Persist non-empty values to the DB settings table
+      const saves: Promise<void>[] = [];
+      if (geminiApiKey !== undefined && geminiApiKey.trim()) {
+        saves.push(setSetting('gemini_api_key', geminiApiKey.trim()));
       }
+      if (metaToken !== undefined && metaToken.trim()) {
+        saves.push(setSetting('meta_whatsapp_token', metaToken.trim()));
+      }
+      if (metaPhoneId !== undefined && metaPhoneId.trim()) {
+        saves.push(setSetting('meta_phone_number_id', metaPhoneId.trim()));
+      }
+      if (apiMode !== undefined) {
+        saves.push(setSetting('api_mode', apiMode));
+      }
+      await Promise.all(saves);
 
       return jsonResponse({
         isSuccess: true,
-        message: 'Credentials updated and applied instantly across all ZEEDO services!',
-        apiMode: process.env.ZEEDO_API_MODE,
+        message: 'Credentials saved to database and will persist across all deployments!',
+        apiMode,
+        saved: saves.length,
       });
     }
 
     // ACTION 2: Run diagnostic latency tests
-    const geminiKey = process.env.GEMINI_API_KEY;
-    const mode = process.env.ZEEDO_API_MODE || 'sandbox';
+    const geminiKey = await resolveConfig('gemini_api_key', 'GEMINI_API_KEY');
+    const mode = await resolveConfig('api_mode', 'ZEEDO_API_MODE', 'sandbox');
     let geminiTest = { success: false, latencyMs: 0, message: '' };
 
     if (mode === 'live' && geminiKey) {
@@ -106,9 +114,7 @@ ZEEDO_API_MODE=${process.env.ZEEDO_API_MODE || 'sandbox'}
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: 'PING' }] }],
-            }),
+            body: JSON.stringify({ contents: [{ parts: [{ text: 'PING' }] }] }),
           }
         );
         geminiTest = {
@@ -124,22 +130,19 @@ ZEEDO_API_MODE=${process.env.ZEEDO_API_MODE || 'sandbox'}
         };
       }
     } else {
-      geminiTest = {
-        success: true,
-        latencyMs: 12,
-        message: 'Sandbox mode active (simulated high-fidelity responses enabled)',
-      };
+      geminiTest = { success: true, latencyMs: 12, message: 'Sandbox mode active (simulated responses enabled)' };
     }
 
+    const metaToken = await resolveConfig('meta_whatsapp_token', 'META_WHATSAPP_TOKEN');
     return jsonResponse({
       timestamp: new Date().toISOString(),
       tests: {
         gemini: geminiTest,
         whatsapp: {
           success: true,
-          mode: mode === 'live' && process.env.META_WHATSAPP_TOKEN ? 'live' : 'sandbox',
+          mode: mode === 'live' && metaToken ? 'live' : 'sandbox',
           message:
-            mode === 'live' && process.env.META_WHATSAPP_TOKEN
+            mode === 'live' && metaToken
               ? 'Meta Cloud Graph API credentials registered'
               : 'Sandbox simulation ready (code 782910)',
         },
