@@ -1,0 +1,347 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Spark Admin 1.0.0 Design System Tokens */
+    --bs-body-bg: #F4F6F5; /* Canvas background: light, warm grayish-green */
+    --bs-body-font-family: 'Plus Jakarta Sans', sans-serif;
+    
+    --brand-forest-dark: #051C12;     /* Core sidebar/brand background */
+    --brand-forest-medium: #072F1F;   /* Alert banner / dark card BG */
+    --brand-forest-light: #1A3E30;    /* Interactive elements in dark mode */
+    --brand-lime: #B4F105;            /* Electric Lime accent highlight */
+    --brand-lime-hover: #c1f824;      
+    --brand-lime-translucent: rgba(180, 241, 5, 0.15);
+    
+    --text-main: #0B130F;             /* Dark headers, main labels */
+    --text-muted-green: #6C7E75;      /* Secondary labels, muted details */
+    --text-sidebar-muted: #879A91;    /* Sidebar inactive link labels */
+    
+    --card-background: #FFFFFF;
+    --border-light: #E9EFEF;
+    --border-dark-green: rgba(255, 255, 255, 0.1);
+    
+    /* System Colors */
+    --sys-green: #22C55E;
+    --sys-green-bg: #DCFCE7;
+    --sys-red: #EF4444;
+    --sys-red-bg: #FEE2E2;
+    --sys-orange: #F97316;
+    --sys-orange-bg: #FFEDD5;
+    
+    /* Layout Configurations */
+    --sidebar-width: 280px;
+    --navbar-height: 80px;
+    
+    /* Border Radii */
+    --radius-xxl: 24px;
+    --radius-xl: 18px;
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+    
+    /* Box Shadows */
+    --shadow-sm: 0 2px 8px rgba(11, 19, 15, 0.02);
+    --shadow-md: 0 10px 30px rgba(11, 19, 15, 0.04);
+    --shadow-lg: 0 20px 50px rgba(11, 19, 15, 0.08);
+  }
+
+  body {
+    background-color: var(--bs-body-bg);
+    color: var(--text-main);
+    font-family: var(--bs-body-font-family);
+    font-size: 0.925rem;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Spark Admin Card */
+.spark-card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xxl);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease-in-out;
+}
+
+.spark-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Spark Admin Alert Green Card (Signature Component) */
+.alert-green-card {
+  background-color: var(--brand-forest-medium);
+  color: #FFFFFF;
+  border-radius: var(--radius-xxl);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 180px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.alert-green-bg-shape {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 140px;
+  height: 140px;
+  opacity: 0.95;
+  pointer-events: none;
+  z-index: 1;
+  transform: rotate(15deg);
+  transition: transform 0.4s ease-in-out;
+}
+
+.alert-green-card:hover .alert-green-bg-shape {
+  transform: rotate(45deg) scale(1.08);
+}
+
+.alert-green-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: 50rem;
+  margin-bottom: 0.75rem;
+}
+
+.alert-green-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: var(--brand-lime);
+  border-radius: 50rem;
+  animation: limePulse 2s infinite;
+}
+
+@keyframes limePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(180, 241, 5, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(180, 241, 5, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(180, 241, 5, 0);
+  }
+}
+
+.alert-green-link {
+  color: var(--brand-lime);
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  transition: all 0.25s ease;
+  z-index: 2;
+}
+
+.alert-green-link:hover {
+  color: #FFFFFF;
+  transform: translateX(4px);
+}
+
+/* Custom Spark Buttons */
+.btn-spark-primary {
+  background-color: var(--brand-forest-medium);
+  border: 1px solid var(--brand-forest-medium);
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-spark-primary:hover {
+  background-color: var(--brand-forest-dark);
+  border-color: var(--brand-forest-dark);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.btn-spark-lime {
+  background-color: var(--brand-lime);
+  border: 1px solid var(--brand-lime);
+  color: var(--brand-forest-dark);
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--brand-lime-translucent);
+}
+
+.btn-spark-lime:hover {
+  background-color: var(--brand-lime-hover);
+  border-color: var(--brand-lime-hover);
+  color: var(--brand-forest-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(180, 241, 5, 0.35);
+}
+
+.btn-spark-light {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-spark-light:hover {
+  background-color: #F8FAF9;
+  border-color: rgba(11, 19, 15, 0.15);
+}
+
+/* Status Badges */
+.spark-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 50rem;
+}
+
+.spark-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50rem;
+}
+
+.spark-badge-success {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--sys-green);
+}
+.spark-badge-success::before {
+  background-color: var(--sys-green);
+}
+
+.spark-badge-pending {
+  background-color: rgba(249, 115, 22, 0.1);
+  color: var(--sys-orange);
+}
+.spark-badge-pending::before {
+  background-color: var(--sys-orange);
+}
+
+.spark-badge-failed {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--sys-red);
+}
+.spark-badge-failed::before {
+  background-color: var(--sys-red);
+}
+
+.spark-badge-lime {
+  background-color: var(--brand-lime);
+  color: var(--brand-forest-dark);
+}
+.spark-badge-lime::before {
+  background-color: var(--brand-forest-dark);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Print Stylesheets for AWB Thermal Labels & Courier Manifests */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .no-print,
+  nav,
+  header,
+  aside,
+  .simulator-bar,
+  .toast-container {
+    display: none !important;
+  }
+
+  .printable-thermal-label {
+    width: 100mm !important;
+    height: 150mm !important;
+    padding: 8mm !important;
+    margin: 0 auto !important;
+    page-break-after: always;
+    box-sizing: border-box;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px dashed #000000 !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  .printable-manifest-sheet {
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 12mm !important;
+    page-break-after: always;
+    box-sizing: border-box;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #000000 !important;
+    padding: 6px 8px !important;
+    color: #000000 !important;
+  }
+}
