@@ -16,27 +16,29 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
     setMounted(true);
   }, []);
 
-  const isLoginPage = pathname === '/login';
+  const isLoginPage = pathname === '/login' || pathname === '/admin/login';
+  const pathPrefix = pathname.startsWith('/admin') ? '/admin' : '';
 
   useEffect(() => {
     if (!mounted || isLoginPage) return;
 
     // If not logged in, route to login
     if (!currentUser) {
-      router.push('/login');
+      router.push(`${pathPrefix}/login`);
       return;
     }
 
     // If logged in, check role permissions
     if (!isRouteAllowed(currentUser.role, pathname)) {
-      const targetHub = ROLE_PERMISSIONS[currentUser.role]?.defaultHub || '/';
+      const rawHub = ROLE_PERMISSIONS[currentUser.role]?.defaultHub || '/';
+      const targetHub = `${pathPrefix}${rawHub === '/' ? '' : rawHub}` || '/';
       addToast(
         'warning',
         `Access to ${pathname} restricted for role ${currentUser.role.replace('_', ' ').toUpperCase()}. Redirected to your operations hub.`
       );
       router.push(targetHub);
     }
-  }, [mounted, pathname, currentUser, isLoginPage, router, addToast]);
+  }, [mounted, pathname, currentUser, isLoginPage, router, addToast, pathPrefix]);
 
   if (isLoginPage) {
     return <main className="w-full min-h-screen">{children}</main>;

@@ -38,6 +38,8 @@ export const Sidebar: React.FC = () => {
   const readyLogisticsCount = auctions.filter((a) => a.codStatus === 'ready_for_dispatch').length;
   const openTicketsCount = (tickets || []).filter((t) => t.status === 'open').length;
 
+  const pathPrefix = pathname.startsWith('/admin') ? '/admin' : '';
+
   const rawMenuSections = [
     {
       title: 'CORE PLATFORM',
@@ -134,7 +136,7 @@ export const Sidebar: React.FC = () => {
       <div>
         {/* Spark Brand Identity */}
         <div className="p-6 pb-4">
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href={pathPrefix || '/'} className="flex items-center gap-3 group">
             {/* Spark 6-pointed Asterisk SVG */}
             <div className="w-10 h-10 rounded-xl bg-[#072F1F] border border-white/10 flex items-center justify-center text-[#B4F105] shadow-lg group-hover:scale-105 transition-transform">
               <svg className="w-6 h-6 fill-[#B4F105]" viewBox="0 0 100 100">
@@ -168,11 +170,12 @@ export const Sidebar: React.FC = () => {
               </div>
               <div className="space-y-1">
                 {section.items.map((item) => {
-                  const isActive = pathname === item.href;
+                  const itemHref = pathPrefix ? `${pathPrefix}${item.href === '/' ? '' : item.href}` || '/admin' : item.href;
+                  const isActive = pathname === itemHref || pathname === item.href;
                   return (
                     <Link
                       key={item.href}
-                      href={item.href}
+                      href={itemHref}
                       className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[0.92rem] font-medium transition-all relative ${
                         isActive
                           ? 'text-white bg-white/5 font-semibold before:content-[""] before:absolute before:-left-4 before:top-2 before:bottom-2 before:w-1 before:bg-[#B4F105] before:rounded-r'

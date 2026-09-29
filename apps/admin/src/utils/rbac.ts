@@ -59,8 +59,9 @@ export function isRouteAllowed(role: StaffRole, pathname: string): boolean {
   if (role === 'super_admin') return true;
   const config = ROLE_PERMISSIONS[role];
   if (!config) return false;
+  const cleanPath = pathname.replace(/^\/admin/, '') || '/';
   return config.allowedRoutes.some((route) => {
-    if (route === '/') return pathname === '/';
-    return pathname.startsWith(route);
+    if (route === '/') return cleanPath === '/';
+    return cleanPath.startsWith(route);
   });
 }

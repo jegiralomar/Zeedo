@@ -11,9 +11,9 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'ZEEDO BID APP — Spark Admin Console',
+  title: 'ZEEDO — Iraq Premier Live Auction Ecosystem',
   description:
-    'Web-Based Admin Panel for Iraq 100% Cash-on-Delivery Auction Platform. Powered by Spark Admin design system.',
+    '100% Cash-on-Delivery Live Auctions across Iraq and Kurdistan. Verified items, doorstep inspection, and real-time live bidding.',
 };
 
 export default function RootLayout({
@@ -23,8 +23,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${plusJakartaSans.variable} h-full`}>
-      <body className="min-h-full bg-[#F4F6F5] text-[#0B130F] flex font-sans antialiased selection:bg-[#B4F105] selection:text-[#051C12]">
-        <AppLayoutShell>{children}</AppLayoutShell>
+      <body className="min-h-full bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#B4F105] selection:text-[#051C12]">
+        {children}
         <ToastContainer />
       </body>
     </html>

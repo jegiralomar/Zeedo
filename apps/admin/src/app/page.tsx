@@ -1,19 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Header } from '@/components/layout/Header';
-import { DashboardOverview } from '@/components/dashboard/DashboardOverview';
+import { MarketplaceLayoutShell } from '@/components/marketplace/MarketplaceLayoutShell';
+import BuyerMarketplacePage from './marketplace/page';
 
-export default function DashboardPage() {
+export default function RootMarketplaceEntry() {
   return (
-    <>
-      <Header
-        title="Dashboard Overview"
-        subtitle="Platform Performance & Real-time Moderation KPIs"
-      />
-      <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
-        <DashboardOverview />
-      </main>
-    </>
+    <MarketplaceLayoutShell>
+      <BuyerMarketplacePage />
+    </MarketplaceLayoutShell>
   );
 }
