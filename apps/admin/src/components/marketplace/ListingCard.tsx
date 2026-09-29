@@ -1,21 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
   Gavel,
   ShieldCheck,
   Bookmark,
   Timer,
-  ChevronRight,
-  Flame,
-  ArrowUpRight,
   CheckCircle2,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 import { MobileAuctionItem } from '@/types/marketplace';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { useBuyerAuctionStore } from '@/store/useBuyerAuctionStore';
-import { TRANSLATIONS, isRTL } from '@/i18n/translations';
+import { TRANSLATIONS, isRTL, formatCurrency } from '@/i18n/translations';
 
 interface ListingCardProps {
   item: MobileAuctionItem;
@@ -28,7 +26,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   onOpenLiveRoom,
   onRequestKyc,
 }) => {
-  const { language, buyer, isTwoGateVerified } = useBuyerAuthStore();
+  const { language, buyer } = useBuyerAuthStore();
   const { savedAuctionIds, toggleSaveAuction, placeSlideBid } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
@@ -36,7 +34,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   const localized = item.multilingual[language] || item.multilingual.en;
   const isSaved = savedAuctionIds.includes(item.id);
 
-  // Countdown timer state
+  // Countdown timer calculation
   const [timeLeft, setTimeLeft] = useState<{ m: number; s: number; isExpired: boolean; isUrgent: boolean }>({
     m: 0,
     s: 0,
@@ -85,27 +83,14 @@ export const ListingCard: React.FC<ListingCardProps> = ({
     }
   };
 
-  const getDialectBadgeText = () => {
-    switch (language) {
-      case 'badini':
-        return 'بادینی (RTL)';
-      case 'ckb':
-        return 'سۆرانی (RTL)';
-      case 'ar':
-        return 'عربي (RTL)';
-      default:
-        return 'English';
-    }
-  };
-
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
       onClick={() => onOpenLiveRoom(item)}
-      className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer hover:border-blue-400"
+      className="bg-slate-900/85 backdrop-blur-xl rounded-3xl border border-white/10 hover:border-emerald-500/40 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/5 transition-all duration-300 overflow-hidden flex flex-col group cursor-pointer"
     >
       {/* Product Image Stage */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
         <img
           src={item.imageUrl}
           alt={localized.title}
@@ -114,20 +99,19 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
         {/* Top Badges Row */}
         <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
-          {/* Dialect pill */}
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-black/50 backdrop-blur-md text-white border border-white/20">
-            {getDialectBadgeText()}
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-950/70 backdrop-blur-md text-slate-300 border border-white/10">
+            {item.condition}
           </span>
 
           {/* Live / Soft-Close status */}
           {item.isAntiSnipingActive || timeLeft.isUrgent ? (
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-600 text-white flex items-center gap-1 shadow-md animate-pulse">
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-600 text-white flex items-center gap-1 shadow-lg shadow-rose-600/30 animate-pulse">
               <Timer className="w-3 h-3" />
-              <span>SOFT CLOSE</span>
+              <span>≤60s RESET ZONE</span>
             </span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-600 text-white flex items-center gap-1.5 shadow-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-600 text-slate-950 flex items-center gap-1.5 shadow-md shadow-emerald-600/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping" />
               <span>LIVE NOW</span>
             </span>
           )}
@@ -137,27 +121,26 @@ export const ListingCard: React.FC<ListingCardProps> = ({
         <div
           className={`absolute bottom-3 ${
             rtl ? 'right-3' : 'left-3'
-          } bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-lg border border-slate-200/60`}
+          } bg-slate-950/90 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-xl border border-white/15`}
         >
-          <span className="text-[10px] font-semibold text-slate-500 block leading-tight">
+          <span className="text-[10px] font-mono text-slate-400 block leading-tight">
             {t.currentBid}
           </span>
           <div className="flex items-baseline gap-1">
-            <span className="font-extrabold text-base text-slate-900 font-mono">
-              {item.currentBidIqd.toLocaleString()}
+            <span className="font-mono font-black text-emerald-400 text-base">
+              {formatCurrency(item.currentBidIqd, language)}
             </span>
-            <span className="text-[10px] font-bold text-blue-600">IQD</span>
           </div>
         </div>
 
-        {/* Verified Badge */}
+        {/* 100% COD Badge */}
         <div
           className={`absolute bottom-3 ${
             rtl ? 'left-3' : 'right-3'
-          } bg-emerald-500/90 text-white px-2 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 backdrop-blur-xs`}
+          } bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 backdrop-blur-md`}
         >
           <ShieldCheck className="w-3 h-3" />
-          <span>{rtl ? 'ڕەسەن' : 'Verified'}</span>
+          <span>COD</span>
         </div>
       </div>
 
@@ -165,46 +148,37 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div>
           {/* Title */}
-          <h4 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h4 className="font-bold text-white text-sm leading-snug line-clamp-2 group-hover:text-emerald-400 transition-colors">
             {localized.title}
           </h4>
 
-          {/* Description */}
-          <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-            {localized.description}
-          </p>
-
-          {/* Specification Pills */}
-          {localized.specs && localized.specs.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {localized.specs.slice(0, 3).map((spec, idx) => (
-                <span
-                  key={idx}
-                  className="text-[10px] bg-slate-100 text-slate-700 font-medium px-2 py-0.5 rounded-lg border border-slate-200/60 truncate max-w-[150px]"
-                >
-                  {spec}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Clean Meta Row */}
+          <div className="flex items-center justify-between text-xs text-slate-400 mt-2 font-mono">
+            <span>By {item.sellerName}</span>
+            <span className="text-slate-500">
+              Retail: ~{formatCurrency(item.estimatedRetailMarketPriceIqd, language)}
+            </span>
+          </div>
         </div>
 
         {/* Footer Row: Live Timer & Actions */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
           {/* Ticking Time */}
           <div
             className={`flex items-center gap-1.5 font-mono text-xs font-bold ${
-              timeLeft.isUrgent ? 'text-rose-600' : 'text-slate-700'
+              timeLeft.isUrgent ? 'text-rose-400 animate-pulse' : 'text-slate-300'
             }`}
           >
             <Timer className={`w-3.5 h-3.5 ${timeLeft.isUrgent ? 'animate-spin' : ''}`} />
             <span>
-              {String(timeLeft.m).padStart(2, '0')}:{String(timeLeft.s).padStart(2, '0')}
+              {timeLeft.isExpired
+                ? 'COMPLETED'
+                : `${String(timeLeft.m).padStart(2, '0')}:${String(timeLeft.s).padStart(2, '0')}`}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Bookmark button */}
+          <div className="flex items-center gap-2">
+            {/* Watchlist Bookmark */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -212,20 +186,21 @@ export const ListingCard: React.FC<ListingCardProps> = ({
               }}
               className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors border ${
                 isSaved
-                  ? 'bg-rose-50 text-rose-600 border-rose-200'
-                  : 'bg-slate-50 text-slate-400 hover:text-slate-700 border-slate-200'
+                  ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                  : 'bg-slate-800 text-slate-400 hover:text-white border-white/5'
               }`}
+              title="Save to Watchlist"
             >
-              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-rose-600' : ''}`} />
+              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-rose-400' : ''}`} />
             </button>
 
-            {/* Quick Bid / Live Room CTA */}
+            {/* Quick Bid Button */}
             <button
               onClick={handleQuickBid}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md transition-all active:scale-95 ${
                 biddingSuccess
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  ? 'bg-emerald-500 text-slate-950'
+                  : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 shadow-emerald-500/20'
               }`}
             >
               {biddingSuccess ? (

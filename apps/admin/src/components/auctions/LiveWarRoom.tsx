@@ -146,13 +146,13 @@ export const LiveWarRoom: React.FC = () => {
           </div>
           <div>
             <h2 className="text-sm font-extrabold text-[#0B130F] flex items-center gap-2">
-              Real-Time Bidding War Room
+              Live Auctions Monitor
               <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803d] font-mono font-bold">
                 {liveAuctions.length} Rooms Active
               </span>
             </h2>
             <p className="text-xs text-[#6C7E75]">
-              Sub-second synchronization with 60s soft close and low-data network resilience mode.
+              Real-time live bidding feed, anti-sniping soft close monitoring, and moderator controls.
             </p>
           </div>
         </div>
