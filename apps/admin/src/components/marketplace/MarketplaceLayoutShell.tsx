@@ -16,18 +16,22 @@ import {
   ChevronDown,
   Sparkles,
   Lock,
+  LogIn,
+  UserPlus,
+  LogOut,
 } from 'lucide-react';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { useBuyerAuctionStore } from '@/store/useBuyerAuctionStore';
 import { TRANSLATIONS, isRTL, DIALECT_LABELS } from '@/i18n/translations';
 import { LanguageModal } from './LanguageModal';
 import { TwoGateKycModal } from './TwoGateKycModal';
+import { BuyerAuthModal } from './BuyerAuthModal';
 
 export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const pathname = usePathname();
-  const { language, buyer, isTwoGateVerified } = useBuyerAuthStore();
+  const { language, buyer, isAuthenticated, logout, isTwoGateVerified } = useBuyerAuthStore();
   const { savedAuctionIds } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
@@ -35,6 +39,8 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
   const [mounted, setMounted] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
     setMounted(true);
@@ -141,20 +147,68 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
               <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
 
-            {/* Two-Gate KYC Status Pill */}
-            <button
-              onClick={() => setShowKycModal(true)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
-                isKycDone
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                  : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-              }`}
-            >
-              <ShieldCheck className={`w-3.5 h-3.5 ${isKycDone ? 'text-emerald-600' : 'text-amber-600'}`} />
-              <span className="hidden sm:inline">
-                {isKycDone ? 'KYC Verified' : 'Verify ID'}
-              </span>
-            </button>
+            {/* Buyer Authentication / Profile State */}
+            {mounted && isAuthenticated && buyer ? (
+              <div className="flex items-center gap-1.5">
+                {/* Two-Gate KYC Status Pill */}
+                <button
+                  onClick={() => setShowKycModal(true)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
+                    isKycDone
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                  }`}
+                  title="Two-Gate Anti-Sniping & COD Doorstep Verification"
+                >
+                  <ShieldCheck className={`w-3.5 h-3.5 ${isKycDone ? 'text-emerald-600' : 'text-amber-600'}`} />
+                  <span className="hidden sm:inline">
+                    {isKycDone ? 'KYC Verified' : 'Verify ID'}
+                  </span>
+                </button>
+
+                {/* Profile Link Badge */}
+                <Link
+                  href="/marketplace/profile"
+                  className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-800 text-xs font-bold flex items-center gap-1.5 transition-colors max-w-[130px] sm:max-w-[160px]"
+                >
+                  <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span className="truncate">{buyer.name.split(' ')[0]}</span>
+                </Link>
+
+                {/* Logout Button */}
+                <button
+                  onClick={() => logout()}
+                  className="p-1.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-500 transition-colors"
+                  title="Log Out of Buyer Account"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setShowAuthModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-1"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{rtl ? 'چوونەژوورەوە' : 'Sign In'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAuthModalMode('signup');
+                    setShowAuthModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{rtl ? 'هەژماری نوێ' : 'Sign Up'}</span>
+                </button>
+              </div>
+            )}
 
             {/* Switch to Admin link */}
             <Link
@@ -212,6 +266,11 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
       <TwoGateKycModal
         isOpen={showKycModal}
         onClose={() => setShowKycModal(false)}
+      />
+      <BuyerAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode={authModalMode}
       />
     </div>
   );

@@ -166,17 +166,13 @@ export const useAdminStore = create<AdminStoreState>()(
       manifests: INITIAL_MANIFESTS,
       banners: INITIAL_BANNERS,
       notifications: INITIAL_NOTIFICATIONS,
-      lowDataSocketFeed: [
-        ['auc-801', 236000, 'usr-104', 45],
-        ['auc-801', 233000, 'usr-103', 68],
-        ['auc-803', 84000, 'usr-103', 1800],
-      ],
+      lowDataSocketFeed: [],
       antiSnipingAlert: null,
       toasts: [],
 
       // Support & Helpdesk State
       tickets: INITIAL_TICKETS,
-      selectedTicketId: 'tkt-101',
+      selectedTicketId: null,
 
       selectTicket: (id) => set({ selectedTicketId: id }),
 
@@ -275,20 +271,47 @@ export const useAdminStore = create<AdminStoreState>()(
 
       // Staff RBAC & Audit State
       staffUsers: INITIAL_STAFF,
-      currentUser: INITIAL_STAFF[0], // Default logged-in as SuperAdmin Rawand Ali
+      currentUser: null, // Secured by default: requires admin login
       auditLogs: INITIAL_AUDIT_LOGS,
 
       setCurrentUser: (user) => set({ currentUser: user }),
 
-      loginStaff: (email, password) => {
+      loginStaff: (identifier, password) => {
+        const cleanId = identifier.trim().toLowerCase();
+
+        // Direct check for master administrator credentials
+        if (
+          (cleanId === 'zadmin9898' ||
+            cleanId === 'zadmin' ||
+            cleanId === 'admin@zeedo.auction' ||
+            cleanId === 'superadmin@zeedo.iq') &&
+          password === 'ZEEDOA98'
+        ) {
+          const masterAdmin = get().staffUsers[0] || INITIAL_STAFF[0];
+          const updatedStaff: StaffUser = { ...masterAdmin, lastLogin: new Date().toISOString() };
+          set((state) => ({
+            currentUser: updatedStaff,
+            staffUsers: state.staffUsers.map((s) => (s.id === masterAdmin.id ? updatedStaff : s)),
+          }));
+          get().logAuditEvent({
+            action: 'STAFF_LOGIN',
+            category: 'auth',
+            targetId: masterAdmin.id,
+            description: `Master Administrator logged into Admin Console (${masterAdmin.role})`,
+          });
+          get().addToast('success', `Signed in as ZEEDO Master Admin (Super Admin)`);
+          return true;
+        }
+
         const staff = get().staffUsers.find(
           (s) =>
-            (s.email.toLowerCase() === email.trim().toLowerCase() ||
-              s.phone.replace(/\s+/g, '') === email.replace(/\s+/g, '')) &&
+            (s.email.toLowerCase() === cleanId ||
+              s.name.toLowerCase() === cleanId ||
+              s.phone.replace(/\s+/g, '') === cleanId) &&
             s.password === password
         );
         if (!staff) {
-          get().addToast('error', 'Invalid staff credentials. Please check email/phone & password.');
+          get().addToast('error', 'Invalid staff credentials. Default admin: ZAdmin9898 / ZEEDOA98');
           return false;
         }
         if (staff.status === 'suspended') {
@@ -1232,15 +1255,18 @@ export const useAdminStore = create<AdminStoreState>()(
           manifests: INITIAL_MANIFESTS,
           banners: INITIAL_BANNERS,
           notifications: INITIAL_NOTIFICATIONS,
+          lowDataSocketFeed: [],
           staffUsers: INITIAL_STAFF,
-          currentUser: INITIAL_STAFF[0],
+          currentUser: null,
           auditLogs: INITIAL_AUDIT_LOGS,
+          tickets: INITIAL_TICKETS,
+          selectedTicketId: null,
         });
-        get().addToast('info', 'Database reset to default Iraqi marketplace state');
+        get().addToast('info', 'Clean production data state restored');
       },
     }),
     {
-      name: 'zeedo_admin_store_v2',
+      name: 'zeedo_admin_store_prod_v1',
       storage: createJSONStorage(() => localStorage),
     }
   )

@@ -31,24 +31,22 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
   const rtl = isRTL(language);
 
   // Gate 1 state
-  const [docNumber, setDocNumber] = useState(buyer.kycDocument?.docNumber || 'IQ-19960412-99182');
-  const [fullName, setFullName] = useState(buyer.name || 'Rebaz Farhad Salih');
-  const [dob, setDob] = useState('1996-04-12');
+  const [docNumber, setDocNumber] = useState(buyer?.kycDocument?.docNumber || '');
+  const [fullName, setFullName] = useState(buyer?.name || '');
+  const [dob, setDob] = useState(buyer?.kycDocument?.dob || '');
   const [bloodType, setBloodType] = useState('O+');
-  const [gate1Done, setGate1Done] = useState(buyer.kycStatus === 'verified');
+  const [gate1Done, setGate1Done] = useState(Boolean(buyer?.kycStatus === 'verified' || buyer?.kycDocument));
   const [gate1Scanning, setGate1Scanning] = useState(false);
   const [ocrNotes, setOcrNotes] = useState<string | null>(null);
 
   // Gate 2 state
-  const [city, setCity] = useState(buyer.city || 'Erbil');
-  const [district, setDistrict] = useState(buyer.rooftopPin?.district || 'Dream City');
-  const [landmark, setLandmark] = useState(
-    buyer.rooftopPin?.landmark || 'Near Italian Village Villa 42B'
-  );
-  const [latitude, setLatitude] = useState(buyer.rooftopPin?.latitude || 36.1911);
-  const [longitude, setLongitude] = useState(buyer.rooftopPin?.longitude || 44.0092);
+  const [city, setCity] = useState(buyer?.city || 'Erbil');
+  const [district, setDistrict] = useState(buyer?.rooftopPin?.district || '');
+  const [landmark, setLandmark] = useState(buyer?.rooftopPin?.landmark || '');
+  const [latitude, setLatitude] = useState(buyer?.rooftopPin?.latitude || 36.1911);
+  const [longitude, setLongitude] = useState(buyer?.rooftopPin?.longitude || 44.0092);
   const [gate2Done, setGate2Done] = useState(
-    Boolean(buyer.rooftopPin && buyer.rooftopPin.isVerified)
+    Boolean(buyer?.rooftopPin && buyer.rooftopPin.isVerified)
   );
 
   if (!isOpen) return null;

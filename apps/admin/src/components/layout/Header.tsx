@@ -4,11 +4,7 @@ import React, { useState } from 'react';
 import { useAdminStore } from '@/store/useAdminStore';
 import { ApiStatusModal } from '@/components/settings/ApiStatusModal';
 import {
-  Zap,
   ShieldAlert,
-  FileCheck2,
-  PackagePlus,
-  RotateCcw,
   Radio,
   Truck,
   Search,
@@ -23,11 +19,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
   const {
-    simulateIncomingBid,
-    triggerAntiSniping,
-    simulateNewKycSubmission,
-    simulateNewSellerListing,
-    resetToDefaults,
     antiSnipingAlert,
     clearAntiSnipingAlert,
     auctions,
@@ -36,8 +27,6 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
 
   const [showApiModal, setShowApiModal] = useState(false);
 
-  const liveAuctions = auctions.filter((a) => a.status === 'live');
-  const targetLiveAuction = liveAuctions[0];
 
   return (
     <header className="sticky top-0 z-30 flex flex-col bg-[#F4F6F5]/90 backdrop-blur-md border-b border-[#E9EFEF] no-print">
@@ -126,61 +115,6 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Spark Simulator Quick Bar */}
-      <div className="flex items-center justify-between px-8 py-2.5 bg-[#FFFFFF] border-t border-b border-[#E9EFEF] text-xs overflow-x-auto gap-2">
-        <div className="flex items-center gap-2 text-[#072F1F] shrink-0 font-bold">
-          <Zap className="w-3.5 h-3.5 text-[#B4F105] fill-[#072F1F]" />
-          <span>Interactive Simulator:</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => simulateIncomingBid()}
-            className="btn-spark-lime text-xs px-3 py-1.5 rounded-full shadow-xs"
-            title="Simulates real-time incoming bid with dynamic increment"
-          >
-            <Zap className="w-3.5 h-3.5 fill-current" />
-            <span>Simulate Live Bid</span>
-          </button>
-
-          <button
-            onClick={() => targetLiveAuction && triggerAntiSniping(targetLiveAuction.id)}
-            className="btn-spark-primary text-xs px-3 py-1.5 rounded-full shadow-xs"
-            title="Triggers 60-second anti-sniping reset timer"
-          >
-            <ShieldAlert className="w-3.5 h-3.5 text-[#B4F105]" />
-            <span>Trigger 60s Soft-Close</span>
-          </button>
-
-          <button
-            onClick={() => simulateNewKycSubmission()}
-            className="btn-spark-light text-xs px-3 py-1.5 rounded-full shadow-xs"
-            title="Dispatches a new user ID KYC upload with OCR extraction"
-          >
-            <FileCheck2 className="w-3.5 h-3.5 text-[#072F1F]" />
-            <span>Simulate KYC Upload</span>
-          </button>
-
-          <button
-            onClick={() => simulateNewSellerListing(false)}
-            className="btn-spark-light text-xs px-3 py-1.5 rounded-full shadow-xs"
-            title="Simulates new listing requiring admin moderation"
-          >
-            <PackagePlus className="w-3.5 h-3.5 text-[#072F1F]" />
-            <span>Queue Moderation</span>
-          </button>
-
-          <button
-            onClick={() => resetToDefaults()}
-            className="btn-spark-light text-xs px-2.5 py-1.5 rounded-full shadow-xs"
-            title="Reset mock state to default"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-[#6C7E75]" />
-            <span>Reset Demo</span>
-          </button>
         </div>
       </div>
 

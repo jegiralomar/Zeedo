@@ -74,7 +74,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       return;
     }
 
-    const success = placeSlideBid(item.id, buyer.name, buyer.phone);
+    const success = placeSlideBid(
+      item.id,
+      buyer?.name || 'Authorized Buyer',
+      buyer?.phone || '+964 750 000 0000'
+    );
     if (success) {
       setBiddingSuccess(true);
       setTimeout(() => setBiddingSuccess(false), 2000);

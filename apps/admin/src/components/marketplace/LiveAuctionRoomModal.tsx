@@ -56,7 +56,11 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
     }
 
     setBidding(true);
-    const success = placeSlideBid(item.id, buyer.name, buyer.phone);
+    const success = placeSlideBid(
+      item.id,
+      buyer?.name || 'Authorized Buyer',
+      buyer?.phone || '+964 750 000 0000'
+    );
     if (success) {
       setBidSuccess(true);
       setTimeout(() => setBidSuccess(false), 2500);

@@ -1,78 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 
-const SEED_USERS = [
-  {
-    id: 'usr-101',
-    phone: '+964 750 341 8821',
-    name: 'Karwan Ahmed Salih',
-    city: 'Erbil',
-    kyc_status: 'verified',
-    kyc_national_id: 'IQ-19920815-11234',
-    rooftop_landmark: 'Near Italian Village Villa 42B',
-    total_bids: 47,
-    total_wins: 3,
-    total_spent_iqd: 4250000,
-    role: 'buyer',
-    created_at: '2026-09-01T10:00:00.000Z',
-  },
-  {
-    id: 'usr-102',
-    phone: '+964 770 192 4433',
-    name: 'Zaid Mustafa Al-Kinani',
-    city: 'Baghdad',
-    kyc_status: 'pending',
-    kyc_national_id: null,
-    rooftop_landmark: 'Behind Al-Mansour Mall, Street 14',
-    total_bids: 12,
-    total_wins: 0,
-    total_spent_iqd: 0,
-    role: 'buyer',
-    created_at: '2026-09-10T08:30:00.000Z',
-  },
-  {
-    id: 'usr-buyer-88',
-    phone: '+964 750 192 8844',
-    name: 'Rebaz Farhad Salih',
-    city: 'Erbil',
-    kyc_status: 'verified',
-    kyc_national_id: 'IQ-19960412-99182',
-    rooftop_landmark: 'Behind Family Mall, Street 10',
-    total_bids: 88,
-    total_wins: 7,
-    total_spent_iqd: 11200000,
-    role: 'buyer',
-    created_at: '2026-08-20T14:00:00.000Z',
-  },
-  {
-    id: 'seller-001',
-    phone: '+964 750 111 2233',
-    name: 'Soran Tech — Erbil Branch',
-    city: 'Erbil',
-    kyc_status: 'verified',
-    kyc_national_id: 'IQ-MERCHANT-001',
-    rooftop_landmark: 'Qaysari Bazaar, Shop #44',
-    total_bids: 0,
-    total_wins: 0,
-    total_spent_iqd: 0,
-    role: 'seller',
-    created_at: '2026-07-15T09:00:00.000Z',
-  },
-  {
-    id: 'seller-002',
-    phone: '+964 770 555 6677',
-    name: 'Karada Electronics — Baghdad',
-    city: 'Baghdad',
-    kyc_status: 'verified',
-    kyc_national_id: 'IQ-MERCHANT-002',
-    rooftop_landmark: 'Al-Karada District, Al-Mansour St',
-    total_bids: 0,
-    total_wins: 0,
-    total_spent_iqd: 0,
-    role: 'seller',
-    created_at: '2026-07-20T11:00:00.000Z',
-  },
-];
+const SEED_USERS: any[] = [];
 
 async function ensureUsersTable(sql: any) {
   await sql`
@@ -94,16 +23,7 @@ async function ensureUsersTable(sql: any) {
 }
 
 async function seedUsers(sql: any) {
-  const count = await sql`SELECT COUNT(*) FROM users`;
-  if (parseInt(count[0].count) > 0) return;
-  for (const u of SEED_USERS) {
-    await sql`
-      INSERT INTO users (id, phone, name, city, kyc_status, kyc_national_id, rooftop_landmark, total_bids, total_wins, total_spent_iqd, role, created_at)
-      VALUES (${u.id}, ${u.phone}, ${u.name}, ${u.city}, ${u.kyc_status}, ${u.kyc_national_id},
-        ${u.rooftop_landmark}, ${u.total_bids}, ${u.total_wins}, ${u.total_spent_iqd}, ${u.role}, ${u.created_at})
-      ON CONFLICT (id) DO NOTHING
-    `;
-  }
+  // Production: Do not seed demo users
 }
 
 export async function GET(request: Request) {

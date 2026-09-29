@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Search,
   SlidersHorizontal,
@@ -219,7 +220,31 @@ export default function BuyerMarketplacePage() {
           <span className="text-xs text-slate-500">100% Cash-on-Delivery Guarantee</span>
         </div>
 
-        {viewMode === 'grid' ? (
+        {filteredAuctions.length === 0 ? (
+          <div className="py-16 px-4 bg-white rounded-3xl border border-dashed border-slate-200 text-center space-y-4 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <Gavel className="w-8 h-8" />
+            </div>
+            <div className="space-y-1.5 max-w-md mx-auto">
+              <h4 className="font-extrabold text-slate-900 text-base">
+                {rtl ? 'هیچ مزادێکی چالاک نییە لەم کاتەدا' : 'No Live Auctions Currently Active'}
+              </h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {rtl
+                  ? 'مزادە فەرمییەکان بە پێداچوونەوەی ورد و ١٠٠٪ پارەدانی کاش بەردەوام زیاد دەکرێن. سەردانی پەڕەکە بکەوە بەم نزیکانە.'
+                  : 'Verified auctions with 100% Cash-on-Delivery doorstep inspection are scheduled regularly. Check back soon or register as a certified seller.'}
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-center gap-2">
+              <Link
+                href="/admin"
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black transition-colors"
+              >
+                {rtl ? 'چوونەژوورەوەی فرۆشیار / بەڕێوەبەر' : 'Merchant / Admin Portal'}
+              </Link>
+            </div>
+          </div>
+        ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredAuctions.map((item) => (
               <ListingCard
