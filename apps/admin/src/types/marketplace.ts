@@ -41,12 +41,17 @@ export interface BuyerProfile {
   totalBids: number;
   totalWins: number;
   joinedAt: string;
+  role?: 'buyer' | 'seller';
+  sellerId?: string;
+  storeName?: string;
+  commissionRate?: number;
 }
 
 export interface BidRecord {
   id: string;
   bidderId: string;
   bidderName: string;
+  bidderPhone?: string;
   amountIqd: number;
   timestamp: string;
   isAutoBid?: boolean;

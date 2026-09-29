@@ -42,6 +42,7 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
           name: cleanName,
           phone: cleanPhone,
           city: cleanCity,
+          role: 'buyer',
           kycStatus: 'pending',
           totalBids: 0,
           totalWins: 0,
@@ -56,23 +57,61 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
         return true;
       },
 
-      login: (phone) => {
-        const cleanPhone = phone.trim();
-        if (!cleanPhone) return false;
+      login: (identifier, password) => {
+        const cleanId = (identifier || '').trim();
+        if (!cleanId) return false;
 
-        // If existing buyer matches or create session
-        const current = get().buyer;
-        if (current && current.phone.replace(/\s+/g, '') === cleanPhone.replace(/\s+/g, '')) {
-          set({ isAuthenticated: true });
-          return true;
+        // Check if matching provisioned merchant in localStorage / admin store
+        if (typeof window !== 'undefined') {
+          try {
+            const adminRaw = window.localStorage.getItem('zeedo_admin_store_prod_v1');
+            if (adminRaw) {
+              const adminParsed = JSON.parse(adminRaw);
+              const sellers: any[] = adminParsed.state?.sellers || [];
+              const matchedSeller = sellers.find(
+                (s) =>
+                  (s.username && s.username.toLowerCase() === cleanId.toLowerCase()) ||
+                  s.phone.replace(/\s+/g, '') === cleanId.replace(/\s+/g, '') ||
+                  s.storeName.toLowerCase() === cleanId.toLowerCase()
+              );
+
+              if (matchedSeller) {
+                // If seller found and password matches or no password enforcement
+                if (!password || !matchedSeller.password || matchedSeller.password === password) {
+                  const sellerBuyerProfile: BuyerProfile = {
+                    id: matchedSeller.id,
+                    name: matchedSeller.ownerName || matchedSeller.storeName,
+                    phone: matchedSeller.phone,
+                    city: matchedSeller.city,
+                    role: 'seller',
+                    sellerId: matchedSeller.id,
+                    storeName: matchedSeller.storeName,
+                    commissionRate: matchedSeller.commissionRate,
+                    kycStatus: 'verified',
+                    totalBids: 0,
+                    totalWins: matchedSeller.completedSales || 0,
+                    joinedAt: matchedSeller.createdAt || new Date().toISOString(),
+                  };
+
+                  set({
+                    isAuthenticated: true,
+                    buyer: sellerBuyerProfile,
+                  });
+                  return true;
+                }
+              }
+            }
+          } catch (e) {}
         }
 
-        // Initialize session for returning phone number
+        // Regular Buyer Session
+        const current = get().buyer;
         const buyerSession: BuyerProfile = {
           id: current?.id || `usr-${Date.now()}`,
           name: current?.name || 'ZEEDO Buyer',
-          phone: cleanPhone,
+          phone: cleanId,
           city: current?.city || 'Erbil',
+          role: 'buyer',
           kycStatus: current?.kycStatus || 'pending',
           totalBids: current?.totalBids || 0,
           totalWins: current?.totalWins || 0,

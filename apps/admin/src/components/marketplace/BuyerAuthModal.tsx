@@ -198,26 +198,38 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
             </div>
           )}
 
-          {/* Phone Field */}
+          {/* Phone / Username Field */}
           <div className="space-y-1.5">
             <label className="font-bold text-slate-700 block">
-              {rtl ? 'ژمارەی مۆبایل لە عێراق' : 'Iraqi Mobile Phone'}
+              {mode === 'login'
+                ? rtl
+                  ? 'ژمارەی مۆبایل یان ناوی فرۆشیار'
+                  : 'Iraqi Phone or Merchant Username'
+                : rtl
+                  ? 'ژمارەی مۆبایل لە عێراق'
+                  : 'Iraqi Mobile Phone'}
             </label>
             <div className="relative">
               <Phone className={`w-4 h-4 text-slate-400 absolute top-3 ${rtl ? 'right-3' : 'left-3'}`} />
               <input
-                type="tel"
+                type="text"
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+964 750 XXX XXXX"
+                placeholder={mode === 'login' ? '+964 750 XXX XXXX / username' : '+964 750 XXX XXXX'}
                 className={`w-full py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white text-slate-900 font-mono font-semibold focus:outline-hidden focus:border-blue-600 focus:ring-2 focus:ring-blue-100 ${
                   rtl ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3 text-left'
                 }`}
               />
             </div>
             <p className="text-[10px] text-slate-400">
-              {rtl ? 'بەکاردێت بۆ دڵنیابوونەوە لە کاتی گەیاندنی کاڵا' : 'Used for courier doorstep delivery coordination'}
+              {mode === 'login'
+                ? rtl
+                  ? 'فرۆشیاران دەتوانن بە ناوی بەکارهێنەری دابینکراو بچنەژوورەوە'
+                  : 'Buyers use phone number; Merchants use provisioned store credentials'
+                : rtl
+                  ? 'بەکاردێت بۆ دڵنیابوونەوە لە کاتی گەیاندنی کاڵا'
+                  : 'Used for courier doorstep delivery coordination'}
             </p>
           </div>
 

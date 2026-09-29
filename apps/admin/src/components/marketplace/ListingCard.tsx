@@ -69,14 +69,14 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
   const handleQuickBid = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isTwoGateVerified()) {
+    if (!buyer) {
       onRequestKyc();
       return;
     }
 
     const success = placeSlideBid(
       item.id,
-      buyer?.name || 'Authorized Buyer',
+      buyer?.name || 'Verified Buyer',
       buyer?.phone || '+964 750 000 0000'
     );
     if (success) {

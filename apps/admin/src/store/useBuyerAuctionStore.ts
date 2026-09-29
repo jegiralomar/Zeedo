@@ -64,6 +64,7 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
             id: `bid-${Date.now()}`,
             bidderId: `usr-${Date.now()}`,
             bidderName: bidderName || 'Authorized Buyer',
+            bidderPhone: bidderPhone || '+964 750 000 0000',
             amountIqd: newBid,
             timestamp: `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`,
           };

@@ -63,6 +63,8 @@ export interface SellerMerchant {
   totalCodVolumeIqd: number;
   rating: number;
   createdAt: string;
+  username?: string;
+  password?: string;
 }
 
 export type ConditionTag = 'New' | 'Used' | 'New Open Box';
@@ -142,6 +144,10 @@ export interface ListingAuction {
   
   // Timers & Life cycle
   submittedAt: string;
+  proposedStartsAt?: string;
+  proposedDurationHours?: number;
+  rejectionReason?: string;
+  estimatedRetailPriceUsd?: number;
   gracePeriodEndsAt?: string; // 10 minutes post-submission
   auctionStartsAt: string;
   auctionEndsAt: string;
@@ -172,7 +178,26 @@ export interface ListingAuction {
   
   // Moderation notes
   moderationNotes?: string;
-  rejectionReason?: string;
+}
+
+export interface SellerInvoice {
+  id: string;
+  invoiceNumber: string;
+  sellerId: string;
+  sellerStoreName: string;
+  period: string; // e.g. "October 2026"
+  postingsCount: number;
+  postingFeePerItemIqd: number; // 1,000 IQD per posting
+  totalPostingFeesIqd: number; // postingsCount * 1,000
+  completedSalesCount: number;
+  totalCodVolumeIqd: number;
+  commissionRate: number; // e.g. 0.07 (7%)
+  totalCommissionDueIqd: number;
+  totalAmountDueIqd: number; // totalPostingFeesIqd + totalCommissionDueIqd
+  status: 'unpaid' | 'paid';
+  dueDate: string;
+  paidAt?: string;
+  createdAt: string;
 }
 
 export interface CourierManifestItem {

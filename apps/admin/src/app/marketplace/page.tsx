@@ -28,10 +28,13 @@ import { MobileAuctionItem } from '@/types/marketplace';
 import { ListingCard } from '@/components/marketplace/ListingCard';
 import { LiveAuctionRoomModal } from '@/components/marketplace/LiveAuctionRoomModal';
 import { TwoGateKycModal } from '@/components/marketplace/TwoGateKycModal';
+import { BuyerAuthModal } from '@/components/marketplace/BuyerAuthModal';
+import { useAdminStore } from '@/store/useAdminStore';
 
 export default function BuyerMarketplacePage() {
-  const { auctions, tickTimers } = useBuyerAuctionStore();
-  const { language } = useBuyerAuthStore();
+  const { auctions: adminAuctions } = useAdminStore();
+  const { auctions, addAuction, tickTimers } = useBuyerAuctionStore();
+  const { language, buyer } = useBuyerAuthStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
@@ -42,6 +45,37 @@ export default function BuyerMarketplacePage() {
   // Modals state
   const [selectedAuction, setSelectedAuction] = useState<MobileAuctionItem | null>(null);
   const [showKycModal, setShowKycModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Sync approved live auctions from admin store into marketplace store
+  useEffect(() => {
+    adminAuctions
+      .filter((a) => a.status === 'live')
+      .forEach((liveItem) => {
+        addAuction({
+          id: liveItem.id,
+          sellerId: liveItem.sellerId,
+          sellerName: liveItem.sellerName,
+          category: liveItem.category,
+          condition: liveItem.condition,
+          imageUrl: liveItem.images[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+          startingPriceIqd: 1000,
+          currentBidIqd: liveItem.currentBidIqd,
+          incrementStepIqd: liveItem.incrementStepIqd || 1000,
+          estimatedRetailMarketPriceIqd: liveItem.estimatedRetailMarketPriceIqd,
+          multilingual: liveItem.multilingual,
+          submittedAt: liveItem.submittedAt,
+          auctionStartsAt: liveItem.auctionStartsAt,
+          auctionEndsAt: liveItem.auctionEndsAt,
+          status: 'live',
+          isAntiSnipingActive: liveItem.isAntiSnipingActive,
+          antiSnipingResetsCount: liveItem.antiSnipingResetsCount,
+          totalBids: liveItem.totalBids,
+          highestBidder: liveItem.highestBidder,
+          bidsHistory: liveItem.bidsHistory,
+        });
+      });
+  }, [adminAuctions, addAuction]);
 
   // Timer ticker
   useEffect(() => {
@@ -251,7 +285,7 @@ export default function BuyerMarketplacePage() {
                 key={item.id}
                 item={item}
                 onOpenLiveRoom={(target) => setSelectedAuction(target)}
-                onRequestKyc={() => setShowKycModal(true)}
+                onRequestKyc={() => setShowAuthModal(true)}
               />
             ))}
           </div>
@@ -262,7 +296,7 @@ export default function BuyerMarketplacePage() {
                 key={item.id}
                 item={item}
                 onOpenLiveRoom={(target) => setSelectedAuction(target)}
-                onRequestKyc={() => setShowKycModal(true)}
+                onRequestKyc={() => setShowAuthModal(true)}
               />
             ))}
           </div>
@@ -274,12 +308,17 @@ export default function BuyerMarketplacePage() {
         item={selectedAuction}
         isOpen={Boolean(selectedAuction)}
         onClose={() => setSelectedAuction(null)}
-        onRequestKyc={() => setShowKycModal(true)}
+        onRequestKyc={() => setShowAuthModal(true)}
       />
 
       <TwoGateKycModal
         isOpen={showKycModal}
         onClose={() => setShowKycModal(false)}
+      />
+
+      <BuyerAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </div>
   );

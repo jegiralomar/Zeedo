@@ -50,7 +50,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   const currentAutoCeiling = myAutoBids[item.id];
 
   const handlePlaceBid = (increment?: number) => {
-    if (!isTwoGateVerified()) {
+    if (!buyer) {
       onRequestKyc();
       return;
     }
@@ -58,7 +58,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
     setBidding(true);
     const success = placeSlideBid(
       item.id,
-      buyer?.name || 'Authorized Buyer',
+      buyer?.name || 'Verified Buyer',
       buyer?.phone || '+964 750 000 0000'
     );
     if (success) {

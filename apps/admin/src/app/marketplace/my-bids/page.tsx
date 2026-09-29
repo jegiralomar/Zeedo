@@ -29,8 +29,27 @@ export default function MyBidsPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'won' | 'disputes'>('all');
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Filter user won items safely without fake fallback
-  const wonItems = buyer ? auctions.filter((a) => a.highestBidder?.id === buyer.id) : [];
+  const cleanPhone = buyer?.phone?.replace(/\s+/g, '') || '';
+
+  // Filter won auctions (status completed or countdown finished, with buyer as highest bidder)
+  const wonItems = buyer
+    ? auctions.filter(
+        (a) =>
+          (a.status === 'completed' || new Date(a.auctionEndsAt).getTime() <= Date.now()) &&
+          (a.highestBidder?.phone?.replace(/\s+/g, '') === cleanPhone || a.highestBidder?.id === buyer.id)
+      )
+    : [];
+
+  // Filter active live bids
+  const activeBids = buyer
+    ? auctions.filter(
+        (a) =>
+          a.status === 'live' &&
+          new Date(a.auctionEndsAt).getTime() > Date.now() &&
+          (a.highestBidder?.phone?.replace(/\s+/g, '') === cleanPhone ||
+            a.bidsHistory?.some((b) => b.bidderPhone?.replace(/\s+/g, '') === cleanPhone))
+      )
+    : [];
 
   if (!isAuthenticated || !buyer) {
     return (

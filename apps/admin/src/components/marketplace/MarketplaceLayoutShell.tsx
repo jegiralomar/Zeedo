@@ -26,6 +26,7 @@ import { TRANSLATIONS, isRTL, DIALECT_LABELS } from '@/i18n/translations';
 import { LanguageModal } from './LanguageModal';
 import { TwoGateKycModal } from './TwoGateKycModal';
 import { BuyerAuthModal } from './BuyerAuthModal';
+import { MerchantPortalView } from '../merchant/MerchantPortalView';
 
 export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -76,6 +77,11 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
 
   const dialectInfo = DIALECT_LABELS[language] || DIALECT_LABELS.ckb;
   const isKycDone = mounted && isTwoGateVerified();
+
+  // If logged in as Merchant Seller, render the dedicated Merchant Portal
+  if (mounted && isAuthenticated && buyer?.role === 'seller') {
+    return <MerchantPortalView />;
+  }
 
   return (
     <div

@@ -35,8 +35,10 @@ export const SellerProvisioningCenter: React.FC = () => {
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('+964 750 ');
   const [city, setCity] = useState('Erbil');
-  const [commissionRate, setCommissionRate] = useState(0.08); // 8%
+  const [commissionRate, setCommissionRate] = useState(0.07); // 7%
   const [autoApprove, setAutoApprove] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('ZeedoSeller2026');
   const [pickupAddress, setPickupAddress] = useState('');
   const [pickupLat, setPickupLat] = useState(36.1911);
   const [pickupLng, setPickupLng] = useState(44.0092);
@@ -71,11 +73,15 @@ export const SellerProvisioningCenter: React.FC = () => {
       auto_approve_listings: autoApprove,
       pickupAddress: pickupAddress || `${city} Commercial District Hub`,
       pickupCoordinates: { lat: pickupLat, lng: pickupLng },
+      username: username.trim() || phone.replace(/\s+/g, ''),
+      password: password.trim() || 'ZeedoSeller2026',
     });
 
     setIsModalOpen(false);
     setStoreName('');
     setOwnerName('');
+    setUsername('');
+    setPassword('ZeedoSeller2026');
     setPhone('+964 750 ');
     setAutoApprove(false);
   };
@@ -413,6 +419,37 @@ export const SellerProvisioningCenter: React.FC = () => {
                     <option value="Kirkuk">Kirkuk</option>
                     <option value="Zakho">Zakho</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Login Credentials for zeedo.auction */}
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-amber-50/60 border border-amber-200/80">
+                <div>
+                  <label className="text-amber-900 font-bold block mb-1">
+                    Store Username (for zeedo.auction)
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="e.g. erbil_mobile"
+                    className="w-full p-2.5 rounded-xl bg-white border border-amber-300 text-[#0B130F] font-mono text-xs"
+                  />
+                  <span className="text-[10px] text-amber-700">Defaults to phone if empty</span>
+                </div>
+
+                <div>
+                  <label className="text-amber-900 font-bold block mb-1">
+                    Store Login Password
+                  </label>
+                  <input
+                    type="text"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className="w-full p-2.5 rounded-xl bg-white border border-amber-300 text-[#0B130F] font-mono text-xs"
+                  />
+                  <span className="text-[10px] text-amber-700">Default: ZeedoSeller2026</span>
                 </div>
               </div>
 

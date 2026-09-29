@@ -21,6 +21,7 @@ import {
   SupportTicket,
   TicketStatus,
   SupportTicketMessage,
+  SellerInvoice,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -92,6 +93,11 @@ interface AdminStoreState {
   rejectKyc: (userId: string, reason: string) => void;
   updateKycOcrFields: (userId: string, fields: Partial<KycDocument>) => void;
 
+  // Invoices & Billing
+  invoices: SellerInvoice[];
+  generateSellerInvoice: (sellerId: string) => void;
+  markInvoicePaid: (invoiceId: string) => void;
+
   // Seller Provisioning Actions
   provisionSeller: (sellerData: {
     storeName: string;
@@ -102,11 +108,14 @@ interface AdminStoreState {
     auto_approve_listings: boolean;
     pickupAddress: string;
     pickupCoordinates: { lat: number; lng: number };
+    username?: string;
+    password?: string;
   }) => void;
   toggleSellerAutonomy: (sellerId: string) => void;
   updateSellerCommission: (sellerId: string, commissionRate: number) => void;
 
-  // Listing Moderation Actions
+  // Listing Moderation & Merchant Submission Actions
+  createSellerListing: (listingData: Partial<ListingAuction>) => void;
   approveListing: (listingId: string) => void;
   rejectListing: (listingId: string, reason: string) => void;
   updateListingMultilingual: (
@@ -169,6 +178,7 @@ export const useAdminStore = create<AdminStoreState>()(
       lowDataSocketFeed: [],
       antiSnipingAlert: null,
       toasts: [],
+      invoices: [],
 
       // Support & Helpdesk State
       tickets: INITIAL_TICKETS,
@@ -514,9 +524,11 @@ export const useAdminStore = create<AdminStoreState>()(
           totalCodVolumeIqd: 0,
           rating: 5.0,
           createdAt: new Date().toISOString(),
+          username: data.username || data.phone.replace(/\s+/g, ''),
+          password: data.password || 'ZeedoSeller2026',
         };
         set((state) => ({ sellers: [newSeller, ...state.sellers] }));
-        get().addToast('success', `Seller "${data.storeName}" provisioned successfully`);
+        get().addToast('success', `Seller "${data.storeName}" provisioned successfully. Login: ${newSeller.username}`);
         get().logAuditEvent({
           action: 'SELLER_PROVISIONED',
           category: 'sellers',
@@ -567,27 +579,145 @@ export const useAdminStore = create<AdminStoreState>()(
         });
       },
 
+      createSellerListing: (listingData) => {
+        const seller = get().sellers.find((s) => s.id === listingData.sellerId);
+        const autoApprove = seller?.auto_approve_listings || false;
+        const newId = `auc-${Math.floor(100 + Math.random() * 900)}`;
+        const durationHours = listingData.proposedDurationHours || 24;
+        const now = new Date();
+        const endsAt = new Date(now.getTime() + durationHours * 3600 * 1000).toISOString();
+
+        const newListing: ListingAuction = {
+          id: newId,
+          sellerId: listingData.sellerId || seller?.id || 'sel-01',
+          sellerName: listingData.sellerName || seller?.storeName || 'Merchant Partner',
+          sellerPhone: listingData.sellerPhone || seller?.phone || '+964 750 000 0000',
+          sellerAutoApprove: autoApprove,
+          status: autoApprove ? 'live' : 'moderation_pending',
+          condition: listingData.condition || 'New',
+          startingPriceIqd: 1000,
+          currentBidIqd: 1000,
+          estimatedRetailMarketPriceIqd: listingData.estimatedRetailMarketPriceIqd || 150000,
+          incrementStepIqd: listingData.incrementStepIqd || 1000,
+          multilingual: listingData.multilingual || {
+            en: { title: 'New Item', description: '', specs: [] },
+            ar: { title: 'منتج جديد', description: '', specs: [] },
+            ckb: { title: 'کاڵای نوێ', description: '', specs: [] },
+            badini: { title: 'کەلەپەلی نوی', description: '', specs: [] },
+          },
+          images: listingData.images && listingData.images.length > 0 ? listingData.images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'],
+          category: listingData.category || 'Consumer Electronics',
+          sourceType: listingData.sourceType || 'url',
+          sourceValue: listingData.sourceValue || '',
+          submittedAt: now.toISOString(),
+          proposedStartsAt: listingData.proposedStartsAt,
+          proposedDurationHours: durationHours,
+          estimatedRetailPriceUsd: listingData.estimatedRetailPriceUsd,
+          auctionStartsAt: now.toISOString(),
+          auctionEndsAt: endsAt,
+          isAntiSnipingActive: false,
+          antiSnipingResetsCount: 0,
+          totalBids: 0,
+          bidsHistory: [],
+        };
+
+        set((state) => ({
+          auctions: [newListing, ...state.auctions],
+          sellers: state.sellers.map((s) =>
+            s.id === newListing.sellerId
+              ? { ...s, totalListings: s.totalListings + 1 }
+              : s
+          ),
+        }));
+
+        if (autoApprove) {
+          get().addToast('success', `Listing "${newListing.multilingual.en.title}" auto-approved and is now LIVE!`);
+        } else {
+          get().addToast('info', `Listing "${newListing.multilingual.en.title}" submitted to Admin Moderation Queue.`);
+        }
+      },
+
       approveListing: (listingId) => {
+        const target = get().auctions.find((a) => a.id === listingId);
+        if (!target) return;
+
+        const durationHours = target.proposedDurationHours || 24;
+        const now = new Date();
+        const endsAt = new Date(now.getTime() + durationHours * 3600 * 1000).toISOString();
+
         set((state) => ({
           auctions: state.auctions.map((a) =>
             a.id === listingId
               ? {
                   ...a,
                   status: 'live' as const,
-                  auctionStartsAt: new Date().toISOString(),
-                  auctionEndsAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+                  auctionStartsAt: now.toISOString(),
+                  auctionEndsAt: endsAt,
                 }
               : a
           ),
+          sellers: state.sellers.map((s) =>
+            s.id === target.sellerId
+              ? { ...s, totalListings: s.totalListings + 1 }
+              : s
+          ),
         }));
-        get().addToast('success', `Listing ${listingId} approved and is now LIVE!`);
+
+        get().addToast('success', `Listing "${target.multilingual.en?.title || listingId}" approved & is now LIVE for ${durationHours} hours!`);
         get().logAuditEvent({
           action: 'LISTING_APPROVED',
           category: 'moderation',
           targetId: listingId,
-          description: `Approved 4-dialect translation board for listing ${listingId} (moved to LIVE at 1,000 IQD starting price)`,
-          diff: { after: { status: 'live' } },
+          description: `Approved listing ${listingId}. Set Live for ${durationHours}h. Accrued 1,000 IQD posting fee to merchant.`,
+          diff: { after: { status: 'live', durationHours } },
         });
+      },
+
+      generateSellerInvoice: (sellerId) => {
+        const seller = get().sellers.find((s) => s.id === sellerId);
+        if (!seller) return;
+
+        const sellerAuctions = get().auctions.filter((a) => a.sellerId === sellerId);
+        const postingsCount = sellerAuctions.length;
+        const totalPostingFeesIqd = postingsCount * 1000;
+        const completedAuctions = sellerAuctions.filter((a) => a.status === 'completed' && a.highestBidder);
+        const totalCodVolumeIqd = completedAuctions.reduce((sum, a) => sum + a.currentBidIqd, 0);
+        const commissionRate = seller.commissionRate || 0.07;
+        const totalCommissionDueIqd = Math.round(totalCodVolumeIqd * commissionRate);
+        const totalAmountDueIqd = totalPostingFeesIqd + totalCommissionDueIqd;
+
+        const newInvoice: SellerInvoice = {
+          id: `inv-${Date.now().toString().slice(-6)}`,
+          invoiceNumber: `INV-ZEEDO-${Math.floor(1000 + Math.random() * 9000)}`,
+          sellerId: seller.id,
+          sellerStoreName: seller.storeName,
+          period: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          postingsCount,
+          postingFeePerItemIqd: 1000,
+          totalPostingFeesIqd,
+          completedSalesCount: completedAuctions.length,
+          totalCodVolumeIqd,
+          commissionRate,
+          totalCommissionDueIqd,
+          totalAmountDueIqd,
+          status: 'unpaid',
+          dueDate: new Date(Date.now() + 14 * 86400 * 1000).toISOString().split('T')[0],
+          createdAt: new Date().toISOString(),
+        };
+
+        set((state) => ({ invoices: [newInvoice, ...state.invoices] }));
+        get().addToast('success', `Invoice generated for ${seller.storeName}: Total Due ${totalAmountDueIqd.toLocaleString()} IQD`);
+      },
+
+      markInvoicePaid: (invoiceId) => {
+        set((state) => ({
+          invoices: state.invoices.map((inv) =>
+            inv.id === invoiceId
+              ? { ...inv, status: 'paid' as const, paidAt: new Date().toISOString() }
+              : inv
+          ),
+        }));
+        get().addToast('success', `Invoice ${invoiceId} marked as PAID.`);
       },
 
       rejectListing: (listingId, reason) => {
