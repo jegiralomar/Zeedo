@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { ocrIraqiNationalIdWithTesseract } from '@/lib/ocr';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function OPTIONS() {
   return handleCorsOptions();
 }
