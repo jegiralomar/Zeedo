@@ -4,20 +4,9 @@
  */
 
 import { getSetting, initDatabaseSchema } from './db';
+import { ocrIraqiNationalIdWithTesseract, IraqiNationalIdOcrResult } from './ocr';
 
-export interface IraqiNationalIdOcrResult {
-  isSuccess: boolean;
-  documentType: string;
-  fullNameArabic: string;
-  fullNameEnglish: string;
-  nationalIdNumber: string;
-  dateOfBirth: string;
-  governorate: string;
-  confidence: number;
-  isAiVerified: boolean;
-  isSandboxFallback: boolean;
-  notes?: string;
-}
+export type { IraqiNationalIdOcrResult };
 
 export interface ItemEnrichmentResult {
   isSuccess: boolean;
@@ -54,131 +43,13 @@ async function getGeminiConfig() {
 }
 
 /**
- * Perform Multimodal Vision OCR on an Iraqi National ID Card (Bataqa Wataniya)
+ * Perform Self-Contained Dual-Language OCR on an Iraqi National ID Card (Bataqa Wataniya)
+ * Uses Tesseract.js (Arabic + English) with zero external API dependencies or quotas.
  */
 export async function ocrIraqiNationalId(
   imageBase64?: string
 ): Promise<IraqiNationalIdOcrResult> {
-  const { key, isLive } = await getGeminiConfig();
-
-  // If live mode is enabled, API key is present and image is provided, call real Gemini Vision API
-  if (isLive && imageBase64) {
-    try {
-      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-      const mimeType = imageBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-
-      const prompt = `You are an expert Iraqi Civil Status and National Identity Card (البطاقة الوطنية الموحدة - Bataqa Wataniya) OCR specialist.
-Inspect this image of an Iraqi National ID or Civil document.
-Extract the following fields accurately in JSON format:
-{
-  "documentType": "Bataqa Wataniya (National Unified Card)",
-  "fullNameArabic": "الاسم الكامل الثلاثي واللقب بالعربية أو الكردية",
-  "fullNameEnglish": "Full Name transliterated in English",
-  "nationalIdNumber": "e.g. 200307654321 or IQ-XXXXXXXX",
-  "dateOfBirth": "YYYY-MM-DD",
-  "governorate": "e.g. Erbil, Baghdad, Sulaymaniyah, Duhok, Basra, etc.",
-  "confidence": 0.98
-}
-Return ONLY valid raw JSON without markdown code fences.`;
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: prompt },
-                  {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: cleanBase64,
-                    },
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.1,
-              response_mime_type: 'application/json',
-            },
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawText) {
-          const parsed = JSON.parse(rawText);
-          return {
-            isSuccess: true,
-            documentType: parsed.documentType || 'Bataqa Wataniya (National Unified Card)',
-            fullNameArabic: parsed.fullNameArabic || '',
-            fullNameEnglish: parsed.fullNameEnglish || '',
-            nationalIdNumber: parsed.nationalIdNumber || '',
-            dateOfBirth: parsed.dateOfBirth || '',
-            governorate: parsed.governorate || '',
-            confidence: parsed.confidence || 0.985,
-            isAiVerified: true,
-            isSandboxFallback: false,
-          };
-        }
-      } else {
-        // Surface the actual Gemini error so it's visible in logs and response
-        const errData = await response.json().catch(() => ({}));
-        const errMsg = errData?.error?.message || `Gemini HTTP ${response.status}`;
-        console.error('Gemini Vision API error:', errMsg);
-        return {
-          isSuccess: false,
-          documentType: 'Bataqa Wataniya (National Unified Card)',
-          fullNameArabic: '',
-          fullNameEnglish: '',
-          nationalIdNumber: '',
-          dateOfBirth: '',
-          governorate: '',
-          confidence: 0,
-          isAiVerified: false,
-          isSandboxFallback: false,
-          notes: `Gemini API error: ${errMsg}`,
-        };
-      }
-    } catch (err) {
-      console.warn('Gemini Vision OCR exception:', err);
-      return {
-        isSuccess: false,
-        documentType: 'Bataqa Wataniya (National Unified Card)',
-        fullNameArabic: '',
-        fullNameEnglish: '',
-        nationalIdNumber: '',
-        dateOfBirth: '',
-        governorate: '',
-        confidence: 0,
-        isAiVerified: false,
-        isSandboxFallback: false,
-        notes: `OCR exception: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      };
-    }
-  }
-
-  // Realistic Sandbox Fallback for Iraqi Bataqa Wataniya
-  return {
-    isSuccess: true,
-    documentType: 'Bataqa Wataniya (National Unified Card)',
-    fullNameArabic: 'ڕێباز فەرهاد ساڵح (ريباز فرهاد صالح)',
-    fullNameEnglish: 'Rebaz Farhad Salih',
-    nationalIdNumber: 'IQ-19960412-99182',
-    dateOfBirth: '1996-04-12',
-    governorate: 'Erbil (هەولێر)',
-    confidence: 0.994,
-    isAiVerified: true,
-    isSandboxFallback: !isLive,
-    notes: !isLive
-      ? 'Sandbox Simulation: Configure live GEMINI_API_KEY in the API Services modal or apps/admin/.env.local.'
-      : undefined,
-  };
+  return ocrIraqiNationalIdWithTesseract(imageBase64);
 }
 
 /**

@@ -10,10 +10,16 @@ export async function GET() {
     success: true,
     apiMode,
     services: {
+      ocr: {
+        configured: true,
+        engine: 'tesseract.js',
+        languages: ['ara', 'eng'],
+        isLive: true,
+      },
       gemini: {
         configured: Boolean(geminiKey && geminiKey.length > 5),
         keyMasked: geminiKey ? `${geminiKey.slice(0, 6)}...${geminiKey.slice(-4)}` : '',
-        model: 'gemini-2.0-flash',
+        model: 'gemini-flash-latest',
         isLive: apiMode === 'live' && Boolean(geminiKey),
       },
       whatsapp: {

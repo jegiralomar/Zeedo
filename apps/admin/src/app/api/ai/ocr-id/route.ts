@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { ocrIraqiNationalId } from '@/lib/gemini';
+import { ocrIraqiNationalIdWithTesseract } from '@/lib/ocr';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
 
 export async function OPTIONS() {
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const body = await safeParseJson<{ imageBase64?: string }>(req);
     const { imageBase64 } = body;
 
-    const result = await ocrIraqiNationalId(imageBase64);
+    const result = await ocrIraqiNationalIdWithTesseract(imageBase64);
     return jsonResponse(result);
   } catch (error) {
     console.error('Error in Iraqi National ID OCR:', error);
