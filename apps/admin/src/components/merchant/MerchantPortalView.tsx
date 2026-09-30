@@ -35,8 +35,15 @@ interface ScrapedData {
   retailPriceUsd: number;
   brand: string;
   category: string;
+  condition?: ConditionTag;
   specs: string[];
   sourceUrl: string;
+  multilingual?: {
+    en: { title: string; description: string; specs: string[] };
+    ar: { title: string; description: string; specs: string[] };
+    ckb: { title: string; description: string; specs: string[] };
+    badini: { title: string; description: string; specs: string[] };
+  };
 }
 
 export const MerchantPortalView: React.FC = () => {
@@ -65,6 +72,7 @@ export const MerchantPortalView: React.FC = () => {
   const [specInput, setSpecInput] = useState('');
   const [description, setDescription] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
+  const [scrapedMultilingual, setScrapedMultilingual] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
@@ -143,9 +151,15 @@ export const MerchantPortalView: React.FC = () => {
       setDescription(product.description || '');
       setCategory(product.category || 'Consumer Electronics');
       setRetailPriceUsd(product.retailPriceUsd || 100);
-      setImages(product.images.length > 0 ? product.images : []);
+      if (product.condition) {
+        setCondition(product.condition);
+      }
+      setImages(product.images && product.images.length > 0 ? product.images : []);
       setSpecs(product.specs || []);
       setSourceUrl(product.sourceUrl || scrapeUrl);
+      if (product.multilingual) {
+        setScrapedMultilingual(product.multilingual);
+      }
     } catch (err: any) {
       setScrapeError(err.message || 'Scraping failed. You can enter details manually.');
     } finally {
@@ -192,7 +206,7 @@ export const MerchantPortalView: React.FC = () => {
       images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'],
       sourceType: 'url',
       sourceValue: sourceUrl || scrapeUrl,
-      multilingual: {
+      multilingual: scrapedMultilingual || {
         en: { title, description, specs },
         ar: { title, description, specs },
         ckb: { title, description, specs },
@@ -209,6 +223,7 @@ export const MerchantPortalView: React.FC = () => {
       setDescription('');
       setImages([]);
       setSpecs([]);
+      setScrapedMultilingual(null);
       setScrapeUrl('');
       setActiveTab('listings');
     }, 1500);
