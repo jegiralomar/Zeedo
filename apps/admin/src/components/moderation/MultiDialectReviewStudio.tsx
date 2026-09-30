@@ -496,22 +496,48 @@ export const MultiDialectReviewStudio: React.FC = () => {
                   <span>One-Tap Relist at 1,000 IQD</span>
                 </button>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   {currentAuction.status === 'moderation_pending' ? (
                     <>
+                      {/* Duration Preset Selector */}
+                      <div className="flex items-center gap-1 bg-[#F4F6F5] p-1 rounded-xl border border-[#E9EFEF] text-[11px] font-mono">
+                        <span className="text-[#6C7E75] px-2 font-bold">Duration:</span>
+                        {[12, 24, 48, 72].map((hrs) => (
+                          <button
+                            key={hrs}
+                            type="button"
+                            onClick={() => {
+                              currentAuction.proposedDurationHours = hrs;
+                              useAdminStore.setState((st) => ({
+                                auctions: st.auctions.map((a) =>
+                                  a.id === currentAuction.id ? { ...a, proposedDurationHours: hrs } : a
+                                ),
+                              }));
+                            }}
+                            className={`px-2 py-1 rounded-lg font-bold transition-all ${
+                              (currentAuction.proposedDurationHours || 24) === hrs
+                                ? 'bg-[#072F1F] text-white shadow-2xs'
+                                : 'text-[#6C7E75] hover:text-[#0B130F]'
+                            }`}
+                          >
+                            {hrs}h
+                          </button>
+                        ))}
+                      </div>
+
                       <button
                         onClick={() => setIsRejectOpen(true)}
                         className="px-4 py-2 rounded-xl bg-[#FEE2E2] text-[#EF4444] hover:bg-[#fecaca] transition-all text-xs font-bold"
                       >
-                        Reject Listing
+                        Reject
                       </button>
 
                       <button
                         onClick={() => approveListing(currentAuction.id)}
-                        className="btn-spark-lime text-xs px-5 py-2 rounded-xl font-black shadow-md"
+                        className="btn-spark-lime text-xs px-5 py-2 rounded-xl font-black shadow-md flex items-center gap-1.5"
                       >
                         <CheckCircle2 className="w-4 h-4 text-[#072F1F]" />
-                        <span>Approve & Publish LIVE</span>
+                        <span>Approve & Go LIVE ({currentAuction.proposedDurationHours || 24}h)</span>
                       </button>
                     </>
                   ) : (

@@ -11,12 +11,6 @@ export const DIALECT_LABELS: Record<LanguageCode, { label: string; script: strin
   badini: { label: 'بادینی', script: 'Kurdish • RTL', region: 'دهۆک، زاخۆ' },
 };
 
-export const formatCurrency = (amount: number, lang: LanguageCode = 'en'): string => {
-  const formattedNumber = (amount || 0).toLocaleString('en-US');
-  const symbol = lang === 'en' ? 'IQD' : 'د.ع';
-  return `${formattedNumber} ${symbol}`;
-};
-
 export const TRANSLATIONS = {
   en: {
     appTitle: 'ZEEDO BID',

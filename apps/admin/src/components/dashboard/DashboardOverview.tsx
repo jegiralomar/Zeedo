@@ -47,7 +47,7 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           <Link href="/auctions" className="alert-green-link mt-2">
-            <span>Live Monitor</span>
+            <span>Live War Room</span>
             <ArrowRight className="w-4 h-4 text-[#B4F105]" />
           </Link>
 
@@ -123,7 +123,7 @@ export const DashboardOverview: React.FC = () => {
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[#6C7E75]">
-                Platform Listing Fees
+                1k IQD Base Engine
               </span>
               <div className="p-2 rounded-xl bg-[#E0F2FE] text-[#0284c7]">
                 <Coins className="w-4 h-4" />
@@ -139,7 +139,7 @@ export const DashboardOverview: React.FC = () => {
             <span className="flex items-center gap-1 text-[#072F1F] font-bold text-[11px]">
               <span>{totalListingsCount} Total Listings</span>
             </span>
-            <span className="text-[11px] font-mono text-[#0284c7] font-bold">1,000 IQD Base</span>
+            <span className="text-[11px] font-mono text-[#0284c7] font-bold">100% Platform Fee</span>
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export const DashboardOverview: React.FC = () => {
               Core Operational Modules
             </span>
             <span className="text-xs text-[#072F1F] font-bold font-mono">
-              Admin Console
+              Spark Admin Architecture
             </span>
           </div>
 
@@ -171,9 +171,9 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#879A91] group-hover:text-[#072F1F] group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="font-bold text-base text-[#0B130F]">Identity Verification (KYC)</h3>
+              <h3 className="font-bold text-base text-[#0B130F]">Split-Screen KYC Review Card</h3>
               <p className="text-xs text-[#6C7E75] leading-relaxed">
-                Review Iraqi Civil ID and Passport submissions alongside verified rooftop GPS delivery coordinates.
+                Inspect raw ID/Passport uploads with zoom/rotate alongside Gemini OCR extracted data and mandatory rooftop delivery GPS map pin verification.
               </p>
               <div className="text-xs font-bold text-[#15803d] font-mono pt-1">
                 {pendingKycCount} submissions awaiting review &rarr;
@@ -190,9 +190,9 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#879A91] group-hover:text-[#072F1F] group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="font-bold text-base text-[#0B130F]">Listing Moderation Studio</h3>
+              <h3 className="font-bold text-base text-[#0B130F]">Multi-Dialect Moderation Queue</h3>
               <p className="text-xs text-[#6C7E75] leading-relaxed">
-                Approve merchant listings across Arabic, Kurdish, and English with strict starting price verification.
+                Review listings across English, Arabic, Kurdish Sorani, and Kurdish Badini. Strict 1,000 IQD starting price lock verification.
               </p>
               <div className="text-xs font-bold text-[#F97316] font-mono pt-1">
                 {pendingModerationCount} listings in moderation queue &rarr;
@@ -209,9 +209,9 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#879A91] group-hover:text-[#072F1F] group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="font-bold text-base text-[#0B130F]">Live Auctions Monitor</h3>
+              <h3 className="font-bold text-base text-[#0B130F]">Live Auction War Room</h3>
               <p className="text-xs text-[#6C7E75] leading-relaxed">
-                Real-time room monitoring, live bid auditing, anti-sniping soft close reset triggers, and moderator controls.
+                Real-time room monitoring, 60-second soft close anti-sniping reset triggers, and 12-25 byte low-data payload stream inspector.
               </p>
               <div className="text-xs font-bold text-[#EF4444] font-mono pt-1">
                 {liveAuctionsCount} rooms live right now &rarr;

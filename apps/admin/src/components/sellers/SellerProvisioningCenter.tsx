@@ -14,19 +14,25 @@ import {
   CheckCircle2,
   Users,
   Eye,
+  FileText,
+  DollarSign,
 } from 'lucide-react';
 
 export const SellerProvisioningCenter: React.FC = () => {
   const {
     sellers,
     users,
+    auctions,
+    invoices,
     provisionSeller,
     toggleSellerAutonomy,
+    generateSellerInvoice,
+    markInvoicePaid,
     addToast,
   } = useAdminStore();
 
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'merchants' | 'buyers'>('merchants');
+  const [activeTab, setActiveTab] = useState<'merchants' | 'buyers' | 'invoices'>('merchants');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -134,6 +140,17 @@ export const SellerProvisioningCenter: React.FC = () => {
             >
               <Users className="w-3.5 h-3.5" />
               <span>Buyers ({users.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('invoices')}
+              className={`px-3.5 py-1.5 rounded-full font-bold transition-colors flex items-center gap-1.5 ${
+                activeTab === 'invoices'
+                  ? 'bg-[#072F1F] text-white shadow-xs'
+                  : 'text-[#6C7E75] hover:text-[#0B130F]'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Invoicing Ledger</span>
             </button>
           </div>
 
@@ -347,6 +364,121 @@ export const SellerProvisioningCenter: React.FC = () => {
                   </tr>
                 );
               })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* INVOICING & BILLING LEDGER TABLE */}
+      {activeTab === 'invoices' && (
+        <div className="spark-card !p-0 overflow-hidden space-y-4">
+          <div className="p-4 bg-[#F8FAF9] border-b border-[#E9EFEF] flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div>
+              <span className="font-extrabold text-[#0B130F] block text-sm">
+                Merchant Direct COD & Commission Invoicing
+              </span>
+              <span className="text-[#6C7E75]">
+                Merchants collect 100% COD directly. Invoices track listing posting fees (1,000 IQD/item) + commission % on GMV.
+              </span>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-[#DCFCE7] text-[#15803d] font-mono font-bold">
+              1,000 IQD Base Posting Fee Active
+            </span>
+          </div>
+
+          <table className="w-full text-xs text-left">
+            <thead>
+              <tr className="bg-[#F8FAF9] border-b border-[#E9EFEF] text-[#6C7E75] uppercase font-mono text-[10px]">
+                <th className="p-4">Merchant & Credentials</th>
+                <th className="p-4">Total Postings (1,000 IQD ea)</th>
+                <th className="p-4">COD Sales Volume (GMV)</th>
+                <th className="p-4">Commission Rate</th>
+                <th className="p-4">Total Balance Due</th>
+                <th className="p-4 text-right">Invoicing Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E9EFEF]">
+              {sellers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-[#6C7E75]">
+                    No merchants provisioned yet. Click &quot;+ Provision New Merchant&quot; above.
+                  </td>
+                </tr>
+              ) : (
+                sellers.map((s) => {
+                  const sellerAuctions = auctions.filter((a) => a.sellerId === s.id);
+                  const postingCount = sellerAuctions.length;
+                  const postingFeesIqd = postingCount * 1000;
+                  const completedAuctions = sellerAuctions.filter(
+                    (a) => a.status === 'completed' && a.highestBidder
+                  );
+                  const gmvIqd = completedAuctions.reduce((sum, a) => sum + a.currentBidIqd, 0);
+                  const commRate = s.commissionRate || 0.07;
+                  const commDue = Math.round(gmvIqd * commRate);
+                  const totalDue = postingFeesIqd + commDue;
+
+                  const sellerInvoice = invoices.find((inv) => inv.sellerId === s.id);
+
+                  return (
+                    <tr key={s.id} className="hover:bg-[#F8FAF9] transition-colors">
+                      <td className="p-4">
+                        <div className="font-extrabold text-[#0B130F] text-sm">{s.storeName}</div>
+                        <div className="text-[11px] text-[#6C7E75] font-mono mt-0.5">
+                          Login: <strong className="text-slate-900">{s.username || s.phone}</strong> • {s.city}
+                        </div>
+                      </td>
+
+                      <td className="p-4 font-mono">
+                        <div className="font-bold text-[#0B130F]">{postingCount} listings</div>
+                        <div className="text-[11px] text-[#6C7E75]">{postingFeesIqd.toLocaleString()} IQD</div>
+                      </td>
+
+                      <td className="p-4 font-mono">
+                        <div className="font-bold text-[#15803d]">{gmvIqd.toLocaleString()} IQD</div>
+                        <div className="text-[11px] text-[#6C7E75]">{completedAuctions.length} won sales</div>
+                      </td>
+
+                      <td className="p-4 font-mono font-bold text-[#0B130F]">
+                        {(commRate * 100).toFixed(0)}%
+                      </td>
+
+                      <td className="p-4 font-mono">
+                        <div className="text-base font-extrabold text-[#072F1F]">
+                          {totalDue.toLocaleString()} IQD
+                        </div>
+                        <span className="text-[10px] text-amber-700 font-bold">
+                          {sellerInvoice?.status === 'paid' ? 'Paid / Settled' : 'Unpaid Balance'}
+                        </span>
+                      </td>
+
+                      <td className="p-4 text-right">
+                        {sellerInvoice?.status === 'paid' ? (
+                          <span className="px-3 py-1 rounded-full bg-[#DCFCE7] text-[#15803d] font-bold text-xs">
+                            Invoice Settled
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => generateSellerInvoice(s.id)}
+                              className="btn-spark-light text-xs py-1 px-3"
+                            >
+                              Generate Invoice
+                            </button>
+                            {sellerInvoice && (
+                              <button
+                                onClick={() => markInvoicePaid(sellerInvoice.id)}
+                                className="btn-spark-lime text-xs py-1 px-3 font-bold"
+                              >
+                                Mark Paid
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

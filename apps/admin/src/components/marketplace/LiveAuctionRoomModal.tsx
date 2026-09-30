@@ -9,17 +9,21 @@ import {
   Flame,
   Truck,
   CheckCircle2,
-  Share2,
   TrendingUp,
-  Store,
-  Layers,
+  MapPin,
+  Clock,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import { MobileAuctionItem } from '@/types/marketplace';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { useBuyerAuctionStore } from '@/store/useBuyerAuctionStore';
-import { TRANSLATIONS, isRTL, formatCurrency } from '@/i18n/translations';
+import { TRANSLATIONS, isRTL } from '@/i18n/translations';
+import { PriceOdometer } from './PriceOdometer';
+import { PriceSparkline } from './PriceSparkline';
 import { SlideToBidSlider } from './SlideToBidSlider';
+import { PhotoCarousel } from './PhotoCarousel';
+import { LiveBidTickerPill } from './LiveBidTickerPill';
 
 interface LiveAuctionRoomModalProps {
   item: MobileAuctionItem | null;
@@ -39,71 +43,76 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
-  // Fast Bid Increment State
-  const [selectedIncrement, setSelectedIncrement] = useState<number>(1000);
+  const [bidding, setBidding] = useState(false);
+  const [bidSuccessMessage, setBidSuccessMessage] = useState<string | null>(null);
   const [showAutoBidModal, setShowAutoBidModal] = useState(false);
-  const [autoBidAmount, setAutoBidAmount] = useState('350000');
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [autoBidAmount, setAutoBidAmount] = useState('');
 
-  // Live countdown state
-  const [timeLeft, setTimeLeft] = useState<{ m: number; s: number; isUrgent: boolean; isExpired: boolean }>({
+  // Countdown timer state
+  const [timeLeft, setTimeLeft] = useState<{
+    h: number;
+    m: number;
+    s: number;
+    isExpired: boolean;
+    isUrgent: boolean;
+  }>({
+    h: 0,
     m: 0,
     s: 0,
-    isUrgent: false,
     isExpired: false,
+    isUrgent: false,
   });
 
   useEffect(() => {
     if (!item) return;
-
-    const calcTime = () => {
+    const calculateTime = () => {
       const now = Date.now();
       const ends = new Date(item.auctionEndsAt).getTime();
       const diff = Math.max(0, Math.floor((ends - now) / 1000));
-      const m = Math.floor(diff / 60);
+
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
       const s = diff % 60;
+
       setTimeLeft({
+        h,
         m,
         s,
-        isUrgent: diff <= 60 && diff > 0,
         isExpired: diff <= 0,
+        isUrgent: diff <= 60 && diff > 0,
       });
     };
 
-    calcTime();
-    const timer = setInterval(calcTime, 1000);
-    return () => clearInterval(timer);
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
   }, [item?.auctionEndsAt]);
 
   if (!isOpen || !item) return null;
 
   const localized = item.multilingual[language] || item.multilingual.en;
   const currentAutoCeiling = myAutoBids[item.id];
-  const nextBidAmount = item.currentBidIqd + selectedIncrement;
+  const currentStep = item.incrementStepIqd || 1000;
 
-  // 1-Click WhatsApp Share Handler
-  const handleWhatsAppShare = () => {
-    const text = `🔥 Live Auction on Zeedo: ${localized.title}\n💰 Current Bid: ${formatCurrency(
-      item.currentBidIqd,
-      language
-    )}\n🚚 100% Cash on Delivery (5-Min Doorstep Inspection)\n👉 Place your bid live: https://zeedo.auction`;
-    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    if (typeof window !== 'undefined') {
-      window.open(url, '_blank');
-    }
-  };
-
-  const handleConfirmBid = () => {
+  const handlePlaceBid = (customIncrement?: number) => {
     if (!buyer) {
       onRequestKyc();
       return;
     }
 
-    placeSlideBid(
+    setBidding(true);
+    const inc = customIncrement || currentStep;
+    const success = placeSlideBid(
       item.id,
-      buyer?.name || 'Verified Buyer',
-      buyer?.phone || '+964 750 000 0000'
+      buyer.name || 'Verified Buyer',
+      buyer.phone || '+964 750 000 0000'
     );
+
+    if (success) {
+      setBidSuccessMessage(`Bid Accepted! (+${inc.toLocaleString()} IQD)`);
+      setTimeout(() => setBidSuccessMessage(null), 2500);
+    }
+    setBidding(false);
   };
 
   const handleSaveAutoBid = () => {
@@ -115,204 +124,220 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
       <div
         dir={rtl ? 'rtl' : 'ltr'}
-        className="bg-slate-900 border border-white/10 text-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
       >
-        {/* Mobile Drag Indicator Handle */}
-        <div className="sm:hidden w-12 h-1.5 bg-slate-700 rounded-full mx-auto mt-2 mb-1" />
-
-        {/* Header Bar */}
-        <div className="px-5 py-3 border-b border-white/10 flex items-center justify-between bg-slate-950/60">
+        {/* Top Header Bar */}
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-black uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-              <span>LIVE WAR ROOM</span>
-            </span>
-            <span className="text-xs text-slate-500 font-mono">ID: {item.id}</span>
+            <LiveBidTickerPill />
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* 1-Click WhatsApp Share Button */}
-            <button
-              onClick={handleWhatsAppShare}
-              className="px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-bold transition-colors flex items-center gap-1.5"
-              title="Share on WhatsApp"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">WhatsApp</span>
-            </button>
-
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors shadow-2xs"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto p-5 space-y-4 flex-1">
-          {/* Anti-Sniping Alert Banner (when ≤ 60s) */}
-          {(item.isAntiSnipingActive || timeLeft.isUrgent) && (
-            <div className="bg-rose-950/50 border border-rose-500/40 rounded-2xl p-3 flex items-center gap-3 animate-pulse">
-              <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-600/30">
-                <Flame className="w-4 h-4" />
-              </div>
-              <div className="text-xs">
-                <span className="font-black text-rose-300 block">⚡ ANTI-SNIPING ZONE (≤60s)</span>
-                <span className="text-rose-400 text-[11px]">
-                  Any bid placed now resets timer to 1:00 (Resets: {item.antiSnipingResetsCount || 0} times)
-                </span>
+        {/* Modal Scrollable Content */}
+        <div className="overflow-y-auto p-5 sm:p-6 space-y-5 flex-1">
+          {/* Anti-Sniping Alert Ribbon if active */}
+          {item.isAntiSnipingActive && (
+            <div className="bg-rose-50 border border-rose-200/90 rounded-2xl p-3 flex items-center justify-between animate-pulse text-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-xs">
+                  <Flame className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-rose-950 block">ANTI-SNIPING SOFT CLOSE ACTIVE</span>
+                  <span className="text-rose-700 text-[11px]">
+                    Timer reset to 1:00 on bids under 60 seconds ({item.antiSnipingResetsCount} extensions)
+                  </span>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Product Media & Main Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-            {/* Main Image with Condition Badge */}
-            <div className="space-y-2">
-              <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-slate-950 border border-white/10">
-                <img
-                  src={item.imageUrl}
-                  alt={localized.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2.5 left-2.5 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] text-white font-bold border border-white/10">
-                  {item.condition}
-                </div>
-                <div className="absolute bottom-2.5 right-2.5 bg-emerald-500/90 text-slate-950 px-2.5 py-0.5 rounded-lg text-[10px] font-black flex items-center gap-1 shadow-md">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>5-Min Inspection</span>
-                </div>
-              </div>
-            </div>
+          {/* Product Gallery & Core Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+            <PhotoCarousel
+              images={[item.imageUrl]}
+              title={localized.title}
+              aspectRatio="square"
+            />
 
-            {/* Title & Metadata */}
-            <div className="space-y-2.5">
-              <h3 className="font-black text-white text-base leading-snug">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                  {item.condition}
+                </span>
+                <span className="text-[11px] text-slate-500 font-mono">
+                  Store: <strong className="text-slate-900">{item.sellerName}</strong>
+                </span>
+              </div>
+
+              <h2 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                 {localized.title}
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                {localized.description}
+              </h2>
+
+              <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                {localized.description || 'Verified authentic merchandise. 100% Cash-on-Delivery.'}
               </p>
 
-              <div className="p-3 bg-slate-950/60 rounded-2xl border border-white/5 space-y-1.5 text-xs font-mono">
-                <div className="flex justify-between text-slate-400">
-                  <span>Merchant Store:</span>
-                  <span className="font-bold text-white">{item.sellerName}</span>
+              {/* Badges Bar */}
+              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-bold text-slate-800">5-Min Doorstep Inspection</span>
                 </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Retail Reference:</span>
-                  <span className="font-bold text-slate-300">
-                    ~{formatCurrency(item.estimatedRetailMarketPriceIqd, language)}
-                  </span>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="font-bold text-slate-800">Pay Cash on Delivery</span>
                 </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Starting Bid:</span>
-                  <span className="text-emerald-400 font-black">1,000 IQD Base</span>
-                </div>
+              </div>
+
+              {/* Retail Baseline */}
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-500">Retail Value:</span>
+                <span className="font-bold text-slate-800">
+                  {item.estimatedRetailMarketPriceIqd.toLocaleString()} IQD
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Pricing & Slide-to-Bid Interactive Console */}
-          <div className="bg-slate-950 rounded-3xl p-5 border border-white/10 shadow-2xl space-y-4">
+          {/* Real-Time Price Console */}
+          <div className="p-5 rounded-3xl bg-slate-950 text-white shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block tracking-wider">
                   {t.currentBid}
                 </span>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-3xl font-black font-mono text-emerald-400 tracking-tight">
-                    {formatCurrency(item.currentBidIqd, language)}
-                  </span>
-                </div>
+                <PriceOdometer value={item.currentBidIqd} size="xl" className="text-white" />
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">
-                  {timeLeft.isExpired ? 'Status' : t.endsIn}
+                <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block tracking-wider">
+                  Time Remaining
                 </span>
-                <span
-                  className={`text-2xl font-mono font-black ${
-                    timeLeft.isUrgent ? 'text-rose-400 animate-pulse' : 'text-slate-200'
+                <div
+                  className={`text-xl font-mono font-black ${
+                    timeLeft.isUrgent ? 'text-amber-400 animate-pulse' : 'text-white'
                   }`}
                 >
                   {timeLeft.isExpired
-                    ? 'ENDED'
-                    : `${String(timeLeft.m).padStart(2, '0')}:${String(timeLeft.s).padStart(2, '0')}`}
-                </span>
+                    ? 'AUCTION ENDED'
+                    : `${String(timeLeft.h).padStart(2, '0')}:${String(timeLeft.m).padStart(2, '0')}:${String(
+                        timeLeft.s
+                      ).padStart(2, '0')}`}
+                </div>
               </div>
             </div>
 
-            {/* Fast-Bid Increment Selector */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                Select Bid Increment:
+            {/* Price Sparkline & Bids Count */}
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 font-mono">
+                Total Activity: <strong className="text-white">{item.totalBids || 0} bids placed</strong>
               </span>
-              <div className="grid grid-cols-3 gap-2">
-                {[1000, 5000, 10000].map((inc) => (
-                  <button
-                    key={inc}
-                    onClick={() => setSelectedIncrement(inc)}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold font-mono transition-all border ${
-                      selectedIncrement === inc
-                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-xs'
-                        : 'bg-slate-900 text-slate-400 border-white/5 hover:text-white'
-                    }`}
-                  >
-                    +{inc.toLocaleString()} IQD
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Interactive Slide-to-Bid Swipe Slider */}
-            <div className="pt-1">
-              <SlideToBidSlider
-                amountText={`+${selectedIncrement.toLocaleString()} IQD`}
-                onBidConfirmed={handleConfirmBid}
-                disabled={timeLeft.isExpired}
-                isRtl={rtl}
+              <PriceSparkline
+                bidsHistory={item.bidsHistory}
+                startingPriceIqd={item.startingPriceIqd}
+                currentBidIqd={item.currentBidIqd}
+                width={120}
+                height={26}
               />
             </div>
+          </div>
 
-            {/* Cash on Delivery Doorstep Guarantee */}
-            <div className="flex items-center gap-2 pt-2 text-[11px] text-slate-400 border-t border-white/5">
-              <Truck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>
-                100% Cash-on-Delivery: 5-minute doorstep inspection before paying physical cash.
+          {/* Tactile Bidding Section */}
+          <div className="space-y-3">
+            {bidSuccessMessage && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{bidSuccessMessage}</span>
+              </div>
+            )}
+
+            {/* Quick Bid Jump Chips */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Quick Jump:</span>
+              {[1000, 2000, 5000].map((inc) => (
+                <button
+                  key={inc}
+                  type="button"
+                  onClick={() => handlePlaceBid(inc)}
+                  disabled={bidding || timeLeft.isExpired}
+                  className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-900 border border-slate-200/80 text-xs font-mono font-bold transition-all disabled:opacity-40"
+                >
+                  +{inc.toLocaleString()} IQD
+                </button>
+              ))}
+            </div>
+
+            {/* Tactile Slide-To-Bid Slider */}
+            <SlideToBidSlider
+              onConfirm={() => handlePlaceBid(currentStep)}
+              amountIqd={currentStep}
+              disabled={bidding || timeLeft.isExpired}
+              label={timeLeft.isExpired ? 'Auction Concluded' : 'Slide to Place Bid'}
+            />
+
+            {/* Auto-Bid Button */}
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => setShowAutoBidModal(true)}
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors"
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>
+                  {currentAutoCeiling
+                    ? `Auto-Bid Ceiling Active: ${currentAutoCeiling.toLocaleString()} IQD`
+                    : 'Configure Auto-Bid Ceiling'}
+                </span>
+              </button>
+
+              <span className="text-[11px] text-slate-400 font-mono">
+                Step: +{currentStep.toLocaleString()} IQD
               </span>
             </div>
           </div>
 
-          {/* Recent Live Bids Feed */}
-          {item.bidsHistory && item.bidsHistory.length > 0 && (
-            <div className="space-y-2">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                Live Bidding Activity ({item.bidsHistory.length})
-              </span>
-              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                {item.bidsHistory.slice(0, 5).map((bid) => (
-                  <div
-                    key={bid.id}
-                    className="p-2.5 rounded-xl bg-slate-950/50 border border-white/5 flex items-center justify-between text-xs font-mono"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Gavel className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="font-bold text-slate-200">{bid.bidderName}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-emerald-400 font-black">
-                        {formatCurrency(bid.amountIqd, language)}
-                      </span>
-                      <span className="text-[10px] text-slate-500">{bid.timestamp}</span>
-                    </div>
-                  </div>
-                ))}
+          {/* Auto-Bid Dialog */}
+          {showAutoBidModal && (
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900">Set Maximum Auto-Bid Ceiling</span>
+                <button
+                  onClick={() => setShowAutoBidModal(false)}
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                System automatically counter-bids on your behalf using official step tiers up to your ceiling.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={autoBidAmount}
+                  onChange={(e) => setAutoBidAmount(e.target.value)}
+                  placeholder={`Min: ${(item.currentBidIqd + currentStep).toLocaleString()} IQD`}
+                  className="flex-1 py-2 px-3 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveAutoBid}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                >
+                  Set Ceiling
+                </button>
               </div>
             </div>
           )}

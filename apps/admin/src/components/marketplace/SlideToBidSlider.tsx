@@ -1,184 +1,164 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Gavel, CheckCircle2, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { Gavel, Check, ChevronRight } from 'lucide-react';
 
 interface SlideToBidSliderProps {
-  amountText: string;
-  onBidConfirmed: () => void;
+  onConfirm: () => void;
+  amountIqd: number;
   disabled?: boolean;
-  isRtl?: boolean;
+  label?: string;
 }
 
 export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
-  amountText,
-  onBidConfirmed,
+  onConfirm,
+  amountIqd,
   disabled = false,
-  isRtl = false,
+  label = 'Slide to Place Bid',
 }) => {
-  const [sliderPos, setSliderPos] = useState(0); // 0 to 1
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
   const containerRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragProgress, setDragProgress] = useState(0); // 0 to 1
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
-  const handleStart = (clientX: number) => {
-    if (disabled || isSuccess) return;
+  const startDrag = (clientX: number) => {
+    if (disabled || isConfirmed) return;
     setIsDragging(true);
-    startXRef.current = clientX;
+    updateProgress(clientX);
   };
 
-  const handleMove = (clientX: number) => {
-    if (!isDragging || disabled || isSuccess || !containerRef.current) return;
+  const updateProgress = (clientX: number) => {
+    if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const width = rect.width - 56; // Handle width = 56px
-
-    if (width <= 0) return;
-
-    let delta = clientX - rect.left - 28;
-    if (isRtl) {
-      delta = rect.right - clientX - 28;
-    }
-
-    const progress = Math.max(0, Math.min(1, delta / width));
-    setSliderPos(progress);
+    const width = rect.width - 52; // thumb size
+    const currentX = Math.max(0, Math.min(clientX - rect.left - 26, width));
+    const progress = currentX / width;
+    setDragProgress(progress);
 
     if (progress >= 0.88) {
-      triggerSuccess();
+      triggerConfirm();
     }
   };
 
-  const handleEnd = () => {
-    if (!isDragging || isSuccess) return;
+  const triggerConfirm = () => {
     setIsDragging(false);
-    if (sliderPos < 0.88) {
-      setSliderPos(0); // Spring back
-    }
-  };
-
-  const triggerSuccess = () => {
-    setIsDragging(false);
-    setSliderPos(1);
-    setIsSuccess(true);
-
-    // Haptic feedback if supported on mobile
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate([40, 60, 100]);
-      } catch (e) {}
-    }
-
-    // Confetti celebration burst
-    try {
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.85 },
-        colors: ['#10B981', '#F59E0B', '#3B82F6', '#FFFFFF'],
-      });
-    } catch (e) {}
-
-    onBidConfirmed();
+    setDragProgress(1);
+    setIsConfirmed(true);
+    onConfirm();
 
     setTimeout(() => {
-      setIsSuccess(false);
-      setSliderPos(0);
-    }, 2200);
+      setIsConfirmed(false);
+      setDragProgress(0);
+    }, 1800);
   };
 
-  // Global mouse up / touch end listeners when dragging
+  const handleTouchStart = (e: React.TouchEvent) => startDrag(e.touches[0].clientX);
+  const handleMouseDown = (e: React.MouseEvent) => startDrag(e.clientX);
+
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (isDragging) handleMove(e.clientX);
-    };
-    const onMouseUp = () => {
-      if (isDragging) handleEnd();
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      updateProgress(e.touches[0].clientX);
     };
 
-    const onTouchMove = (e: TouchEvent) => {
-      if (isDragging && e.touches[0]) handleMove(e.touches[0].clientX);
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      updateProgress(e.clientX);
     };
-    const onTouchEnd = () => {
-      if (isDragging) handleEnd();
+
+    const handleEnd = () => {
+      if (!isDragging) return;
+      setIsDragging(false);
+      if (dragProgress < 0.88) {
+        // Snap back animation
+        setDragProgress(0);
+      }
     };
 
     if (isDragging) {
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('touchmove', onTouchMove, { passive: false });
-      window.addEventListener('touchend', onTouchEnd);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleEnd);
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleEnd);
     }
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleEnd);
     };
-  }, [isDragging, sliderPos]);
+  }, [isDragging, dragProgress]);
 
   return (
     <div
       ref={containerRef}
-      className={`relative h-14 rounded-2xl p-1 select-none overflow-hidden transition-all shadow-lg ${
-        isSuccess
-          ? 'bg-emerald-600 shadow-emerald-500/30'
-          : disabled
-          ? 'bg-slate-800/50 opacity-50 cursor-not-allowed'
-          : 'bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-white/10 shadow-black/40'
+      className={`relative h-14 rounded-2xl p-1 select-none overflow-hidden transition-all duration-200 border ${
+        disabled
+          ? 'opacity-40 pointer-events-none bg-slate-100 border-slate-200'
+          : isConfirmed
+          ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-500/20'
+          : 'bg-slate-100 border-slate-200/80'
       }`}
     >
-      {/* Background Progress Fill */}
+      {/* Background Fill Track */}
       <div
-        className={`absolute top-0 bottom-0 ${isRtl ? 'right-0' : 'left-0'} ${
-          isSuccess
-            ? 'bg-emerald-500'
-            : 'bg-gradient-to-r from-emerald-600/30 to-emerald-500/50'
-        } transition-all duration-75`}
-        style={{ width: `${sliderPos * 100}%` }}
+        className="absolute inset-y-0 left-0 bg-emerald-500/20 rounded-2xl transition-all duration-75"
+        style={{ width: `${Math.max(52, dragProgress * 100)}%` }}
       />
 
-      {/* Shimmering Center Text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {isSuccess ? (
-          <div className="flex items-center gap-2 text-white font-black text-sm tracking-wide animate-bounce">
-            <CheckCircle2 className="w-5 h-5 text-white" />
-            <span>BID CONFIRMED ({amountText})</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-slate-300 font-bold text-xs tracking-wider uppercase opacity-90">
-            <span>{isRtl ? 'بخشێنە بۆ مزایدەکردن' : 'Slide to Bid'}</span>
-            <span className="font-mono text-emerald-400 font-black">{amountText}</span>
-            {isRtl ? (
-              <ChevronLeft className="w-4 h-4 text-emerald-400 animate-pulse" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-emerald-400 animate-pulse" />
-            )}
-          </div>
-        )}
+      {/* Shimmer Label */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-12">
+        <span
+          className={`text-xs font-bold tracking-tight transition-opacity duration-200 flex items-center gap-1.5 ${
+            isConfirmed
+              ? 'text-white font-black text-sm'
+              : dragProgress > 0.4
+              ? 'text-slate-400 opacity-30'
+              : 'text-slate-600'
+          }`}
+        >
+          {isConfirmed ? (
+            <>
+              <Check className="w-4 h-4 stroke-[3]" />
+              <span>Bid Accepted: {amountIqd.toLocaleString()} IQD</span>
+            </>
+          ) : (
+            <>
+              <span>{label}</span>
+              <span className="font-mono font-black text-slate-900">
+                (+{amountIqd.toLocaleString()} IQD)
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 animate-pulse" />
+            </>
+          )}
+        </span>
       </div>
 
-      {/* Draggable Gavel Pill Handle */}
+      {/* Draggable Thumb */}
       <div
-        onMouseDown={(e) => handleStart(e.clientX)}
-        onTouchStart={(e) => {
-          if (e.touches[0]) handleStart(e.touches[0].clientX);
-        }}
-        className={`absolute top-1 bottom-1 w-12 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg transition-transform ${
-          isSuccess
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        className={`absolute top-1 bottom-1 w-12 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing transition-transform shadow-md ${
+          isConfirmed
             ? 'bg-white text-emerald-600'
-            : 'bg-gradient-to-tr from-emerald-500 to-emerald-400 text-slate-950 shadow-emerald-500/30 active:scale-105'
+            : isDragging
+            ? 'bg-emerald-600 text-white scale-105'
+            : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'
         }`}
         style={{
-          [isRtl ? 'right' : 'left']: `calc(${sliderPos * 100}% - ${sliderPos * 48}px)`,
+          transform: `translateX(${
+            containerRef.current
+              ? dragProgress * (containerRef.current.clientWidth - 56)
+              : 0
+          }px)`,
+          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
-        {isSuccess ? (
-          <Sparkles className="w-5 h-5 animate-spin" />
+        {isConfirmed ? (
+          <Check className="w-5 h-5 stroke-[3]" />
         ) : (
-          <Gavel className="w-5 h-5" />
+          <Gavel className="w-5 h-5 text-emerald-600" />
         )}
       </div>
     </div>

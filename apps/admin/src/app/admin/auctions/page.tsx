@@ -8,8 +8,8 @@ export default function AuctionsPage() {
   return (
     <>
       <Header
-        title="Live Auctions Monitor"
-        subtitle="Real-time live bidding feed, anti-sniping soft close monitoring, and moderator controls"
+        title="Live Auction War Room"
+        subtitle="Real-Time Bidding Mechanics, 60s Soft-Close Anti-Sniping & Low-Data Socket Stream"
       />
       <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
         <LiveWarRoom />

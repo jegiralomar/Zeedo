@@ -50,7 +50,7 @@ export const Sidebar: React.FC = () => {
           icon: <LayoutDashboard className="w-[1.15rem] h-[1.15rem]" />,
         },
         {
-          label: 'Live Auctions Monitor',
+          label: 'Live Auction War Room',
           href: '/auctions',
           icon: <Flame className="w-[1.15rem] h-[1.15rem]" />,
           badge: liveAuctionsCount > 0 ? `${liveAuctionsCount} Live` : null,
@@ -62,7 +62,7 @@ export const Sidebar: React.FC = () => {
       title: 'MODERATION & GATING',
       items: [
         {
-          label: 'Identity Verification (KYC)',
+          label: 'Split-Screen KYC',
           href: '/kyc',
           icon: <ShieldCheck className="w-[1.15rem] h-[1.15rem]" />,
           badge: pendingKycCount > 0 ? pendingKycCount : null,
@@ -81,7 +81,7 @@ export const Sidebar: React.FC = () => {
       title: 'OPERATIONS & GROWTH',
       items: [
         {
-          label: 'Logistics & Dispatch',
+          label: 'Logistics & Print Center',
           href: '/logistics',
           icon: <Printer className="w-[1.15rem] h-[1.15rem]" />,
           badge: readyLogisticsCount > 0 ? readyLogisticsCount : null,
@@ -115,7 +115,7 @@ export const Sidebar: React.FC = () => {
           icon: <Users className="w-[1.15rem] h-[1.15rem]" />,
         },
         {
-          label: 'Audit Logs',
+          label: 'Audit Trail Logs',
           href: '/audit',
           icon: <ScrollText className="w-[1.15rem] h-[1.15rem]" />,
         },
