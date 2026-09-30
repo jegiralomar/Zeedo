@@ -82,6 +82,9 @@ export async function initDatabaseSchema() {
     await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS highest_bidder JSONB;`;
     await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS cod_status VARCHAR(32);`;
     await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS proposed_duration_hours INT DEFAULT 24;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS package_awb_id VARCHAR(64);`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS is_anti_sniping_active BOOLEAN DEFAULT FALSE;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS anti_sniping_resets_count INT DEFAULT 0;`;
 
     // 3. Live Bids Table
     await sql`
@@ -96,6 +99,11 @@ export async function initDatabaseSchema() {
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `;
+
+    await sql`ALTER TABLE bids ADD COLUMN IF NOT EXISTS is_voided BOOLEAN DEFAULT FALSE;`;
+    await sql`ALTER TABLE bids ADD COLUMN IF NOT EXISTS void_reason TEXT;`;
+    await sql`ALTER TABLE bids ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ;`;
+    await sql`ALTER TABLE bids ADD COLUMN IF NOT EXISTS voided_by VARCHAR(128);`;
 
     // 4. KYC Verifications Table
     await sql`

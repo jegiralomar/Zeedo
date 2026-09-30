@@ -6,12 +6,16 @@ import { useAdminStore } from '@/store/useAdminStore';
 import { isRouteAllowed, ROLE_PERMISSIONS } from '@/utils/rbac';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { ToastContainer } from '@/components/layout/ToastContainer';
+import { useLiveAuctionSocket } from '@/hooks/useLiveAuctionSocket';
 
 export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, addToast, syncAuctionsFromDb, syncSellersFromDb } = useAdminStore();
   const [mounted, setMounted] = React.useState(false);
+
+  // Connect to ultra-lean real-time WebSocket Bidding Gateway for live admin sync
+  useLiveAuctionSocket({ enabled: true });
 
   React.useEffect(() => {
     setMounted(true);

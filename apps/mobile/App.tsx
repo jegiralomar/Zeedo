@@ -47,13 +47,24 @@ export default function App() {
         const data = await res.json();
         const listings = (data.listings || []).map((l: any) => ({
           id: l.id,
-          title: l.title,
+          title:
+            l.title ||
+            l.multilingual?.ckb?.title ||
+            l.multilingual?.en?.title ||
+            l.multilingual?.ar?.title ||
+            'Auction Lot',
           category: l.category || 'Electronics',
-          currentBid: Number(l.currentBid || l.current_bid || 1000),
-          startingPrice: Number(l.startingPrice || l.starting_price || 1000),
-          bidIncrement: Number(l.bidIncrement || 1000),
-          endsAt: l.endsAt || l.ends_at,
-          photos: l.photos || (l.image ? [l.image] : []),
+          currentBid: Number(l.currentBid || l.currentBidIqd || l.current_bid || 1000),
+          startingPrice: Number(l.startingPrice || l.startingPriceIqd || l.starting_price || 1000),
+          bidIncrement: Number(l.bidIncrement || l.incrementStepIqd || 1000),
+          endsAt: l.endsAt || l.auctionEndsAt || l.ends_at,
+          photos:
+            l.photos ||
+            (Array.isArray(l.images) && l.images.length > 0
+              ? l.images
+              : l.image
+              ? [l.image]
+              : []),
           totalBids: Number(l.totalBids || l.total_bids || 0),
           condition: l.condition || 'Brand New',
         }));
@@ -131,8 +142,93 @@ export default function App() {
       });
     });
 
-    // 5. Subscribe to personal outbid notifications
+    // 5. Anti-Sniping Timer Extensions & Admin Extensions
+    const handleTimerChange = (data: any) => {
+      if (!data || !data.auctionId) return;
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it.id === data.auctionId) {
+            return {
+              ...it,
+              endsAt: data.auctionEndsAt || it.endsAt,
+            };
+          }
+          return it;
+        })
+      );
+
+      setSelectedRoomItem((current) => {
+        if (current && current.id === data.auctionId) {
+          return {
+            ...current,
+            endsAt: data.auctionEndsAt || current.endsAt,
+          };
+        }
+        return current;
+      });
+    };
+
+    const unsubTimerExt = liveSocket.on('TIMER_EXTENDED', handleTimerChange);
+    const unsubTimerReset = liveSocket.on('TIMER_RESET', handleTimerChange);
+
+    // 6. Pause & Resume Operations
+    const handleStatusChange = () => {
+      fetchLiveAuctions();
+    };
+    const unsubPause = liveSocket.on('AUCTION_PAUSED', handleStatusChange);
+    const unsubResume = liveSocket.on('AUCTION_RESUMED', handleStatusChange);
+
+    // 7. Concluded Auction
+    const unsubEnded = liveSocket.on('AUCTION_ENDED', (data: any) => {
+      fetchLiveAuctions();
+      if (data && data.isWinner) {
+        Alert.alert(
+          '🎉 Congratulations! You Won!',
+          `You are the winning bidder for this auction at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nYour order has been confirmed with 100% Cash-on-Delivery inspection. Tracking: ${data.packageAwbId || 'Pending Courier Dispatch'}`,
+          [{ text: 'View Won Items', onPress: () => setActiveTab('my_bids') }]
+        );
+      }
+    });
+
+    // 8. Voided Bids
+    const unsubVoid = liveSocket.on('BID_VOIDED', (data: any) => {
+      if (!data || !data.auctionId) return;
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it.id === data.auctionId) {
+            return {
+              ...it,
+              currentBid: data.currentBidIqd,
+              totalBids: data.totalBids,
+            };
+          }
+          return it;
+        })
+      );
+
+      setSelectedRoomItem((current) => {
+        if (current && current.id === data.auctionId) {
+          return {
+            ...current,
+            currentBid: data.currentBidIqd,
+            totalBids: data.totalBids,
+          };
+        }
+        return current;
+      });
+    });
+
+    // 9. Subscribe to personal outbid notifications
     const unsubOutbid = liveSocket.on('OUTBID_ALERT', (data: any) => {
+      if (data && data.isWinner) {
+        Alert.alert(
+          '🎉 Congratulations! You Won!',
+          `You won "${data.auctionTitle || 'an item'}" at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nDoorstep Cash-on-Delivery inspection AWB: ${data.packageAwbId || 'Dispatched'}`,
+          [{ text: 'View In My Bids', onPress: () => setActiveTab('my_bids') }]
+        );
+        return;
+      }
+
       Alert.alert(
         'Outbid Alert! ⚠️',
         `Someone just outbid you on "${data.auctionTitle || 'an item'}" at ${data.newBidIqd?.toLocaleString()} IQD! Place another bid to regain the lead!`,
@@ -154,6 +250,12 @@ export default function App() {
 
     return () => {
       unsubBids();
+      unsubTimerExt();
+      unsubTimerReset();
+      unsubPause();
+      unsubResume();
+      unsubEnded();
+      unsubVoid();
       unsubOutbid();
       liveSocket.disconnect();
     };

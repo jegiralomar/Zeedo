@@ -9,7 +9,16 @@ const WS_BROADCAST_SECRET = process.env.WS_BROADCAST_SECRET || 'zeedo_internal_l
 export interface LiveBroadcastPayload {
   channel?: string;
   channels?: string[];
-  event: 'NEW_BID' | 'TIMER_RESET' | 'AUCTION_ENDED' | 'OUTBID_ALERT' | 'NEW_DROP';
+  event:
+    | 'NEW_BID'
+    | 'TIMER_RESET'
+    | 'TIMER_EXTENDED'
+    | 'AUCTION_PAUSED'
+    | 'AUCTION_RESUMED'
+    | 'AUCTION_ENDED'
+    | 'BID_VOIDED'
+    | 'OUTBID_ALERT'
+    | 'NEW_DROP';
   data: any;
 }
 

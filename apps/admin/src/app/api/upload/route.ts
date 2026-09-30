@@ -1,5 +1,21 @@
 import { NextResponse } from 'next/server';
-import { uploadMedia } from '@/lib/storage';
+import { uploadMedia, testR2Connection } from '@/lib/storage';
+
+export async function GET() {
+  try {
+    const status = await testR2Connection();
+    return NextResponse.json({
+      success: true,
+      service: 'Cloudflare R2 Media Storage',
+      status,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to check storage status' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: Request) {
   try {

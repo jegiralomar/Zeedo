@@ -977,6 +977,19 @@ export const useAdminStore = create<AdminStoreState>()(
             timestamp: new Date().toLocaleTimeString(),
           },
         }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              action: 'anti_sniping_reset',
+              operatorName: get().currentUser?.name || 'Staff Moderator',
+            }),
+          }).catch((err) => console.warn('Failed to sync anti-sniping reset to server:', err));
+        }
+
         get().addToast(
           'warning',
           `Manual Anti-Sniping triggered: Timer for ${auctionId} reset to 60 seconds!`
@@ -1003,6 +1016,20 @@ export const useAdminStore = create<AdminStoreState>()(
             a.id === auctionId ? { ...a, auctionEndsAt: newEndsAt, status: 'live' as const } : a
           ),
         }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              action: 'extend_timer',
+              additionalMinutes,
+              operatorName: get().currentUser?.name || 'Staff Moderator',
+            }),
+          }).catch((err) => console.warn('Failed to sync timer extension to server:', err));
+        }
+
         get().addToast('success', `Extended timer for auction ${auctionId} by +${additionalMinutes}m`);
         get().logAuditEvent({
           action: 'TIMER_EXTENDED',
@@ -1024,6 +1051,19 @@ export const useAdminStore = create<AdminStoreState>()(
             a.id === auctionId ? { ...a, status: newStatus } : a
           ),
         }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              action: 'toggle_pause',
+              operatorName: get().currentUser?.name || 'Staff Moderator',
+            }),
+          }).catch((err) => console.warn('Failed to sync pause status to server:', err));
+        }
+
         get().addToast(
           isPaused ? 'success' : 'warning',
           isPaused ? `Auction ${auctionId} resumed live.` : `Auction ${auctionId} paused by admin.`
@@ -1043,10 +1083,26 @@ export const useAdminStore = create<AdminStoreState>()(
             a.id === auctionId ? { ...a, status: 'cancelled' as const } : a
           ),
         }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              action: 'pause',
+              operatorName: get().currentUser?.name || 'Staff Moderator',
+            }),
+          }).catch((err) => console.warn('Failed to sync pause to server:', err));
+        }
+
         get().addToast('warning', `Auction ${auctionId} paused/cancelled by admin.`);
       },
 
       forceEndAuction: (auctionId) => {
+        const cleanId = auctionId.replace(/^auc-/, '');
+        const awbId = `AWB-IQ-202609-${cleanId}`;
+
         set((state) => ({
           auctions: state.auctions.map((a) =>
             a.id === auctionId
@@ -1055,11 +1111,24 @@ export const useAdminStore = create<AdminStoreState>()(
                   status: 'completed' as const,
                   auctionEndsAt: new Date().toISOString(),
                   codStatus: 'ready_for_dispatch' as const,
-                  packageAwbId: `AWB-IQ-202609-${a.id.replace('auc-', '')}`,
+                  packageAwbId: awbId,
                 }
               : a
           ),
         }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              action: 'force_end',
+              operatorName: get().currentUser?.name || 'Staff Moderator',
+            }),
+          }).catch((err) => console.warn('Failed to sync force end to server:', err));
+        }
+
         get().addToast('success', `Auction ${auctionId} concluded. Marked for COD dispatch.`);
       },
 
@@ -1114,6 +1183,20 @@ export const useAdminStore = create<AdminStoreState>()(
               : a
           ),
         }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              action: 'void_bid',
+              bidId,
+              voidReason: reason,
+              operatorName: currentUser?.name || 'Staff Moderator',
+            }),
+          }).catch((err) => console.warn('Failed to sync void bid to server:', err));
+        }
 
         get().addToast(
           'warning',

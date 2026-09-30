@@ -70,6 +70,78 @@ export function useLiveAuctionSocket({ auctionId, userId, enabled = true }: UseL
           lastBidAlert: `⚠️ You were outbid on ${data.auctionTitle || 'an item'}! New lead: ${data.newBidIqd?.toLocaleString()} IQD`,
         });
       }
+
+      // 3. Anti-Sniping & Admin Timer Extensions
+      if ((event === 'TIMER_EXTENDED' || event === 'TIMER_RESET') && data && data.auctionId) {
+        const updateFn = (a: any) => {
+          if (a.id !== data.auctionId) return a;
+          return {
+            ...a,
+            auctionEndsAt: data.auctionEndsAt || a.auctionEndsAt,
+            isAntiSnipingActive:
+              data.isAntiSnipingActive !== undefined
+                ? data.isAntiSnipingActive
+                : a.isAntiSnipingActive,
+            antiSnipingResetsCount:
+              data.antiSnipingResetsCount !== undefined
+                ? data.antiSnipingResetsCount
+                : a.antiSnipingResetsCount,
+            status: data.status || a.status,
+          };
+        };
+        useBuyerAuctionStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+        useAdminStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+      }
+
+      // 4. Pause & Resume Operations
+      if ((event === 'AUCTION_PAUSED' || event === 'AUCTION_RESUMED') && data && data.auctionId) {
+        const newStatus = data.status || (event === 'AUCTION_RESUMED' ? 'live' : 'cancelled');
+        const updateFn = (a: any) => {
+          if (a.id !== data.auctionId) return a;
+          return { ...a, status: newStatus };
+        };
+        useBuyerAuctionStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+        useAdminStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+      }
+
+      // 5. Force End / Concluded Auction
+      if (event === 'AUCTION_ENDED' && data && data.auctionId) {
+        const updateFn = (a: any) => {
+          if (a.id !== data.auctionId) return a;
+          return {
+            ...a,
+            status: 'completed',
+            currentBidIqd: data.currentBidIqd || a.currentBidIqd,
+            highestBidder: data.highestBidder !== undefined ? data.highestBidder : a.highestBidder,
+            packageAwbId: data.packageAwbId || a.packageAwbId,
+            auctionEndsAt: data.concludedAt || a.auctionEndsAt,
+          };
+        };
+        useBuyerAuctionStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+        useAdminStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+      }
+
+      // 6. Voided Bid Event
+      if (event === 'BID_VOIDED' && data && data.auctionId) {
+        const updateFn = (a: any) => {
+          if (a.id !== data.auctionId) return a;
+          return {
+            ...a,
+            currentBidIqd: data.currentBidIqd,
+            highestBidder: data.highestBidder,
+            totalBids: data.totalBids !== undefined ? data.totalBids : a.totalBids,
+            bidsHistory:
+              data.bidsHistory ||
+              a.bidsHistory?.map((b: any) =>
+                b.id === data.voidedBidId || b.bidId === data.voidedBidId
+                  ? { ...b, isVoided: true, voidReason: data.voidReason }
+                  : b
+              ),
+          };
+        };
+        useBuyerAuctionStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+        useAdminStore.setState((state) => ({ auctions: state.auctions.map(updateFn) }));
+      }
     } catch (err) {
       console.warn('[Zeedo WS] Error processing socket event:', err);
     }
