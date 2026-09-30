@@ -9,12 +9,23 @@ import { Sidebar } from '@/components/layout/Sidebar';
 export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, addToast } = useAdminStore();
+  const { currentUser, addToast, syncAuctionsFromDb, syncSellersFromDb } = useAdminStore();
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    // Initial sync from DB
+    syncAuctionsFromDb();
+    syncSellersFromDb();
+
+    // Periodic sync every 15s to catch new merchant listings in real-time
+    const interval = setInterval(() => {
+      syncAuctionsFromDb();
+      syncSellersFromDb();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [syncAuctionsFromDb, syncSellersFromDb]);
 
   const isLoginPage = pathname === '/login' || pathname === '/admin/login';
   const pathPrefix = pathname.startsWith('/admin') ? '/admin' : '';

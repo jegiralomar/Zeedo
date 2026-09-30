@@ -124,6 +124,8 @@ interface AdminStoreState {
     content: MultilingualContent
   ) => void;
   relistAuction: (listingId: string) => void;
+  syncAuctionsFromDb: () => Promise<void>;
+  syncSellersFromDb: () => Promise<void>;
 
   // Live Auction Actions & Anti-Sniping
   placeBid: (auctionId: string, bidderId?: string, customAmount?: number) => void;
@@ -630,6 +632,15 @@ export const useAdminStore = create<AdminStoreState>()(
           ),
         }));
 
+        // Immediately persist to PostgreSQL database
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newListing),
+          }).catch((err) => console.warn('Failed to sync listing to Postgres:', err));
+        }
+
         if (autoApprove) {
           get().addToast('success', `Listing "${newListing.multilingual.en.title}" auto-approved and is now LIVE!`);
         } else {
@@ -662,6 +673,15 @@ export const useAdminStore = create<AdminStoreState>()(
               : s
           ),
         }));
+
+        // Persist approval to PostgreSQL
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: listingId, status: 'live' }),
+          }).catch((err) => console.warn('Failed to sync approval to Postgres:', err));
+        }
 
         get().addToast('success', `Listing "${target.multilingual.en?.title || listingId}" approved & is now LIVE for ${durationHours} hours!`);
         get().logAuditEvent({
@@ -728,6 +748,16 @@ export const useAdminStore = create<AdminStoreState>()(
               : a
           ),
         }));
+
+        // Persist rejection to PostgreSQL
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: listingId, status: 'rejected', rejectionReason: reason }),
+          }).catch((err) => console.warn('Failed to sync rejection to Postgres:', err));
+        }
+
         get().addToast('warning', `Listing ${listingId} rejected: ${reason}`);
         get().logAuditEvent({
           action: 'LISTING_REJECTED',
@@ -752,6 +782,18 @@ export const useAdminStore = create<AdminStoreState>()(
               : a
           ),
         }));
+
+        if (typeof window !== 'undefined') {
+          const target = get().auctions.find((a) => a.id === listingId);
+          if (target) {
+            fetch('/api/listings', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: listingId, multilingual: target.multilingual }),
+            }).catch((err) => console.warn('Failed to sync multilingual update to Postgres:', err));
+          }
+        }
+
         get().addToast('info', `Updated ${lang.toUpperCase()} listing translation`);
       },
 
@@ -779,7 +821,62 @@ export const useAdminStore = create<AdminStoreState>()(
         };
 
         set((state) => ({ auctions: [relisted, ...state.auctions] }));
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/listings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(relisted),
+          }).catch((err) => console.warn('Failed to sync relisted auction to Postgres:', err));
+        }
+
         get().addToast('success', `One-Tap Relisted item! New auction ID: ${newAuctionId} at 1,000 IQD.`);
+      },
+
+      syncAuctionsFromDb: async () => {
+        if (typeof window === 'undefined') return;
+        try {
+          const res = await fetch('/api/listings');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.listings)) {
+            const dbListings: ListingAuction[] = data.listings;
+            set((state) => {
+              const dbMap = new Map(dbListings.map((item) => [item.id, item]));
+              const merged = [...dbListings];
+              for (const local of state.auctions) {
+                if (!dbMap.has(local.id)) {
+                  merged.push(local);
+                }
+              }
+              return { auctions: merged };
+            });
+          }
+        } catch (err) {
+          console.warn('syncAuctionsFromDb error:', err);
+        }
+      },
+
+      syncSellersFromDb: async () => {
+        if (typeof window === 'undefined') return;
+        try {
+          const res = await fetch('/api/sellers');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.sellers)) {
+            const dbSellers: any[] = data.sellers;
+            set((state) => {
+              const dbMap = new Map(dbSellers.map((s) => [s.id, s]));
+              const merged = [...dbSellers];
+              for (const local of state.sellers) {
+                if (!dbMap.has(local.id)) {
+                  merged.push(local);
+                }
+              }
+              return { sellers: merged };
+            });
+          }
+        } catch (err) {
+          console.warn('syncSellersFromDb error:', err);
+        }
       },
 
       placeBid: (auctionId, bidderId, customAmount) => {

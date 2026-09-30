@@ -36,7 +36,12 @@ export const LiveWarRoom: React.FC = () => {
     forceEndAuction,
     voidAuctionBid,
     addToast,
+    syncAuctionsFromDb,
   } = useAdminStore();
+
+  useEffect(() => {
+    syncAuctionsFromDb();
+  }, [syncAuctionsFromDb]);
 
   const liveAuctions = auctions.filter((a) => a.status === 'live');
   const [selectedAuctionId, setSelectedAuctionId] = useState<string>(

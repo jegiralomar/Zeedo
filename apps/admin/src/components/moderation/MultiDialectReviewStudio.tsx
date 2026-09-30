@@ -16,11 +16,16 @@ import {
   Edit3,
   Layers,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 
 export const MultiDialectReviewStudio: React.FC = () => {
-  const { auctions, approveListing, rejectListing, updateListingMultilingual, relistAuction } =
+  const { auctions, approveListing, rejectListing, updateListingMultilingual, relistAuction, syncAuctionsFromDb } =
     useAdminStore();
+
+  React.useEffect(() => {
+    syncAuctionsFromDb();
+  }, [syncAuctionsFromDb]);
 
   const pendingListings = auctions.filter((a) => a.status === 'moderation_pending');
   const otherListings = auctions.filter((a) => a.status !== 'moderation_pending');
@@ -110,30 +115,40 @@ export const MultiDialectReviewStudio: React.FC = () => {
           </div>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-[#F4F6F5] p-1 rounded-full border border-[#E9EFEF]">
+        {/* Actions & View Mode Toggle */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setViewMode('side_by_side')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
-              viewMode === 'side_by_side'
-                ? 'bg-[#072F1F] text-white shadow-xs'
-                : 'text-[#6C7E75] hover:text-[#0B130F]'
-            }`}
+            onClick={() => syncAuctionsFromDb()}
+            className="p-2 rounded-full border border-[#E9EFEF] bg-[#F4F6F5] text-[#6C7E75] hover:text-[#072F1F] hover:bg-white transition-all shadow-2xs"
+            title="Refresh Listings from Database"
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>4-Column Side-by-Side</span>
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={() => setViewMode('tabbed')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
-              viewMode === 'tabbed'
-                ? 'bg-[#072F1F] text-white shadow-xs'
-                : 'text-[#6C7E75] hover:text-[#0B130F]'
-            }`}
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Tabbed Deep Edit</span>
-          </button>
+
+          <div className="flex items-center gap-1 bg-[#F4F6F5] p-1 rounded-full border border-[#E9EFEF]">
+            <button
+              onClick={() => setViewMode('side_by_side')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                viewMode === 'side_by_side'
+                  ? 'bg-[#072F1F] text-white shadow-xs'
+                  : 'text-[#6C7E75] hover:text-[#0B130F]'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>4-Column Side-by-Side</span>
+            </button>
+            <button
+              onClick={() => setViewMode('tabbed')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                viewMode === 'tabbed'
+                  ? 'bg-[#072F1F] text-white shadow-xs'
+                  : 'text-[#6C7E75] hover:text-[#0B130F]'
+              }`}
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Tabbed Deep Edit</span>
+            </button>
+          </div>
         </div>
       </div>
 

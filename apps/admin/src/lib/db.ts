@@ -64,6 +64,19 @@ export async function initDatabaseSchema() {
       );
     `;
 
+    // Ensure all extended columns exist for full ListingAuction fidelity
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS seller_phone VARCHAR(32);`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS seller_auto_approve BOOLEAN DEFAULT FALSE;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS estimated_retail_usd NUMERIC(10, 2);`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS increment_step_iqd INT DEFAULT 1000;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS multilingual JSONB;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS source_type VARCHAR(32) DEFAULT 'url';`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS source_value TEXT;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS bids_history JSONB DEFAULT '[]'::jsonb;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS highest_bidder JSONB;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS cod_status VARCHAR(32);`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS proposed_duration_hours INT DEFAULT 24;`;
+
     // 3. Live Bids Table
     await sql`
       CREATE TABLE IF NOT EXISTS bids (

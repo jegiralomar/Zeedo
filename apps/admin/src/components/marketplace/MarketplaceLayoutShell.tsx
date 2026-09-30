@@ -32,7 +32,7 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
 }) => {
   const pathname = usePathname();
   const { language, buyer, isAuthenticated, logout, isTwoGateVerified } = useBuyerAuthStore();
-  const { savedAuctionIds } = useBuyerAuctionStore();
+  const { savedAuctionIds, syncLiveAuctionsFromDb } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
@@ -44,7 +44,8 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    syncLiveAuctionsFromDb();
+  }, [syncLiveAuctionsFromDb]);
 
   const navItems = [
     {

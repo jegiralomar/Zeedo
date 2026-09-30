@@ -41,7 +41,7 @@ interface ScrapedData {
 
 export const MerchantPortalView: React.FC = () => {
   const { buyer, logout } = useBuyerAuthStore();
-  const { auctions, createSellerListing, sellers } = useAdminStore();
+  const { auctions, createSellerListing, sellers, syncAuctionsFromDb } = useAdminStore();
 
   const [activeTab, setActiveTab] = useState<'listings' | 'new_listing' | 'orders' | 'billing'>('listings');
   const [filterStatus, setFilterStatus] = useState<'all' | 'live' | 'moderation_pending' | 'completed' | 'rejected'>('all');
@@ -68,8 +68,9 @@ export const MerchantPortalView: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Load exchange rate on mount
+  // Load exchange rate and sync DB auctions on mount
   useEffect(() => {
+    syncAuctionsFromDb();
     fetch('/api/exchange-rate')
       .then((res) => res.json())
       .then((json) => {
@@ -78,7 +79,7 @@ export const MerchantPortalView: React.FC = () => {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [syncAuctionsFromDb]);
 
   // Update converted IQD when USD or exchange rate changes
   useEffect(() => {
