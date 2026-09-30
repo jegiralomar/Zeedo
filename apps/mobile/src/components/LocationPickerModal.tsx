@@ -3,12 +3,13 @@ import {
   StyleSheet,
   View,
   Text,
-  Modal,
   TextInput,
   TouchableOpacity,
   ScrollView,
   Alert,
 } from 'react-native';
+import { EviraTheme, eviraWindowStyles } from '../lib/theme';
+import { EviraModal } from './EviraModal';
 
 interface LocationPickerModalProps {
   visible: boolean;
@@ -57,196 +58,161 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.modalCard}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.headerTitle}>Delivery Doorstep Location</Text>
-              <Text style={styles.headerSub}>Pinpoint 100% Cash-on-Delivery Dispatch</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.scroll}>
-            {/* City Selector Chips */}
-            <Text style={styles.sectionLabel}>Select City / Governorate</Text>
-            <View style={styles.chipGrid}>
-              {IRAQI_CITIES.map((city) => {
-                const isSelected = selectedCity.name === city.name;
-                return (
-                  <TouchableOpacity
-                    key={city.name}
-                    onPress={() => setSelectedCity(city)}
-                    style={[styles.cityChip, isSelected && styles.cityChipActive]}
-                  >
-                    <Text style={[styles.cityChipText, isSelected && styles.cityChipTextActive]}>
-                      📍 {city.name} ({city.kurdish})
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Neighborhood / District Input */}
-            <Text style={styles.sectionLabel}>Neighborhood / District</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Dream City, Bakhtiyari, Mansour..."
-              placeholderTextColor="#94A3B8"
-              value={district}
-              onChangeText={setDistrict}
-            />
-
-            {/* Nearest Landmark */}
-            <Text style={styles.sectionLabel}>Nearest Landmark (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Near Royal Mall, opposite Grand Mosque..."
-              placeholderTextColor="#94A3B8"
-              value={landmark}
-              onChangeText={setLandmark}
-            />
-
-            {/* Map Pin Guarantee Banner */}
-            <View style={styles.infoBanner}>
-              <Text style={styles.infoText}>
-                ✓ Couriers call you directly upon arrival. You can open and inspect the item before handing over cash.
-              </Text>
-            </View>
-
-            {/* Confirm Button */}
-            <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-              <Text style={styles.saveButtonText}>Confirm Doorstep Location</Text>
-            </TouchableOpacity>
-          </ScrollView>
+    <EviraModal
+      visible={visible}
+      onClose={onClose}
+      title="Delivery Doorstep Location"
+      subtitle="Pinpoint 100% Cash-on-Delivery Dispatch"
+      contentStyle={styles.modalContent}
+    >
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* City Selector Chips */}
+        <Text style={eviraWindowStyles.inputLabel}>Select City / Governorate</Text>
+        <View style={styles.chipGrid}>
+          {IRAQI_CITIES.map((city) => {
+            const isSelected = selectedCity.name === city.name;
+            return (
+              <TouchableOpacity
+                key={city.name}
+                onPress={() => setSelectedCity(city)}
+                style={[styles.cityChip, isSelected && styles.cityChipActive]}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.cityChipText, isSelected && styles.cityChipTextActive]}>
+                  📍 {city.name} ({city.kurdish})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-      </View>
-    </Modal>
+
+        {/* Neighborhood / District Input */}
+        <Text style={[eviraWindowStyles.inputLabel, { marginTop: 16 }]}>
+          Neighborhood / District
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Dream City, Bakhtiyari, Mansour..."
+          placeholderTextColor={EviraTheme.colors.textTertiary}
+          value={district}
+          onChangeText={setDistrict}
+        />
+
+        {/* Nearest Landmark */}
+        <Text style={[eviraWindowStyles.inputLabel, { marginTop: 16 }]}>
+          Nearest Landmark (Optional)
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Near Royal Mall, opposite Grand Mosque..."
+          placeholderTextColor={EviraTheme.colors.textTertiary}
+          value={landmark}
+          onChangeText={setLandmark}
+        />
+
+        {/* Inspection & Courier Guarantee */}
+        <View style={styles.guaranteeBanner}>
+          <Text style={styles.guaranteeIcon}>🛡️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.guaranteeTitle}>Doorstep Cash Inspection</Text>
+            <Text style={styles.guaranteeText}>
+              Couriers call you directly upon arrival. You can open and inspect the auction lot before handing over payment.
+            </Text>
+          </View>
+        </View>
+
+        {/* Confirm Button */}
+        <TouchableOpacity
+          onPress={handleSave}
+          style={[eviraWindowStyles.primaryButton, styles.confirmButton]}
+          activeOpacity={0.85}
+        >
+          <Text style={eviraWindowStyles.primaryButtonText}>Confirm Doorstep Location</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </EviraModal>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#072F1F',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    maxHeight: '85%',
-    borderTopWidth: 1,
-    borderColor: 'rgba(180, 241, 5, 0.3)',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  headerSub: {
-    fontSize: 11,
-    color: '#A7C1B5',
-    marginTop: 2,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+  modalContent: {
+    maxHeight: '88%',
   },
   scroll: {
-    marginBottom: 10,
+    maxHeight: 460,
   },
-  sectionLabel: {
-    fontSize: 11,
-    color: '#E5E7EB',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 14,
-    marginBottom: 8,
+  scrollContent: {
+    paddingBottom: 16,
   },
   chipGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 4,
   },
   cityChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: EviraTheme.radii.full,
+    backgroundColor: EviraTheme.colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: EviraTheme.colors.border,
   },
   cityChipActive: {
-    backgroundColor: '#B4F105',
-    borderColor: '#B4F105',
+    backgroundColor: EviraTheme.colors.primary,
+    borderColor: EviraTheme.colors.primary,
   },
   cityChipText: {
-    color: '#E5E7EB',
+    color: EviraTheme.colors.textPrimary,
     fontSize: 12,
-    fontWeight: '700',
-  },
-  cityChipTextActive: {
-    color: '#072F1F',
-    fontWeight: '900',
-  },
-  input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    color: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-  },
-  infoBanner: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 18,
-  },
-  infoText: {
-    color: '#6EE7B7',
-    fontSize: 12,
-    lineHeight: 18,
     fontWeight: '600',
   },
-  saveButton: {
-    backgroundColor: '#B4F105',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+  cityChipTextActive: {
+    color: EviraTheme.colors.textWhite,
+    fontWeight: '700',
   },
-  saveButtonText: {
-    color: '#072F1F',
-    fontWeight: '900',
+  input: {
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.lg,
+    borderWidth: 1,
+    borderColor: EviraTheme.colors.border,
+    color: EviraTheme.colors.textPrimary,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     fontSize: 14,
-    letterSpacing: 0.5,
+    fontWeight: '500',
+  },
+  guaranteeBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.lg,
+    borderWidth: 1,
+    borderColor: EviraTheme.colors.border,
+    padding: 14,
+    marginTop: 18,
+    gap: 12,
+  },
+  guaranteeIcon: {
+    fontSize: 20,
+    marginTop: 2,
+  },
+  guaranteeTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
+    marginBottom: 2,
+  },
+  guaranteeText: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: EviraTheme.colors.textSecondary,
+  },
+  confirmButton: {
+    marginTop: 20,
   },
 });

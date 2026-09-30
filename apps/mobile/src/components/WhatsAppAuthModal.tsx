@@ -3,13 +3,14 @@ import {
   StyleSheet,
   View,
   Text,
-  Modal,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { saveMobileSession, MobileBuyerSession } from '../lib/session';
+import { EviraTheme, eviraWindowStyles } from '../lib/theme';
+import { EviraModal } from './EviraModal';
 
 interface WhatsAppAuthModalProps {
   visible: boolean;
@@ -119,7 +120,7 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
         expiresAt: data.expiresAt || new Date(Date.now() + 90 * 86400000).toISOString(),
       };
 
-      // Persist 90-day token into iOS Keychain / Android Keystore
+      // Persist 90-day token into secure storage
       await saveMobileSession(session);
       onSuccess(session);
       onClose();
@@ -130,248 +131,198 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    setStep('phone');
+    onClose();
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.modalCard}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              {step === 'phone'
-                ? 'Sign In with WhatsApp'
-                : 'Enter 6-Digit Code'}
-            </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
+    <EviraModal
+      visible={visible}
+      onClose={handleClose}
+      title={step === 'phone' ? 'Sign In with WhatsApp' : 'Enter 6-Digit Code'}
+      subtitle={
+        step === 'phone'
+          ? 'Receive an instant 1-tap verification code via WhatsApp. Zero passwords, 90-day active session.'
+          : `We sent a 6-digit security code via WhatsApp to ${phone}.`
+      }
+    >
+      {step === 'phone' && (
+        <View style={styles.inputSection}>
+          <Text style={eviraWindowStyles.inputLabel}>Iraqi Mobile Number</Text>
+          <View style={styles.phoneInputRow}>
+            <View style={styles.countryCodeBadge}>
+              <Text style={styles.countryCodeText}>🇮🇶 +964</Text>
+            </View>
+            <TextInput
+              style={styles.phoneTextInput}
+              placeholder="750 123 4567"
+              placeholderTextColor={EviraTheme.colors.textTertiary}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+              autoFocus
+            />
           </View>
 
-          <Text style={styles.subtitle}>
-            {step === 'phone'
-              ? 'Receive an instant 1-tap verification code via WhatsApp. Zero passwords, 90-day active session.'
-              : `We sent a 6-digit security code via WhatsApp to ${phone}.`}
-          </Text>
+          <TouchableOpacity
+            onPress={handleSendOtp}
+            disabled={loading}
+            style={eviraWindowStyles.primaryButton}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color={EviraTheme.colors.textWhite} />
+            ) : (
+              <Text style={eviraWindowStyles.primaryButtonText}>Send WhatsApp Code</Text>
+            )}
+          </TouchableOpacity>
 
-          {step === 'phone' && (
-            <View style={styles.inputSection}>
-              <Text style={styles.inputLabel}>Iraqi Mobile Number</Text>
-              <View style={styles.phoneInputRow}>
-                <View style={styles.countryCodeBadge}>
-                  <Text style={styles.countryCodeText}>🇮🇶 +964</Text>
-                </View>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="750 123 4567"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="phone-pad"
-                  value={phone}
-                  onChangeText={setPhone}
-                  autoFocus
-                />
-              </View>
-
-              <TouchableOpacity
-                onPress={handleSendOtp}
-                disabled={loading}
-                style={styles.submitButton}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#072F1F" />
-                ) : (
-                  <Text style={styles.submitButtonText}>Send WhatsApp Code</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleDemoLogin}
-                style={{ marginTop: 12, paddingVertical: 8, alignItems: 'center' }}
-              >
-                <Text style={{ color: '#D97706', fontSize: 13, fontWeight: '700' }}>
-                  ⚡ Instant Demo Login (Skip OTP for Testing)
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {step === 'otp' && (
-            <View style={styles.inputSection}>
-              {sandboxCode && (
-                <TouchableOpacity
-                  onPress={() => setOtp(sandboxCode)}
-                  style={styles.sandboxPill}
-                >
-                  <Text style={styles.sandboxText}>
-                    ⚡ Test Sandbox Code: <Text style={styles.sandboxBold}>{sandboxCode}</Text> (Tap to auto-fill)
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-              <Text style={styles.inputLabel}>6-Digit Verification Code</Text>
-              <TextInput
-                style={[styles.textInput, styles.otpInput]}
-                placeholder="123456"
-                placeholderTextColor="#94A3B8"
-                keyboardType="number-pad"
-                maxLength={6}
-                value={otp}
-                onChangeText={setOtp}
-                autoFocus
-              />
-
-              <TouchableOpacity
-                onPress={handleVerifyOtp}
-                disabled={loading}
-                style={styles.submitButton}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#072F1F" />
-                ) : (
-                  <Text style={styles.submitButtonText}>Verify & Authorize 90-Day Session</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setStep('phone')}
-                style={styles.backButton}
-              >
-                <Text style={styles.backButtonText}>← Change Phone Number</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <TouchableOpacity
+            onPress={handleDemoLogin}
+            style={styles.demoLoginButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.demoLoginText}>
+              ⚡ Instant Demo Login (Skip OTP for Testing)
+            </Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </Modal>
+      )}
+
+      {step === 'otp' && (
+        <View style={styles.inputSection}>
+          {sandboxCode && (
+            <TouchableOpacity
+              onPress={() => setOtp(sandboxCode)}
+              style={styles.sandboxPill}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.sandboxText}>
+                ⚡ Sandbox Code: <Text style={styles.sandboxBold}>{sandboxCode}</Text> (Tap to fill)
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <Text style={eviraWindowStyles.inputLabel}>6-Digit Verification Code</Text>
+          <TextInput
+            style={styles.otpInput}
+            placeholder="123456"
+            placeholderTextColor={EviraTheme.colors.textTertiary}
+            keyboardType="number-pad"
+            maxLength={6}
+            value={otp}
+            onChangeText={setOtp}
+            autoFocus
+          />
+
+          <TouchableOpacity
+            onPress={handleVerifyOtp}
+            disabled={loading}
+            style={eviraWindowStyles.primaryButton}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator color={EviraTheme.colors.textWhite} />
+            ) : (
+              <Text style={eviraWindowStyles.primaryButtonText}>
+                Verify & Authorize 90-Day Session
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setStep('phone')}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backButtonText}>← Change Phone Number</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </EviraModal>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#072F1F',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    borderTopWidth: 1,
-    borderColor: 'rgba(180, 241, 5, 0.3)',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  subtitle: {
-    color: '#A7C1B5',
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 20,
-  },
   inputSection: {
     gap: 12,
   },
-  inputLabel: {
-    fontSize: 11,
-    color: '#E5E7EB',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
   phoneInputRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: EviraTheme.colors.border,
   },
   countryCodeBadge: {
     paddingHorizontal: 14,
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: EviraTheme.colors.surfaceSubtle,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.1)',
+    borderRightColor: EviraTheme.colors.border,
   },
   countryCodeText: {
-    color: '#FFFFFF',
+    color: EviraTheme.colors.textPrimary,
     fontWeight: '700',
     fontSize: 13,
   },
-  textInput: {
+  phoneTextInput: {
     flex: 1,
-    color: '#FFFFFF',
+    color: EviraTheme.colors.textPrimary,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     fontWeight: '600',
   },
   otpInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: EviraTheme.colors.border,
+    color: EviraTheme.colors.textPrimary,
     textAlign: 'center',
-    fontSize: 24,
+    fontSize: 26,
     letterSpacing: 8,
     fontWeight: '900',
+    paddingVertical: 14,
   },
   sandboxPill: {
-    backgroundColor: 'rgba(180, 241, 5, 0.15)',
+    backgroundColor: '#FEF3C7',
     borderWidth: 1,
-    borderColor: '#B4F105',
+    borderColor: '#FDE68A',
     padding: 10,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: EviraTheme.radii.md,
+    marginBottom: 4,
   },
   sandboxText: {
-    color: '#B4F105',
+    color: '#92400E',
     fontSize: 12,
     textAlign: 'center',
+    fontWeight: '600',
   },
   sandboxBold: {
     fontWeight: '900',
     textDecorationLine: 'underline',
   },
-  submitButton: {
-    backgroundColor: '#B4F105',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
+  demoLoginButton: {
     marginTop: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
-  submitButtonText: {
-    color: '#072F1F',
-    fontWeight: '900',
-    fontSize: 14,
-    letterSpacing: 0.5,
+  demoLoginText: {
+    color: EviraTheme.colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   backButton: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   backButtonText: {
-    color: '#A7C1B5',
+    color: EviraTheme.colors.textSecondary,
     fontSize: 12,
     fontWeight: '700',
   },
