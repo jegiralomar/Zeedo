@@ -332,7 +332,7 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
       },
     }),
     {
-      name: 'zeedo_buyer_auth_prod_v1',
+      name: 'zeedo_buyer_auth_prod_v2',
       storage: createJSONStorage(() => localStorage),
     }
   )

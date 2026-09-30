@@ -841,17 +841,7 @@ export const useAdminStore = create<AdminStoreState>()(
           const res = await fetch('/api/listings');
           const data = await res.json();
           if (data.success && Array.isArray(data.listings)) {
-            const dbListings: ListingAuction[] = data.listings;
-            set((state) => {
-              const dbMap = new Map(dbListings.map((item) => [item.id, item]));
-              const merged = [...dbListings];
-              for (const local of state.auctions) {
-                if (!dbMap.has(local.id)) {
-                  merged.push(local);
-                }
-              }
-              return { auctions: merged };
-            });
+            set({ auctions: data.listings });
           }
         } catch (err) {
           console.warn('syncAuctionsFromDb error:', err);
@@ -864,17 +854,7 @@ export const useAdminStore = create<AdminStoreState>()(
           const res = await fetch('/api/sellers');
           const data = await res.json();
           if (data.success && Array.isArray(data.sellers)) {
-            const dbSellers: any[] = data.sellers;
-            set((state) => {
-              const dbMap = new Map(dbSellers.map((s) => [s.id, s]));
-              const merged = [...dbSellers];
-              for (const local of state.sellers) {
-                if (!dbMap.has(local.id)) {
-                  merged.push(local);
-                }
-              }
-              return { sellers: merged };
-            });
+            set({ sellers: data.sellers });
           }
         } catch (err) {
           console.warn('syncSellersFromDb error:', err);
@@ -1542,7 +1522,7 @@ export const useAdminStore = create<AdminStoreState>()(
       },
     }),
     {
-      name: 'zeedo_admin_store_prod_v1',
+      name: 'zeedo_admin_store_prod_v2',
       storage: createJSONStorage(() => localStorage),
     }
   )

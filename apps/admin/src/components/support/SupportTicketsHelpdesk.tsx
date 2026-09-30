@@ -78,36 +78,6 @@ export const SupportTicketsHelpdesk: React.FC = () => {
     setReplyText((prev) => (prev ? `${prev}\n${text}` : text));
   };
 
-  const handleSimulateNewMobileTicket = () => {
-    const randomSeq = Math.floor(100 + Math.random() * 900);
-    const mockMobileTicket: SupportTicket = {
-      id: `tkt-${Date.now()}`,
-      ticketNumber: `TKT-202609-${randomSeq}`,
-      buyerId: 'usr-buyer-88',
-      buyerName: 'Rebaz Farhad Salih',
-      buyerPhone: '+964 750 192 8844',
-      buyerCity: 'Erbil',
-      kycStatus: 'verified',
-      rooftopLandmark: 'Behind Family Mall, Street 10',
-      subject: 'Inquiry regarding 100% COD open-box inspection in Erbil',
-      category: 'cod_inspection',
-      status: 'open',
-      priority: 'high',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      messages: [
-        {
-          id: `msg-${Date.now()}`,
-          sender: 'buyer',
-          senderName: 'Rebaz Farhad Salih',
-          text: 'Hello admin team, I won the PlayStation 5 Pro. Can you confirm the courier will wait 5 minutes while I inspect the box before handing over the cash?',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ],
-    };
-    createTicket(mockMobileTicket);
-  };
-
   const cannedResponses = [
     {
       label: '🛡️ Open-Box Policy (Kurdish)',
@@ -181,20 +151,19 @@ export const SupportTicketsHelpdesk: React.FC = () => {
           <div className="text-[11px] text-gray-400 mt-1">Cases Closed</div>
         </div>
 
-        <div className="bg-[#051C12]/90 border border-[#B4F105]/20 rounded-2xl p-4 shadow-lg backdrop-blur-md flex flex-col justify-between">
-          <div>
-            <div className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">
-              Mobile Simulator
-            </div>
-            <div className="text-[11px] text-gray-300">Test live mobile chat ticket creation</div>
+        <div className="bg-[#051C12]/90 border border-[#10B981]/20 rounded-2xl p-4 shadow-lg backdrop-blur-md">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-xs uppercase tracking-wider text-gray-400 font-bold">
+              Resolution Rate
+            </span>
+            <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
           </div>
-          <button
-            onClick={handleSimulateNewMobileTicket}
-            className="w-full mt-2 bg-[#B4F105] hover:bg-[#a1d904] text-[#051C12] font-black text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            Simulate Mobile Ticket
-          </button>
+          <div className="text-2xl font-black text-white">
+            {tickets.length > 0
+              ? `${Math.round((tickets.filter((t) => t.status === 'resolved').length / tickets.length) * 100)}%`
+              : '100%'}
+          </div>
+          <div className="text-[11px] text-gray-400 mt-1">SLA Target Met</div>
         </div>
       </div>
 

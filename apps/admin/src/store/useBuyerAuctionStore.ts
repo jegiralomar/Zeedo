@@ -86,36 +86,7 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
               };
             });
 
-            set((state) => {
-              const dbMap = new Map(items.map((i) => [i.id, i]));
-              const sanitizedLocal = state.auctions.map((local) => {
-                if (!local.multilingual) {
-                  const fallbackTitle = (local as any).titles?.en || 'Auction Item';
-                  return {
-                    ...local,
-                    imageUrl:
-                      local.imageUrl ||
-                      (local as any).images?.[0] ||
-                      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-                    multilingual: {
-                      en: { title: fallbackTitle, description: '', specs: [] },
-                      ar: { title: (local as any).titles?.ar || fallbackTitle, description: '', specs: [] },
-                      ckb: { title: (local as any).titles?.ckb || fallbackTitle, description: '', specs: [] },
-                      badini: { title: (local as any).titles?.badini || fallbackTitle, description: '', specs: [] },
-                    },
-                  };
-                }
-                return local;
-              });
-
-              const merged = [...items];
-              for (const local of sanitizedLocal) {
-                if (!dbMap.has(local.id)) {
-                  merged.push(local);
-                }
-              }
-              return { auctions: merged };
-            });
+            set({ auctions: items });
           }
         } catch (err) {
           console.warn('syncLiveAuctionsFromDb error:', err);
@@ -224,7 +195,7 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
       },
     }),
     {
-      name: 'zeedo_buyer_auction_prod_v2',
+      name: 'zeedo_buyer_auction_prod_v3',
       storage: createJSONStorage(() => localStorage),
     }
   )

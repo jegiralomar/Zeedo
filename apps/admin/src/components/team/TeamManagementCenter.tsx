@@ -234,7 +234,7 @@ export const TeamManagementCenter: React.FC = () => {
                       <span>Password Configured</span>
                     </div>
                     <span className="text-[10px] text-[#6C7E75] block mt-0.5">
-                      Plaintext demo: <strong className="text-[#072F1F]">{staff.password}</strong>
+                      Credential status: <strong className="text-[#072F1F]">Protected</strong>
                     </span>
                   </td>
 
