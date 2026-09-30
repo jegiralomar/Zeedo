@@ -59,7 +59,19 @@
   - Replaced "Mobile Simulator" card in Support Helpdesk with live "Resolution Rate" SLA metric card.
   - Masked credentials in Team Management Center.
 
-### C. Merchant Portal & Scraper Architecture (Completed ✅)
+### D. Resolution of `pickupCoordinates is undefined` Crash (Completed & Deployed ✅)
+- **Root Cause:**
+  - When syncing merchants from Neon Postgres via `GET /api/sellers`, the response rows were omitting `pickupCoordinates`.
+  - In `SellerProfileDetail.tsx`, line 265 attempted direct access `seller.pickupCoordinates.lat.toFixed(4)`.
+  - When opening the seller profile, this threw: `Uncaught TypeError: can't access property "lat", j.pickupCoordinates is undefined`.
+- **Resolution:**
+  - **Database Migration:** Added `pickup_coordinates JSONB DEFAULT '{"lat": 36.1911, "lng": 44.0092}'::jsonb` to `sellers` table in Neon Postgres and updated existing seller rows.
+  - **API Layer:** Updated `GET /api/sellers` (and `POST`) to parse and return `pickupCoordinates` with Iraqi regional fallback coordinates.
+  - **Frontend Safeguard:** Added safe optional chaining in `SellerProfileDetail.tsx` (`seller.pickupCoordinates?.lat != null ? ... : '36.1911, 44.0092'`).
+  - **Logistics Safeguard:** Added safe optional chaining in `PrintCenter.tsx` for waypoint coordinate rendering.
+  - **Production Deployment:** Deployed build `admin-bqx7jmrxh-zeedo1.vercel.app` aliased to `https://zeedo.auction`. Live API confirmed returning valid `pickupCoordinates`.
+
+### E. Merchant Portal & Scraper Architecture (Completed ✅)
 - **Gemini Official `url_context` Scraper:** Upgraded `/api/scraper/product` to use Gemini API with URL context and Headless Jina Reader fallback (`https://r.jina.ai/`).
 - **Catalog Intelligence:** Automatically parses product images, retail price baseline in USD/IQD, specifications, and auto-generates translations across all Iraqi dialects:
   - `ckb` (Kurdish Sorani - Erbil & Sulaymaniyah)
