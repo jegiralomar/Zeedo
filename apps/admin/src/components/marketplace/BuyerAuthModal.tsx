@@ -40,7 +40,7 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
   onClose,
   defaultMode = 'login',
 }) => {
-  const { language, login, signUp } = useBuyerAuthStore();
+  const { language, login, signUp, setSellerSession } = useBuyerAuthStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
@@ -54,47 +54,71 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    setTimeout(() => {
-      if (mode === 'signup') {
-        if (!fullName.trim()) {
-          setError(rtl ? 'تکایە ناوی تەواو بنووسە' : 'Please enter your full name');
-          setLoading(false);
-          return;
-        }
-        if (!phone.trim()) {
-          setError(rtl ? 'تکایە ژمارەی مۆبایل بنووسە' : 'Please enter your phone number');
-          setLoading(false);
-          return;
-        }
-
-        const ok = signUp(fullName, phone, city, password);
+    if (mode === 'signup') {
+      if (!fullName.trim()) {
+        setError(rtl ? 'تکایە ناوی تەواو بنووسە' : 'Please enter your full name');
         setLoading(false);
-        if (ok) {
-          onClose();
-        } else {
-          setError(rtl ? 'هەڵەیەک ڕوویدا لە دروستکردنی هەژمار' : 'Failed to create account');
-        }
-      } else {
-        if (!phone.trim()) {
-          setError(rtl ? 'تکایە ژمارەی مۆبایل یان هەژمار بنووسە' : 'Please enter your phone or username');
-          setLoading(false);
-          return;
-        }
-
-        const ok = login(phone, password);
-        setLoading(false);
-        if (ok) {
-          onClose();
-        } else {
-          setError(rtl ? 'زانیارییەکان نادروستن' : 'Invalid credentials');
-        }
+        return;
       }
-    }, 350);
+      if (!phone.trim()) {
+        setError(rtl ? 'تکایە ژمارەی مۆبایل بنووسە' : 'Please enter your phone number');
+        setLoading(false);
+        return;
+      }
+
+      const ok = signUp(fullName, phone, city, password);
+      setLoading(false);
+      if (ok) {
+        onClose();
+      } else {
+        setError(rtl ? 'هەڵەیەک ڕوویدا لە دروستکردنی هەژمار' : 'Failed to create account');
+      }
+    } else {
+      const cleanId = phone.trim();
+      if (!cleanId) {
+        setError(rtl ? 'تکایە ژمارەی مۆبایل یان هەژمار بنووسە' : 'Please enter your phone or username');
+        setLoading(false);
+        return;
+      }
+
+      // 1. Check local/pre-seeded credentials first
+      const localOk = login(cleanId, password);
+      if (localOk) {
+        setLoading(false);
+        onClose();
+        return;
+      }
+
+      // 2. Query Postgres API to check if it's a registered Merchant
+      try {
+        const res = await fetch(
+          `/api/sellers?auth=true&identifier=${encodeURIComponent(cleanId)}&password=${encodeURIComponent(password)}`
+        );
+        const data = await res.json();
+        if (data.success && data.seller) {
+          setSellerSession(data.seller);
+          setLoading(false);
+          onClose();
+          return;
+        }
+      } catch (err) {
+        console.warn('Merchant backend check failed:', err);
+      }
+
+      // 3. Fallback: log in as standard buyer session
+      const buyerOk = login(cleanId, password);
+      setLoading(false);
+      if (buyerOk) {
+        onClose();
+      } else {
+        setError(rtl ? 'زانیارییەکان نادروستن' : 'Invalid credentials');
+      }
+    }
   };
 
   return (

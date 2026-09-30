@@ -104,6 +104,41 @@ export async function initDatabaseSchema() {
       );
     `;
 
+    // 6. Sellers / Merchants Table
+    await sql`
+      CREATE TABLE IF NOT EXISTS sellers (
+        id VARCHAR(64) PRIMARY KEY,
+        store_name VARCHAR(128) NOT NULL,
+        owner_name VARCHAR(128) NOT NULL,
+        phone VARCHAR(32) UNIQUE NOT NULL,
+        city VARCHAR(64) DEFAULT 'Erbil',
+        commission_rate NUMERIC(4, 2) DEFAULT 0.07,
+        auto_approve_listings BOOLEAN DEFAULT FALSE,
+        pickup_address TEXT,
+        status VARCHAR(32) DEFAULT 'active',
+        total_listings INT DEFAULT 0,
+        completed_sales INT DEFAULT 0,
+        total_cod_volume_iqd BIGINT DEFAULT 0,
+        rating NUMERIC(3, 1) DEFAULT 5.0,
+        username VARCHAR(64) UNIQUE NOT NULL,
+        password VARCHAR(128) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    // Seed default pre-configured merchant if none exists
+    await sql`
+      INSERT INTO sellers (
+        id, store_name, owner_name, phone, city, commission_rate,
+        auto_approve_listings, pickup_address, status, total_listings,
+        completed_sales, total_cod_volume_iqd, rating, username, password, created_at
+      ) VALUES (
+        'sel-01', 'ZEEDO Official Store', 'Merchant Partner', '+964 750 111 2233',
+        'Erbil', 0.07, TRUE, 'Gulan Street, Erbil', 'active', 0,
+        0, 0, 5.0, 'merchant', 'ZEEDOMerchant98', NOW()
+      ) ON CONFLICT (username) DO NOTHING;
+    `;
+
     return true;
   } catch (error) {
     console.error('Database schema initialization error:', error);

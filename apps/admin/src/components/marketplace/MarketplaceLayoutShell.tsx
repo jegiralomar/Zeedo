@@ -15,7 +15,6 @@ import {
   ExternalLink,
   ChevronDown,
   Sparkles,
-  Lock,
   LogIn,
   UserPlus,
   LogOut,
@@ -215,16 +214,6 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
                 </button>
               </div>
             )}
-
-            {/* Switch to Admin link */}
-            <Link
-              href="/admin"
-              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs"
-              title="Admin & Operations Center"
-            >
-              <Lock className="w-3 h-3 text-[#B4F105]" />
-              <span className="hidden sm:inline">Admin</span>
-            </Link>
           </div>
         </div>
       </header>

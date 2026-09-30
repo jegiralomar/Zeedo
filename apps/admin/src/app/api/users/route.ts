@@ -68,6 +68,57 @@ export async function GET(request: Request) {
   return NextResponse.json({ success: true, count: filtered.length, users: filtered, source: 'memory_fallback' });
 }
 
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, name, phone, city = 'Erbil', role = 'buyer' } = body;
+
+    if (!phone || !name) {
+      return NextResponse.json({ success: false, error: 'Name and phone are required' }, { status: 400 });
+    }
+
+    const cleanPhone = phone.trim();
+    const userId = id || `usr-${Date.now()}`;
+
+    await initDatabaseSchema();
+    const sql = getDb();
+    if (sql) {
+      await ensureUsersTable(sql);
+      const rows = await sql`
+        INSERT INTO users (id, phone, name, city, role, created_at)
+        VALUES (${userId}, ${cleanPhone}, ${name}, ${city}, ${role}, NOW())
+        ON CONFLICT (phone) DO UPDATE SET
+          name = EXCLUDED.name,
+          city = EXCLUDED.city
+        RETURNING *;
+      `;
+      const u = rows[0];
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: u.id,
+          phone: u.phone,
+          name: u.name,
+          city: u.city,
+          kycStatus: u.kyc_status,
+          role: u.role,
+          createdAt: u.created_at,
+        },
+        source: 'neon_postgres',
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: { id: userId, phone: cleanPhone, name, city, role, kycStatus: 'pending' },
+      source: 'memory_fallback',
+    });
+  } catch (error: any) {
+    console.error('Users POST error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
@@ -89,3 +140,4 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

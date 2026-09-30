@@ -70,6 +70,9 @@ export const SellerProvisioningCenter: React.FC = () => {
       return;
     }
 
+    const cleanUsername = username.trim() || phone.replace(/\s+/g, '');
+    const cleanPassword = password.trim() || 'ZeedoSeller2026';
+
     provisionSeller({
       storeName,
       ownerName,
@@ -79,9 +82,26 @@ export const SellerProvisioningCenter: React.FC = () => {
       auto_approve_listings: autoApprove,
       pickupAddress: pickupAddress || `${city} Commercial District Hub`,
       pickupCoordinates: { lat: pickupLat, lng: pickupLng },
-      username: username.trim() || phone.replace(/\s+/g, ''),
-      password: password.trim() || 'ZeedoSeller2026',
+      username: cleanUsername,
+      password: cleanPassword,
     });
+
+    // Also persist directly to PostgreSQL
+    fetch('/api/sellers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        storeName,
+        ownerName,
+        phone,
+        city,
+        commissionRate,
+        auto_approve_listings: autoApprove,
+        pickupAddress: pickupAddress || `${city} Commercial District Hub`,
+        username: cleanUsername,
+        password: cleanPassword,
+      }),
+    }).catch((err) => console.warn('Failed to sync seller to Postgres:', err));
 
     setIsModalOpen(false);
     setStoreName('');
