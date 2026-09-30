@@ -448,11 +448,11 @@ export const SupportTicketsHelpdesk: React.FC = () => {
                 </div>
               </div>
 
-              {/* Gate 2 Rooftop Landmark */}
+              {/* Gate 2 Delivery Landmark */}
               <div className="bg-[#03120B] border border-gray-800 rounded-2xl p-3.5 space-y-1.5">
                 <div className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-[#B4F105]" />
-                  <span>Gate 2 Rooftop Landmark</span>
+                  <span>Gate 2 Delivery Landmark</span>
                 </div>
                 <p className="text-xs text-gray-200 font-semibold">
                   {currentTicket.rooftopLandmark || matchedBuyer?.rooftopPin?.landmark || 'Behind Family Mall, Street 10'}

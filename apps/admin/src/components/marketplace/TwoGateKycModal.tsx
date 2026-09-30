@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { TRANSLATIONS, isRTL } from '@/i18n/translations';
+import { LocationPickerModal } from './LocationPickerModal';
 
 interface TwoGateKycModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
   const [gate2Done, setGate2Done] = useState(
     Boolean(buyer?.rooftopPin && buyer.rooftopPin.isVerified)
   );
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   if (!isOpen) return null;
 
@@ -131,20 +133,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
   };
 
   const handleLocateMe = () => {
-    const lat = 36.1925;
-    const lng = 44.0115;
-    setLatitude(lat);
-    setLongitude(lng);
-    setGate2Done(true);
-    completeGate2({
-      latitude: lat,
-      longitude: lng,
-      city,
-      district,
-      landmark,
-      addressText: `${district}, ${city}, Iraq`,
-      isVerified: true,
-    });
+    setShowLocationModal(true);
   };
 
   const handleConfirmAll = () => {
@@ -263,7 +252,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
             )}
           </div>
 
-          {/* GATE 2: Rooftop Map Pin Dropper */}
+          {/* GATE 2: Delivery Location */}
           <div
             className={`border rounded-2xl p-5 transition-all ${
               gate2Done
@@ -289,7 +278,55 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
             </div>
 
             <div className="mt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* Interactive Map Launch Banner */}
+              <div
+                onClick={() => setShowLocationModal(true)}
+                className="group relative cursor-pointer overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50/60 p-3.5 transition-all hover:border-emerald-300 hover:shadow-xs"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-extrabold text-slate-900">
+                          {gate2Done
+                            ? (t.editLocationOnMap || 'Edit Location on Map')
+                            : (t.openInteractiveMap || 'Open Interactive Map')}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-200/80 text-emerald-900">
+                          Live Leaflet Map
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {gate2Done
+                          ? `${city}${district ? ' • ' + district : ''} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+                          : 'Tap to drop and adjust your delivery pin on OpenStreetMap'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowLocationModal(true);
+                    }}
+                    className="px-3.5 py-2 bg-emerald-600 group-hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1.5 shrink-0"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>
+                      {gate2Done
+                        ? (t.changeLocation || 'Change Pin')
+                        : (t.setDeliveryLocation || 'Set Location')}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Fields for Governorate, District & Landmark */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
                 <div>
                   <label className="text-[11px] font-bold text-slate-700 block mb-1">
                     {t.governorate}
@@ -329,7 +366,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
 
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                  <MapPin className="w-3.5 h-3.5 text-red-500" />
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                   <span>
                     GPS: {latitude.toFixed(4)}, {longitude.toFixed(4)}
                   </span>
@@ -337,9 +374,9 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                 <button
                   type="button"
                   onClick={handleLocateMe}
-                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 border border-slate-200"
                 >
-                  <Navigation className="w-3.5 h-3.5" />
+                  <Navigation className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{t.locateMe}</span>
                 </button>
               </div>
@@ -364,6 +401,26 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Interactive Leaflet Map Modal */}
+      <LocationPickerModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onLocationSaved={(pin) => {
+          setCity(pin.city);
+          setDistrict(pin.district || '');
+          setLandmark(pin.landmark || '');
+          setLatitude(pin.latitude);
+          setLongitude(pin.longitude);
+          setGate2Done(true);
+        }}
+        initialCity={city}
+        initialDistrict={district}
+        initialLandmark={landmark}
+        initialLatitude={latitude}
+        initialLongitude={longitude}
+      />
     </div>
   );
 };
+

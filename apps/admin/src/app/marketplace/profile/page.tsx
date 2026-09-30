@@ -21,6 +21,7 @@ import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { TRANSLATIONS, isRTL } from '@/i18n/translations';
 import { TwoGateKycModal } from '@/components/marketplace/TwoGateKycModal';
 import { BuyerAuthModal } from '@/components/marketplace/BuyerAuthModal';
+import { LocationPickerModal } from '@/components/marketplace/LocationPickerModal';
 
 export default function BuyerProfilePage() {
   const { buyer, language, isAuthenticated, logout, isTwoGateVerified } = useBuyerAuthStore();
@@ -28,6 +29,7 @@ export default function BuyerProfilePage() {
   const rtl = isRTL(language);
 
   const [showKycModal, setShowKycModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
@@ -245,23 +247,41 @@ export default function BuyerProfilePage() {
             </div>
           </div>
 
-          {/* Gate 2 */}
+          {/* Gate 2: Location */}
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className={`w-6 h-6 rounded-full text-white font-bold text-xs flex items-center justify-center ${buyer.rooftopPin ? 'bg-emerald-600' : 'bg-slate-400'}`}>
                   2
                 </span>
-                <span className="font-bold text-xs text-slate-900">Gate 2: Rooftop Map Pin</span>
+                <span className="font-bold text-xs text-slate-900">
+                  {t.gate2Title || 'Gate 2: Delivery Location'}
+                </span>
               </div>
-              {buyer.rooftopPin ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <Clock className="w-4 h-4 text-slate-400" />
-              )}
+              <div className="flex items-center gap-2">
+                {buyer.rooftopPin ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Clock className="w-4 h-4 text-slate-400" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowLocationModal(true)}
+                  className="px-2.5 py-1 text-[11px] font-bold bg-white hover:bg-slate-100 border border-slate-200 text-emerald-700 rounded-lg transition-colors flex items-center gap-1 shadow-xs"
+                >
+                  <MapPin className="w-3 h-3 text-emerald-600" />
+                  <span>{buyer.rooftopPin ? (t.changeLocation || 'Edit on Map') : (t.setDeliveryLocation || 'Set Location')}</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500">City / Governorate:</span>
+                <span className="font-semibold text-slate-900">
+                  {buyer.rooftopPin?.city || buyer.city || 'Pending Selection'}
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">District:</span>
                 <span className="font-semibold text-slate-900">
@@ -269,7 +289,7 @@ export default function BuyerProfilePage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">GPS Pin:</span>
+                <span className="text-slate-500">Delivery GPS Pin:</span>
                 <span className="font-mono text-slate-700">
                   {buyer.rooftopPin ? `${buyer.rooftopPin.latitude.toFixed(4)}, ${buyer.rooftopPin.longitude.toFixed(4)}` : 'Not Set'}
                 </span>
@@ -288,6 +308,11 @@ export default function BuyerProfilePage() {
       <TwoGateKycModal
         isOpen={showKycModal}
         onClose={() => setShowKycModal(false)}
+      />
+
+      <LocationPickerModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
       />
     </div>
   );

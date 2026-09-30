@@ -18,6 +18,7 @@ import {
   LogIn,
   UserPlus,
   LogOut,
+  MapPin,
 } from 'lucide-react';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { useBuyerAuctionStore } from '@/store/useBuyerAuctionStore';
@@ -25,6 +26,7 @@ import { TRANSLATIONS, isRTL, DIALECT_LABELS } from '@/i18n/translations';
 import { LanguageModal } from './LanguageModal';
 import { TwoGateKycModal } from './TwoGateKycModal';
 import { BuyerAuthModal } from './BuyerAuthModal';
+import { LocationPickerModal } from './LocationPickerModal';
 import { MerchantPortalView } from '../merchant/MerchantPortalView';
 
 export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = ({
@@ -38,6 +40,7 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
 
   const [mounted, setMounted] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
@@ -146,6 +149,18 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
               <Globe2 className="w-3.5 h-3.5 text-blue-600" />
               <span>{dialectInfo.label}</span>
               <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {/* Delivery Location Button */}
+            <button
+              onClick={() => setShowLocationModal(true)}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/60 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              title="Set Delivery Location on Map"
+            >
+              <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span className="max-w-[85px] sm:max-w-[120px] truncate">
+                {buyer?.rooftopPin?.city || buyer?.city || (language === 'ar' ? 'الموقع' : language === 'ckb' ? 'شوێن' : 'Location')}
+              </span>
             </button>
 
             {/* Buyer Authentication / Profile State */}
@@ -262,6 +277,10 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         defaultMode={authModalMode}
+      />
+      <LocationPickerModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
       />
     </div>
   );

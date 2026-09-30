@@ -326,7 +326,7 @@ export const SellerProvisioningCenter: React.FC = () => {
                 <th className="p-4">Buyer Name & Phone</th>
                 <th className="p-4">City & Joined</th>
                 <th className="p-4">Gate 1: KYC Status</th>
-                <th className="p-4">Gate 2: Rooftop Map Pin</th>
+                <th className="p-4">Gate 2: Delivery Location</th>
                 <th className="p-4">Bids & Wins</th>
               </tr>
             </thead>
