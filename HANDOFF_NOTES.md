@@ -67,6 +67,14 @@
 - **Next.js Subdomain Middleware (`src/middleware.ts`):** Host header inspection dynamically routes buyer vs admin requests while sharing `/api/*`.
 - **Self-Contained Tesseract.js OCR:** Iraqi Unified National ID cards (*Bataqa Wataniya*) parsed locally in `/api/ai/ocr-id` without external API quotas.
 
+### F. Marketplace Feed & Adaptive Card System (Completed & Verified ✅)
+- **Adaptive Layout Toggle:** Quick toggle on marketplace feed allowing buyers to switch between:
+  - **2-Column Compact Grid (`compact`):** High-speed mobile scanning with clean equal-height cards (product image, condition tag, live countdown timer pill, 2-line title clamp, responsive PriceOdometer, and 1-tap quick bid button).
+  - **1-Column Detailed Feed (`detailed`):** High-impact card presentation with 4:3 photo, 100% COD badge, price sparkline trajectory, retail baseline comparison, and dual actions (Quick Bid + Details/War Room).
+- **View Mode Persistence:** Buyer's chosen view preference is saved in `localStorage.getItem('zeedo_view_mode')`.
+- **Visual-Only Live Bid Highlight:** When bids increment or quick bid is clicked, the card triggers a subtle emerald border pulse (`ring-2 ring-emerald-500/80 shadow-md shadow-emerald-500/10`) and animated price spark badge (`+1,000 IQD`) without disruptive vibration or audio.
+- **Clean Clutter-Free Feed:** Avoided redundant floating ticker overlay since card prices are already live.
+
 ---
 
 ## 2. Active System Architecture
@@ -89,7 +97,7 @@
 - **Buyer Test Account:** Phone auth / OTP simulation (auto-verifies in development/preview)
 - **Merchant ID:** `sel-01` (Zeedo Merchant Hub, Erbil)
 - **Vercel Project:** `zeedo1/admin` (`prj_CjmLqSrWrPki65DICvgMeCeUKWNI`)
-- **Git Branches:** `master` and `main` are synchronized at commit `4a0ba49`.
+- **Git Branches:** `master` and `main` are synchronized at commit `f8e29ba`.
 
 ---
 
