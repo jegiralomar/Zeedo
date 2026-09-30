@@ -39,8 +39,25 @@
 - **Resolution:**
   - Fast-forward merged `master` into `main` and pushed both branches to GitHub (`commit 4a0ba49`).
   - Executed direct CLI production build and deployment (`vercel --prod --yes`) from `apps/admin/`.
-  - Deployment `admin-o48acw5mm-zeedo1.vercel.app` completed successfully in 15s and aliased directly to `https://zeedo.auction`.
-  - Verified live bundle: old crashing chunk `1i5thibl0xj3n.js` is gone; verified live chunk `3-k0fzwti2iav.js` contains the new fallback logic and `09p-0il68u_zq.js` serves the `v2` store.
+  - Latest production deployment `admin-2jge0wnf6-zeedo1.vercel.app` completed successfully and aliased directly to `https://zeedo.auction`.
+
+### C. Complete Demo Data Purge & Fresh Slate Enforcement (Completed & Deployed ✅)
+- **Database Cleanup:**
+  - Purged all demo/test items from Neon PostgreSQL `auctions` table (`auc-636477`, `auc-475442`, `auc-294`).
+  - Purged all test users from `users` table (`usr-1790727432767`, `usr-1790727440252`).
+  - Reset seller counters to `0` (`totalListings: 0, completedSales: 0, totalCodVolumeIqd: 0`).
+  - Confirmed 0 ghost bids, 0 test KYC records, and 0 dummy support tickets.
+- **Authoritative DB Synchronization:**
+  - In `useBuyerAuctionStore.ts`, replaced local merge loop with direct database assignment (`set({ auctions: items })`).
+  - In `useAdminStore.ts`, made database authoritative for auctions and sellers (`set({ auctions: data.listings })`, `set({ sellers: data.sellers })`).
+  - Removed legacy cross-store injection effect in `marketplace/page.tsx`.
+- **Client Cache Invalidation:**
+  - Bumped `useBuyerAuctionStore` persistence key to `zeedo_buyer_auction_prod_v3`.
+  - Bumped `useAdminStore` persistence key to `zeedo_admin_store_prod_v2`.
+  - Bumped `useBuyerAuthStore` persistence key to `zeedo_buyer_auth_prod_v2`.
+- **UI Cleanliness:**
+  - Replaced "Mobile Simulator" card in Support Helpdesk with live "Resolution Rate" SLA metric card.
+  - Masked credentials in Team Management Center.
 
 ### C. Merchant Portal & Scraper Architecture (Completed ✅)
 - **Gemini Official `url_context` Scraper:** Upgraded `/api/scraper/product` to use Gemini API with URL context and Headless Jina Reader fallback (`https://r.jina.ai/`).
