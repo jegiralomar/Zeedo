@@ -642,9 +642,9 @@ export const useAdminStore = create<AdminStoreState>()(
         }
 
         if (autoApprove) {
-          get().addToast('success', `Listing "${newListing.multilingual.en.title}" auto-approved and is now LIVE!`);
+          get().addToast('success', `Listing "${newListing.multilingual?.en?.title || 'New Item'}" auto-approved and is now LIVE!`);
         } else {
-          get().addToast('info', `Listing "${newListing.multilingual.en.title}" submitted to Admin Moderation Queue.`);
+          get().addToast('info', `Listing "${newListing.multilingual?.en?.title || 'New Item'}" submitted to Admin Moderation Queue.`);
         }
       },
 
@@ -683,7 +683,7 @@ export const useAdminStore = create<AdminStoreState>()(
           }).catch((err) => console.warn('Failed to sync approval to Postgres:', err));
         }
 
-        get().addToast('success', `Listing "${target.multilingual.en?.title || listingId}" approved & is now LIVE for ${durationHours} hours!`);
+        get().addToast('success', `Listing "${target.multilingual?.en?.title || listingId}" approved & is now LIVE for ${durationHours} hours!`);
         get().logAuditEvent({
           action: 'LISTING_APPROVED',
           category: 'moderation',
@@ -955,7 +955,7 @@ export const useAdminStore = create<AdminStoreState>()(
           antiSnipingAlert: isAntiSnipeTriggered
             ? {
                 auctionId,
-                itemTitle: auction.multilingual.en.title,
+                itemTitle: auction.multilingual?.en?.title || 'Item',
                 timestamp: new Date().toLocaleTimeString(),
               }
             : state.antiSnipingAlert,
@@ -964,7 +964,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (isAntiSnipeTriggered) {
           get().addToast(
             'warning',
-            `⚠️ ANTI-SNIPING SOFT CLOSE: Bid placed at <=60s on "${auction.multilingual.en.title}". Timer reset to 60s!`
+            `⚠️ ANTI-SNIPING SOFT CLOSE: Bid placed at <=60s on "${auction.multilingual?.en?.title || 'Item'}". Timer reset to 60s!`
           );
         } else {
           get().addToast(
@@ -991,7 +991,7 @@ export const useAdminStore = create<AdminStoreState>()(
           ),
           antiSnipingAlert: {
             auctionId,
-            itemTitle: auction.multilingual.en.title,
+            itemTitle: auction.multilingual?.en?.title || 'Item',
             timestamp: new Date().toLocaleTimeString(),
           },
         }));
@@ -1120,7 +1120,7 @@ export const useAdminStore = create<AdminStoreState>()(
           sequenceNumber: index + 1,
           listingId: auc.id,
           packageAwbId: auc.packageAwbId || `AWB-IQ-202609-${auc.id.replace('auc-', '')}`,
-          itemTitle: auc.multilingual.en.title,
+          itemTitle: auc.multilingual?.en?.title || 'Item',
           buyerName: auc.highestBidder?.name || 'Walk-in Buyer',
           buyerPhone: auc.highestBidder?.phone || '+964 750 000 0000',
           city: auc.highestBidder?.rooftopPin?.city || 'Erbil',

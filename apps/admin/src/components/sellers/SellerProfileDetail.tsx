@@ -328,7 +328,7 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
                       LIVE
                     </span>
                   </div>
-                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual.en.title}</h4>
+                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual?.en?.title || 'Item'}</h4>
                   <div className="flex items-center gap-3 text-xs text-[#6C7E75] mt-1 font-mono">
                     <span>Current Bid: <strong className="text-[#15803d]">{auc.currentBidIqd.toLocaleString()} IQD</strong></span>
                     <span>•</span>
@@ -376,7 +376,7 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
                       COD Collected
                     </span>
                   </div>
-                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual.en.title}</h4>
+                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual?.en?.title || 'Item'}</h4>
                   <div className="text-[#6C7E75] mt-0.5">
                     Buyer: <strong className="text-[#0B130F]">{auc.highestBidder?.name}</strong> ({auc.highestBidder?.phone}) • {auc.highestBidder?.rooftopPin?.city}
                   </div>
@@ -422,7 +422,7 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
                       Awaiting Admin Approval
                     </span>
                   </div>
-                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual.en.title}</h4>
+                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual?.en?.title || 'Item'}</h4>
                   <div className="text-[#6C7E75] mt-0.5">
                     Scraped Retail Baseline: {auc.estimatedRetailMarketPriceIqd.toLocaleString()} IQD
                   </div>

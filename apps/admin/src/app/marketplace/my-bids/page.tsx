@@ -210,7 +210,11 @@ export default function MyBidsPage() {
           </div>
         ) : (
           wonItems.map((item) => {
-            const localized = item.multilingual[language] || item.multilingual.en;
+            const localized = item.multilingual?.[language] || item.multilingual?.en || {
+              title: (item as any).titles?.en || (item as any).titles?.[language] || 'Won Item',
+              description: '',
+              specs: [],
+            };
             return (
               <div
                 key={item.id}

@@ -204,7 +204,7 @@ export const PrintCenter: React.FC = () => {
                     </div>
 
                     <h4 className="font-bold text-xs text-[#0B130F] mt-1 line-clamp-1">
-                      {auc.multilingual.en.title}
+                      {auc.multilingual?.en?.title || 'Parcel Item'}
                     </h4>
 
                     <div className="flex items-center justify-between text-[11px] text-[#6C7E75] mt-2 font-mono">
@@ -349,7 +349,7 @@ export const PrintCenter: React.FC = () => {
                       <span>Condition: {currentAuction.condition}</span>
                     </div>
                     <div className="font-bold text-xs text-black line-clamp-2">
-                      {currentAuction.multilingual.en.title}
+                      {currentAuction.multilingual?.en?.title || 'Item'}
                     </div>
 
                     <div className="pt-2 flex items-center justify-between text-[10px] text-slate-700 border-t border-slate-300">
@@ -476,7 +476,7 @@ export const PrintCenter: React.FC = () => {
                               {auc.packageAwbId || auc.id}
                             </span>
                             <span className="text-[#6C7E75] text-[11px] line-clamp-1">
-                              {auc.multilingual.en.title}
+                              {auc.multilingual?.en?.title || 'Parcel Item'}
                             </span>
                           </div>
                         </div>

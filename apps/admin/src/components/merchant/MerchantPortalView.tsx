@@ -439,7 +439,7 @@ export const MerchantPortalView: React.FC = () => {
                           {item.images[0] ? (
                             <img
                               src={item.images[0]}
-                              alt={item.multilingual.en?.title}
+                              alt={item.multilingual?.en?.title || 'Product'}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
@@ -469,10 +469,10 @@ export const MerchantPortalView: React.FC = () => {
                         {/* Body Details */}
                         <div className="p-4">
                           <h4 className="font-bold text-sm text-white line-clamp-1">
-                            {item.multilingual.en?.title || 'Untitled Item'}
+                            {item.multilingual?.en?.title || 'Untitled Item'}
                           </h4>
                           <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
-                            {item.multilingual.en?.description || 'No description provided'}
+                            {item.multilingual?.en?.description || 'No description provided'}
                           </p>
 
                           {/* Rejection Note Alert if rejected */}
@@ -827,11 +827,11 @@ export const MerchantPortalView: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <img
                         src={item.images[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80'}
-                        alt={item.multilingual.en?.title}
+                        alt={item.multilingual?.en?.title || 'Product'}
                         className="w-14 h-14 rounded-xl object-cover bg-slate-950 shrink-0"
                       />
                       <div>
-                        <h4 className="font-bold text-xs text-white line-clamp-1">{item.multilingual.en?.title}</h4>
+                        <h4 className="font-bold text-xs text-white line-clamp-1">{item.multilingual?.en?.title || 'Item'}</h4>
                         <div className="flex items-center gap-2 mt-1 text-xs">
                           <span className="text-slate-400">Winner:</span>
                           <strong className="text-slate-200">{item.highestBidder?.name}</strong>

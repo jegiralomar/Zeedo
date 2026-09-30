@@ -38,14 +38,14 @@ export const MultiDialectReviewStudio: React.FC = () => {
 
   const filteredPending = pendingListings.filter(
     (a) =>
-      a.multilingual.en.title.toLowerCase().includes(searchQueue.toLowerCase()) ||
+      (a.multilingual?.en?.title || '').toLowerCase().includes(searchQueue.toLowerCase()) ||
       a.id.toLowerCase().includes(searchQueue.toLowerCase()) ||
       a.sellerName.toLowerCase().includes(searchQueue.toLowerCase())
   );
 
   const filteredOther = otherListings.filter(
     (a) =>
-      a.multilingual.en.title.toLowerCase().includes(searchQueue.toLowerCase()) ||
+      (a.multilingual?.en?.title || '').toLowerCase().includes(searchQueue.toLowerCase()) ||
       a.id.toLowerCase().includes(searchQueue.toLowerCase()) ||
       a.sellerName.toLowerCase().includes(searchQueue.toLowerCase())
   );
@@ -71,7 +71,7 @@ export const MultiDialectReviewStudio: React.FC = () => {
   const handleStartEditing = (lang: LanguageCode) => {
     if (!currentAuction) return;
     setActiveTabLang(lang);
-    setEditedContent({ ...currentAuction.multilingual[lang] });
+    setEditedContent({ ...(currentAuction.multilingual?.[lang] || { title: '', description: '', specs: [] }) });
     setIsEditing(true);
   };
 
@@ -201,7 +201,7 @@ export const MultiDialectReviewStudio: React.FC = () => {
                   </div>
 
                   <h4 className="font-bold text-sm text-[#0B130F] mt-1 line-clamp-1">
-                    {item.multilingual.en.title}
+                    {item.multilingual?.en?.title || item.id}
                   </h4>
 
                   <div className="flex items-center justify-between text-xs text-[#6C7E75] mt-2">
@@ -262,7 +262,7 @@ export const MultiDialectReviewStudio: React.FC = () => {
                     </span>
                   </div>
                   <h4 className="font-medium text-xs text-[#0B130F] mt-1 line-clamp-1">
-                    {item.multilingual.en.title}
+                    {item.multilingual?.en?.title || item.id}
                   </h4>
                 </div>
               );
@@ -345,7 +345,11 @@ export const MultiDialectReviewStudio: React.FC = () => {
               {viewMode === 'side_by_side' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {dialects.map((d) => {
-                    const content = currentAuction.multilingual[d.code];
+                    const content = currentAuction?.multilingual?.[d.code] || currentAuction?.multilingual?.en || {
+                      title: 'Untranslated Title',
+                      description: 'No translation provided yet',
+                      specs: [],
+                    };
                     return (
                       <div
                         key={d.code}
@@ -390,10 +394,10 @@ export const MultiDialectReviewStudio: React.FC = () => {
 
                         <div>
                           <div className="text-[10px] text-[#6C7E75] uppercase font-bold">
-                            Bulleted Specs ({content.specs.length})
+                            Bulleted Specs ({(content.specs || []).length})
                           </div>
                           <ul className="text-[11px] text-[#0B130F] space-y-1 mt-1">
-                            {content.specs.map((s, idx) => (
+                            {(content.specs || []).map((s, idx) => (
                               <li key={idx} className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] shrink-0" />
                                 <span>{s}</span>
@@ -415,7 +419,7 @@ export const MultiDialectReviewStudio: React.FC = () => {
                         onClick={() => {
                           setActiveTabLang(d.code);
                           if (isEditing) {
-                            setEditedContent({ ...currentAuction.multilingual[d.code] });
+                            setEditedContent({ ...(currentAuction?.multilingual?.[d.code] || { title: '', description: '', specs: [] }) });
                           }
                         }}
                         className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
@@ -442,7 +446,7 @@ export const MultiDialectReviewStudio: React.FC = () => {
                         value={
                           isEditing
                             ? editedContent.title
-                            : currentAuction.multilingual[activeTabLang].title
+                            : currentAuction?.multilingual?.[activeTabLang]?.title || ''
                         }
                         onChange={(e) =>
                           setEditedContent({ ...editedContent, title: e.target.value })
@@ -461,7 +465,7 @@ export const MultiDialectReviewStudio: React.FC = () => {
                         value={
                           isEditing
                             ? editedContent.description
-                            : currentAuction.multilingual[activeTabLang].description
+                            : currentAuction?.multilingual?.[activeTabLang]?.description || ''
                         }
                         onChange={(e) =>
                           setEditedContent({ ...editedContent, description: e.target.value })

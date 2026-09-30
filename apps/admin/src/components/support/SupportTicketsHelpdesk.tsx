@@ -471,7 +471,7 @@ export const SupportTicketsHelpdesk: React.FC = () => {
                 {matchedAuctions.length > 0 ? (
                   matchedAuctions.map((auc) => (
                     <div key={auc.id} className="text-xs text-gray-300 border-b border-gray-900 pb-1.5">
-                      <div className="font-bold text-white truncate">{auc.multilingual.en.title}</div>
+                      <div className="font-bold text-white truncate">{auc.multilingual?.en?.title || 'Item'}</div>
                       <div className="text-[10px] text-gray-400">
                         {auc.currentBidIqd.toLocaleString()} IQD • 100% COD
                       </div>

@@ -41,7 +41,7 @@ export const ParcelLifecycleBoard: React.FC<ParcelLifecycleBoardProps> = ({
 
   const filteredAuctions = completedAuctions.filter((auc) => {
     const matchesSearch =
-      auc.multilingual.en.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      (auc.multilingual?.en?.title || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
       (auc.packageAwbId && auc.packageAwbId.toLowerCase().includes(searchFilter.toLowerCase())) ||
       (auc.highestBidder?.name && auc.highestBidder.name.toLowerCase().includes(searchFilter.toLowerCase())) ||
       auc.id.toLowerCase().includes(searchFilter.toLowerCase());
@@ -483,7 +483,7 @@ const ParcelCard: React.FC<ParcelCardProps> = ({
       {/* Item Title & Seller */}
       <div>
         <h4 className="font-bold text-xs text-[#0B130F] line-clamp-1">
-          {auction.multilingual.en.title}
+          {auction.multilingual?.en?.title || 'Parcel Item'}
         </h4>
         <span className="text-[10px] text-[#6C7E75]">Seller: {auction.sellerName}</span>
       </div>

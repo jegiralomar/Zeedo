@@ -63,7 +63,12 @@ export default function BuyerMarketplacePage() {
           currentBidIqd: liveItem.currentBidIqd,
           incrementStepIqd: liveItem.incrementStepIqd || 1000,
           estimatedRetailMarketPriceIqd: liveItem.estimatedRetailMarketPriceIqd,
-          multilingual: liveItem.multilingual,
+          multilingual: liveItem.multilingual || {
+            en: { title: liveItem.category || 'Live Item', description: '', specs: [] },
+            ar: { title: 'منتج مباشر', description: '', specs: [] },
+            ckb: { title: 'کاڵای ڕاستەوخۆ', description: '', specs: [] },
+            badini: { title: 'کەلەپەلی نوی', description: '', specs: [] },
+          },
           submittedAt: liveItem.submittedAt,
           auctionStartsAt: liveItem.auctionStartsAt,
           auctionEndsAt: liveItem.auctionEndsAt,
@@ -96,16 +101,26 @@ export default function BuyerMarketplacePage() {
   const filteredAuctions = auctions.filter((item) => {
     const matchesCat =
       selectedCategory === 'All' || item.category === selectedCategory;
-    const localized = item.multilingual[language] || item.multilingual.en;
+    const localized = item.multilingual?.[language] || item.multilingual?.en || {
+      title: (item as any).titles?.en || (item as any).titles?.[language] || 'Live Auction Item',
+      description: '',
+      specs: [],
+    };
     const matchesQuery =
       searchQuery.trim() === '' ||
-      localized.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sellerName.toLowerCase().includes(searchQuery.toLowerCase());
+      (localized.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.sellerName || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesQuery;
   });
 
   const hotAuction = auctions.find((a) => a.isAntiSnipingActive) || auctions[0];
-  const hotLocalized = hotAuction ? (hotAuction.multilingual[language] || hotAuction.multilingual.en) : null;
+  const hotLocalized = hotAuction
+    ? hotAuction.multilingual?.[language] || hotAuction.multilingual?.en || {
+        title: (hotAuction as any).titles?.en || (hotAuction as any).titles?.[language] || 'Hot Drop',
+        description: '',
+        specs: [],
+      }
+    : null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">

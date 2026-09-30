@@ -117,7 +117,7 @@ export const LiveWarRoom: React.FC = () => {
   const filteredAndSortedAuctions = [...liveAuctions]
     .filter((auc) => {
       const matchesSearch =
-        auc.multilingual.en.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (auc.multilingual?.en?.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         auc.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         auc.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || auc.category === categoryFilter;
@@ -206,7 +206,7 @@ export const LiveWarRoom: React.FC = () => {
               (auc.bidsHistory || []).map((b) => ({
                 ...b,
                 auctionId: auc.id,
-                auctionTitle: auc.multilingual.en.title,
+                auctionTitle: auc.multilingual?.en?.title || auc.category,
                 city: auc.highestBidder?.rooftopPin?.city || 'Erbil',
               }))
             )
@@ -393,7 +393,7 @@ export const LiveWarRoom: React.FC = () => {
                           {auc.id} &bull; {auc.category}
                         </span>
                         <h3 className="font-bold text-sm text-[#0B130F] line-clamp-1 mt-0.5">
-                          {auc.multilingual.en.title}
+                          {auc.multilingual?.en?.title || auc.category}
                         </h3>
                       </div>
 
@@ -487,7 +487,7 @@ export const LiveWarRoom: React.FC = () => {
                               </span>
                             </div>
                             <div className="font-extrabold text-[#0B130F] mt-0.5 line-clamp-1 max-w-[220px]">
-                              {auc.multilingual.en.title}
+                              {auc.multilingual?.en?.title || auc.category}
                             </div>
                           </td>
                           <td className="p-3.5">
@@ -577,7 +577,7 @@ export const LiveWarRoom: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-xs text-[#0B130F] line-clamp-1">
-                            {auc.multilingual.en.title}
+                            {auc.multilingual?.en?.title || auc.category}
                           </h4>
                           <span className="text-[10px] px-2 py-0.2 rounded-full bg-[#F4F6F5] text-[#6C7E75]">
                             {auc.category}
@@ -743,7 +743,7 @@ export const LiveWarRoom: React.FC = () => {
 
                 <a
                   href={`https://wa.me/9647500000000?text=${encodeURIComponent(
-                    `Hello ZEEDO Support, I have an inquiry regarding Auction ID: ${currentAuction.id} (${currentAuction.multilingual.en.title}), Seller: ${currentAuction.sellerName}.`
+                    `Hello ZEEDO Support, I have an inquiry regarding Auction ID: ${currentAuction.id} (${currentAuction.multilingual?.en?.title || currentAuction.category}), Seller: ${currentAuction.sellerName}.`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

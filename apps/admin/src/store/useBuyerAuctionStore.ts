@@ -40,42 +40,76 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
           const res = await fetch('/api/listings?status=live');
           const data = await res.json();
           if (data.success && Array.isArray(data.listings)) {
-            const items: MobileAuctionItem[] = data.listings.map((l: any) => ({
-              id: l.id,
-              sellerId: l.sellerId,
-              sellerName: l.sellerName,
-              titles: {
-                en: l.multilingual?.en?.title || 'New Item',
-                ar: l.multilingual?.ar?.title || l.multilingual?.en?.title || 'منتج جديد',
-                ckb: l.multilingual?.ckb?.title || l.multilingual?.en?.title || 'کاڵای نوێ',
-                badini: l.multilingual?.badini?.title || l.multilingual?.en?.title || 'کەلەپەلی نوی',
-              },
-              descriptions: {
-                en: l.multilingual?.en?.description || '',
-                ar: l.multilingual?.ar?.description || '',
-                ckb: l.multilingual?.ckb?.description || '',
-                badini: l.multilingual?.badini?.description || '',
-              },
-              specifications: l.multilingual?.en?.specs || [],
-              images: l.images || [],
-              startingPriceIqd: 1000,
-              currentBidIqd: l.currentBidIqd || 1000,
-              estimatedRetailPriceIqd: l.estimatedRetailMarketPriceIqd || 150000,
-              incrementStepIqd: l.incrementStepIqd || 1000,
-              status: 'live',
-              totalBids: l.totalBids || 0,
-              bidsHistory: l.bidsHistory || [],
-              auctionStartsAt: l.auctionStartsAt,
-              auctionEndsAt: l.auctionEndsAt,
-              isAntiSnipingActive: l.isAntiSnipingActive || false,
-              antiSnipingResetsCount: l.antiSnipingResetsCount || 0,
-              category: l.category || 'Consumer Electronics',
-              condition: l.condition || 'New',
-            }));
+            const items: MobileAuctionItem[] = data.listings.map((l: any) => {
+              const enTitle = l.multilingual?.en?.title || l.titles?.en || 'New Item';
+              const arTitle = l.multilingual?.ar?.title || l.titles?.ar || enTitle;
+              const ckbTitle = l.multilingual?.ckb?.title || l.titles?.ckb || enTitle;
+              const badiniTitle = l.multilingual?.badini?.title || l.titles?.badini || enTitle;
+
+              const enDesc = l.multilingual?.en?.description || l.descriptions?.en || '';
+              const arDesc = l.multilingual?.ar?.description || l.descriptions?.ar || enDesc;
+              const ckbDesc = l.multilingual?.ckb?.description || l.descriptions?.ckb || enDesc;
+              const badiniDesc = l.multilingual?.badini?.description || l.descriptions?.badini || enDesc;
+
+              const specs = l.multilingual?.en?.specs || l.specifications || [];
+              const imageUrl =
+                (Array.isArray(l.images) && l.images[0]) ||
+                l.imageUrl ||
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80';
+
+              return {
+                id: l.id,
+                sellerId: l.sellerId || 'sel-01',
+                sellerName: l.sellerName || 'Zeedo Merchant',
+                category: l.category || 'Consumer Electronics',
+                condition: l.condition || 'New',
+                imageUrl,
+                startingPriceIqd: 1000,
+                currentBidIqd: l.currentBidIqd || 1000,
+                incrementStepIqd: l.incrementStepIqd || 1000,
+                estimatedRetailMarketPriceIqd: l.estimatedRetailMarketPriceIqd || 150000,
+                multilingual: {
+                  en: { title: enTitle, description: enDesc, specs },
+                  ar: { title: arTitle, description: arDesc, specs },
+                  ckb: { title: ckbTitle, description: ckbDesc, specs },
+                  badini: { title: badiniTitle, description: badiniDesc, specs },
+                },
+                submittedAt: l.submittedAt || new Date().toISOString(),
+                auctionStartsAt: l.auctionStartsAt || new Date().toISOString(),
+                auctionEndsAt: l.auctionEndsAt || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+                status: 'live',
+                isAntiSnipingActive: l.isAntiSnipingActive || false,
+                antiSnipingResetsCount: l.antiSnipingResetsCount || 0,
+                totalBids: l.totalBids || 0,
+                highestBidder: l.highestBidder,
+                bidsHistory: l.bidsHistory || [],
+              };
+            });
+
             set((state) => {
               const dbMap = new Map(items.map((i) => [i.id, i]));
+              const sanitizedLocal = state.auctions.map((local) => {
+                if (!local.multilingual) {
+                  const fallbackTitle = (local as any).titles?.en || 'Auction Item';
+                  return {
+                    ...local,
+                    imageUrl:
+                      local.imageUrl ||
+                      (local as any).images?.[0] ||
+                      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+                    multilingual: {
+                      en: { title: fallbackTitle, description: '', specs: [] },
+                      ar: { title: (local as any).titles?.ar || fallbackTitle, description: '', specs: [] },
+                      ckb: { title: (local as any).titles?.ckb || fallbackTitle, description: '', specs: [] },
+                      badini: { title: (local as any).titles?.badini || fallbackTitle, description: '', specs: [] },
+                    },
+                  };
+                }
+                return local;
+              });
+
               const merged = [...items];
-              for (const local of state.auctions) {
+              for (const local of sanitizedLocal) {
                 if (!dbMap.has(local.id)) {
                   merged.push(local);
                 }
@@ -145,7 +179,7 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
           success = true;
           return {
             auctions: updatedAuctions,
-            lastBidAlert: `Bid accepted: ${newBid.toLocaleString()} IQD on ${target.multilingual.en?.title || 'item'}`,
+            lastBidAlert: `Bid accepted: ${newBid.toLocaleString()} IQD on ${target.multilingual?.en?.title || (target as any).titles?.en || 'item'}`,
           };
         });
 
@@ -190,7 +224,7 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
       },
     }),
     {
-      name: 'zeedo_buyer_auction_prod_v1',
+      name: 'zeedo_buyer_auction_prod_v2',
       storage: createJSONStorage(() => localStorage),
     }
   )
