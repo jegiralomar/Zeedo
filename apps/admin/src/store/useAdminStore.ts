@@ -584,7 +584,7 @@ export const useAdminStore = create<AdminStoreState>()(
       createSellerListing: (listingData) => {
         const seller = get().sellers.find((s) => s.id === listingData.sellerId);
         const autoApprove = seller?.auto_approve_listings || false;
-        const newId = `auc-${Math.floor(100 + Math.random() * 900)}`;
+        const newId = `auc-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
         const durationHours = listingData.proposedDurationHours || 24;
         const now = new Date();
         const endsAt = new Date(now.getTime() + durationHours * 3600 * 1000).toISOString();
