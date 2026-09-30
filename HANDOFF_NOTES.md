@@ -3,73 +3,99 @@
 **Last Updated:** September 30, 2026  
 **Repository:** `d:\ZEEDO BID APP`  
 **Production URL:** [https://zeedo.auction](https://zeedo.auction)  
-**Admin URL:** [https://admin.zeedo.auction](https://admin.zeedo.auction) (and fallback [https://zeedo.auction/admin](https://zeedo.auction/admin))
+**Admin URL:** [https://admin.zeedo.auction](https://admin.zeedo.auction) (and fallback [https://zeedo.auction/admin](https://zeedo.auction/admin))  
+**Master Admin Credentials:** `ZAdmin9898` / `ZEEDOA98`
 
 ---
 
-## 1. Summary of Recent Progress
+## 1. Summary of Recent Progress & Critical Fixes
 
-### A. Dual-Domain Subdomain Architecture (Completed ✅)
-- **`zeedo.auction`:** Dedicated to the **Buyer Marketplace Web Application**.
-  - Replicates the exact visual layout and components of the Expo React Native mobile app in responsive Tailwind web components.
-  - **Live Auction Browsing:** Category pills (Phones, Watches, Gaming, Laptops), real-time search, 2-column grid vs. list view toggle.
-  - **Anti-Sniping Zone Banner:** Live countdown ticking ticker (<60s soft close alert, reset count, leading bidder).
-  - **Live Auction War Room (`LiveAuctionRoomModal.tsx`):** Dynamic tier increments (`+1,000`, `+2,000`, `+3,000 IQD`), proxy auto-bid ceiling with safety brake check, live bids ledger.
-  - **Two-Gate KYC Verification (`TwoGateKycModal.tsx`):**
-    - **Gate 1:** Civil ID verification powered by our self-contained Tesseract.js OCR engine (`/api/ai/ocr-id`).
-    - **Gate 2:** Rooftop GPS Map Pin Dropper with landmark and Iraqi district inputs.
-  - **My Bids & COD Tracking (`/my-bids`):** Active bids (leader vs outbid) and won items with thermal AWB tracking numbers.
-  - **Saved Watchlist (`/watchlist`):** Live bookmarked items.
-  - **Buyer Profile (`/profile`):** Verified identity, phone, address, and bid records.
-  - **Multilingual RTL/LTR:** Instant switching between Kurdish Sorani (`ckb`), Kurdish Badini (`badini`), Arabic (`ar`), and English (`en`).
+### A. Resolution of `multilingual.ckb` Crash (Completed & Deployed ✅)
+- **Root Cause:**
+  - Marketplace buyer app defaults to Kurdish Sorani (`language: 'ckb'`).
+  - Legacy listings in the PostgreSQL database or cached in browser `localStorage` under `zeedo_buyer_auction_prod_v1` lacked the `multilingual` JSON object.
+  - In `marketplace/page.tsx` and `marketplace/my-bids/page.tsx`, `item.multilingual[language]` evaluated to `item.multilingual['ckb']`, throwing `Uncaught TypeError: can't access property "ckb", e.multilingual is undefined` and crashing the React tree.
+  - In `useBuyerAuctionStore.ts`, `syncLiveAuctionsFromDb` was previously omitting the `multilingual` dictionary mapping from API rows, saving unmapped items into store state.
+- **Comprehensive Solution:**
+  - Added safe optional chaining (`item.multilingual?.[language] || item.multilingual?.en || ...`) with comprehensive Iraqi dialect fallbacks (`ckb`, `badini`, `ar`, `en`) across all 11 affected files:
+    - `marketplace/page.tsx`
+    - `marketplace/my-bids/page.tsx`
+    - `useBuyerAuctionStore.ts`
+    - `useAdminStore.ts`
+    - `MultiDialectReviewStudio.tsx`
+    - `LiveWarRoom.tsx`
+    - `SellerProfileDetail.tsx`
+    - `SupportTicketsHelpdesk.tsx`
+    - `ParcelLifecycleBoard.tsx`
+    - `PrintCenter.tsx`
+    - `MerchantPortalView.tsx`
+  - Upgraded buyer Zustand store persistence key from `zeedo_buyer_auction_prod_v1` to `zeedo_buyer_auction_prod_v2` to immediately invalidate and purge any corrupted legacy state cached in client browsers.
+  - Fixed listing sync mapper to populate all 4 dialects, image URLs, and specifications.
 
-- **`admin.zeedo.auction`:** Dedicated to the **Operations & Admin Panel**.
-  - All admin operations moved under `src/app/admin/`:
-    - Overview Dashboard (`/` -> `/admin`)
-    - Live Auction War Room (`/auctions` -> `/admin/auctions`)
-    - Split-Screen KYC Review (`/kyc` -> `/admin/kyc`)
-    - Listing Moderation (`/moderation` -> `/admin/moderation`)
-    - Logistics & Thermal Label Print Center (`/logistics` -> `/admin/logistics`)
-    - Merchants & Sellers (`/sellers` -> `/admin/sellers`)
-    - Marketing & CMS (`/cms` -> `/admin/cms`)
-    - Support & Help Desk (`/support` -> `/admin/support`)
-    - Team & RBAC Roles (`/team` -> `/admin/team`)
-    - Audit Trail (`/audit` -> `/admin/audit`)
-  - Direct path fallback: `zeedo.auction/admin` remains fully functional during DNS setup.
+### B. Branch Sync & Production Deployment Pipeline (Completed & Deployed ✅)
+- **Root Cause for Delayed Edge Updates:**
+  - `origin/main` was 18 commits behind `origin/master`.
+  - Vercel Git-triggered builds were failing in 4 seconds due to root directory configuration when pulling the full monorepo root.
+- **Resolution:**
+  - Fast-forward merged `master` into `main` and pushed both branches to GitHub (`commit 4a0ba49`).
+  - Executed direct CLI production build and deployment (`vercel --prod --yes`) from `apps/admin/`.
+  - Deployment `admin-o48acw5mm-zeedo1.vercel.app` completed successfully in 15s and aliased directly to `https://zeedo.auction`.
+  - Verified live bundle: old crashing chunk `1i5thibl0xj3n.js` is gone; verified live chunk `3-k0fzwti2iav.js` contains the new fallback logic and `09p-0il68u_zq.js` serves the `v2` store.
 
-- **Next.js Subdomain Routing (`src/middleware.ts`):**
-  - Host header inspection routes `admin.zeedo.auction` -> `/admin/*` and `zeedo.auction` -> `/marketplace/*`.
-  - All `/api/*` routes are shared seamlessly without cross-origin CORS barriers.
+### C. Merchant Portal & Scraper Architecture (Completed ✅)
+- **Gemini Official `url_context` Scraper:** Upgraded `/api/scraper/product` to use Gemini API with URL context and Headless Jina Reader fallback (`https://r.jina.ai/`).
+- **Catalog Intelligence:** Automatically parses product images, retail price baseline in USD/IQD, specifications, and auto-generates translations across all Iraqi dialects:
+  - `ckb` (Kurdish Sorani - Erbil & Sulaymaniyah)
+  - `badini` (Kurdish Badini - Duhok & Zakho)
+  - `ar` (Iraqi Arabic - Baghdad & Basra)
+  - `en` (English Reference)
+- **ID Collision Fix:** Replaced random Math IDs with millisecond-timestamped keys (`auc-${Date.now().toString().slice(-6)}`) preventing merchant listings from overwriting one another.
+- **Postgres Real-Time Sync:** Merchant-submitted items persist to Neon PostgreSQL (`auctions` table) and appear in the Admin Moderation queue.
 
-### B. Self-Contained Tesseract.js OCR (Completed ✅)
-- Dual-language Arabic (`ara`) and English (`eng`) model pipeline.
-- Extracts Iraqi Unified National ID cards (*Bataqa Wataniya*).
-- Zero API keys, zero rate limits, zero external quotas.
+### D. Pure IQD Bidding & Iraqi Localized Economics (Completed ✅)
+- Starting price strictly **1,000 IQD** nationwide.
+- Dynamic bidding tiers:
+  - `< 100,000 IQD`: `+1,000 IQD` increments
+  - `100,000 - 200,000 IQD`: `+2,000 IQD` increments
+  - `> 200,000 IQD`: `+3,000 IQD` increments
+- 60-second Anti-Sniping soft close timer extensions with visual alerts.
+- Live exchange rate sync via Central Bank of Iraq market rate (`/api/exchange-rate`).
 
-### C. Build & Verification (Completed ✅)
-- Tested with Next.js 16.3.6 (Turbopack) — all 30 routes and the Middleware Proxy compiled cleanly with 0 TypeScript/compilation errors.
+### E. Dual-Domain Architecture & Tesseract.js OCR (Completed ✅)
+- **`zeedo.auction`:** Buyer Marketplace Web App.
+- **`admin.zeedo.auction`:** Operations & Admin Panel (`/admin/*`).
+- **Next.js Subdomain Middleware (`src/middleware.ts`):** Host header inspection dynamically routes buyer vs admin requests while sharing `/api/*`.
+- **Self-Contained Tesseract.js OCR:** Iraqi Unified National ID cards (*Bataqa Wataniya*) parsed locally in `/api/ai/ocr-id` without external API quotas.
 
 ---
 
-## 2. Vercel Domain Configuration Instructions
+## 2. Active System Architecture
 
-To activate the dual-domain routing in production on Vercel:
-1. Open the **Vercel Dashboard** → Select the **Zeedo** project.
-2. Navigate to **Settings** → **Domains**.
-3. Ensure both domains are added to the same project:
-   - `zeedo.auction` (Primary domain → serves Buyer Marketplace)
-   - `www.zeedo.auction` (Redirects to `zeedo.auction`)
-   - `admin.zeedo.auction` (Subdomain → serves Admin Console)
-4. In your DNS provider (e.g., Cloudflare, Namecheap, GoDaddy):
-   - Add a CNAME record: `admin` pointing to `cname.vercel-dns.com` (or Vercel CNAME).
-
----
-
-## 3. Active Architecture
-
-| Domain | Experience | Target | Status |
+| Endpoint / Domain | Purpose | Backing Source | Status |
 |---|---|---|---|
-| `zeedo.auction` | Buyer Marketplace | `/marketplace/*` | Production Ready |
-| `admin.zeedo.auction` | Spark Admin Console | `/admin/*` | Production Ready |
-| `zeedo.auction/admin` | Admin Fallback | `/admin/*` | Active Fallback |
-| Shared API (`/api/*`) | Backend Services | Neon Postgres DB + Tesseract OCR | Live |
+| `https://zeedo.auction` | Buyer Marketplace Web App | Next.js Turbopack (`/marketplace/*`) | **Live & Verified** |
+| `https://admin.zeedo.auction` | Operations Management Panel | Next.js Turbopack (`/admin/*`) | **Live** |
+| `https://zeedo.auction/admin` | Direct Admin Fallback | Next.js Turbopack (`/admin/*`) | **Live Fallback** |
+| `GET /api/listings?status=live` | Live Marketplace Listings | Neon PostgreSQL (`auctions` table) | **Operational** |
+| `POST /api/listings` | Merchant Listing Creation | Neon PostgreSQL | **Operational** |
+| `POST /api/scraper/product` | Product Catalog Scraper | Jina Reader + Gemini `url_context` | **Operational** |
+| `POST /api/ai/ocr-id` | Bataqa Wataniya Civil ID OCR | Self-contained Tesseract.js (`ara` + `eng`) | **Operational** |
+
+---
+
+## 3. Key Credentials & Configurations
+
+- **Admin Login:** `ZAdmin9898` / `ZEEDOA98`
+- **Buyer Test Account:** Phone auth / OTP simulation (auto-verifies in development/preview)
+- **Merchant ID:** `sel-01` (Zeedo Merchant Hub, Erbil)
+- **Vercel Project:** `zeedo1/admin` (`prj_CjmLqSrWrPki65DICvgMeCeUKWNI`)
+- **Git Branches:** `master` and `main` are synchronized at commit `4a0ba49`.
+
+---
+
+## 4. Verification Instructions
+
+If verifying on a client browser:
+1. Open [zeedo.auction](https://zeedo.auction).
+2. Perform a hard refresh (`Ctrl + Shift + R` on Windows/Linux or `Cmd + Shift + R` on Mac).
+3. The marketplace renders with Kurdish Sorani (`ckb`) by default, category pills, live auction cards, and zero console TypeErrors.
