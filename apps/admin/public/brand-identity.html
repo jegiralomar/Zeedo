@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZEEDO • Brand Identity & Logo System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-indigo: #5B50D6;
+      --brand-indigo-hover: #4A40C4;
+      --brand-indigo-light: #EEEDFB;
+      --brand-navy: #1E2235;
+      --brand-yellow: #FFB800;
+      --canvas-bg: #F5F6FA;
+      --card-bg: #FFFFFF;
+      --border-color: #ECEEF5;
+      --text-muted: #64748B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--canvas-bg);
+      color: var(--brand-navy);
+      line-height: 1.6;
+      padding: 40px 20px 80px;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .brand-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--brand-indigo-light);
+      color: var(--brand-indigo);
+      font-weight: 800;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .brand-header h1 {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+      margin-bottom: 10px;
+      color: var(--brand-navy);
+    }
+
+    .brand-header p {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Section Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 28px;
+      border: 1px solid var(--border-color);
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(30, 34, 53, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 12px 30px rgba(91, 80, 214, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* Visual Previews */
+    .icon-preview-box {
+      background: #F8F9FD;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      margin-bottom: 20px;
+      border: 1px dashed #E2E8F0;
+    }
+
+    .app-icon-img {
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      box-shadow: 0 16px 40px rgba(91, 80, 214, 0.25);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .app-icon-img:hover {
+      transform: scale(1.05) rotate(-2deg);
+    }
+
+    .logo-preview-box {
+      background: #FFFFFF;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px dashed #E2E8F0;
+    }
+
+    .logo-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+    }
+
+    /* Color Swatches */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .swatch {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+
+    .swatch-color {
+      width: 100%;
+      height: 64px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .swatch-name {
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+
+    .swatch-hex {
+      font-size: 11px;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    /* Action Buttons */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 13px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--brand-indigo);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(91, 80, 214, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-indigo-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--brand-indigo-light);
+      color: var(--brand-indigo);
+    }
+
+    .btn-secondary:hover {
+      background: #E0DEFA;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .brand-header h1 {
+        font-size: 28px;
+      }
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="brand-header">
+      <div class="badge-pill">⚖️ Official Brand System</div>
+      <h1>ZEEDO Brand Identity & Assets</h1>
+      <p>Luxury live auction identity featuring the Royal Indigo (#5B50D6) and Golden Gavel (#FFB800) visual language across iOS, Android, and Web.</p>
+    </header>
+
+    <!-- Top Grid: App Icon & Horizontal Logo Lockup -->
+    <div class="grid-2">
+      <!-- Card 1: 3D App Icon -->
+      <div class="card">
+        <h2 class="card-title">📱 App Icon Mark</h2>
+        <p class="card-subtitle">512×512 iOS and Android store launcher asset</p>
+        
+        <div class="icon-preview-box">
+          <img src="/zeedo_app_icon.jpg" alt="Zeedo 3D App Icon" class="app-icon-img">
+        </div>
+
+        <div class="btn-row">
+          <a href="/zeedo_app_icon.jpg" download="zeedo_app_icon.jpg" class="btn btn-primary">
+            Download App Icon (HD)
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: Horizontal Brand Lockup -->
+      <div class="card">
+        <h2 class="card-title">🏷️ Horizontal Brand Lockup</h2>
+        <p class="card-subtitle">Official typography lockup with English & Arabic subline</p>
+        
+        <div class="logo-preview-box">
+          <img src="/zeedo_brand_logo.jpg" alt="Zeedo Brand Logo Lockup" class="logo-img">
+        </div>
+
+        <div class="btn-row">
+          <a href="/zeedo_brand_logo.jpg" download="zeedo_brand_logo.jpg" class="btn btn-primary">
+            Download Logo (16:9)
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Palette Section -->
+    <div class="card" style="margin-bottom: 40px;">
+      <h2 class="card-title">🎨 Brand Color Tokens</h2>
+      <p class="card-subtitle">Harmonized color palette across the buyer app, mobile app, and admin panel</p>
+
+      <div class="palette-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background: #5B50D6;"></div>
+          <div class="swatch-name">Royal Indigo</div>
+          <div class="swatch-hex">#5B50D6</div>
+        </div>
+
+        <div class="swatch">
+          <div class="swatch-color" style="background: #FFB800;"></div>
+          <div class="swatch-name">Golden Yellow</div>
+          <div class="swatch-hex">#FFB800</div>
+        </div>
+
+        <div class="swatch">
+          <div class="swatch-color" style="background: #1E2235;"></div>
+          <div class="swatch-name">Deep Navy</div>
+          <div class="swatch-hex">#1E2235</div>
+        </div>
+
+        <div class="swatch">
+          <div class="swatch-color" style="background: #F5F6FA; border: 1px solid #ECEEF5;"></div>
+          <div class="swatch-name">Soft Periwinkle</div>
+          <div class="swatch-hex">#F5F6FA</div>
+        </div>
+
+        <div class="swatch">
+          <div class="swatch-color" style="background: #EEEDFB;"></div>
+          <div class="swatch-name">Lavender Pill</div>
+          <div class="swatch-hex">#EEEDFB</div>
+        </div>
+
+        <div class="swatch">
+          <div class="swatch-color" style="background: #EF4444;"></div>
+          <div class="swatch-name">Live Red</div>
+          <div class="swatch-hex">#EF4444</div>
+        </div>
+
+        <div class="swatch">
+          <div class="swatch-color" style="background: #10B981;"></div>
+          <div class="swatch-name">Verified Green</div>
+          <div class="swatch-hex">#10B981</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation Links -->
+    <div style="text-align: center;">
+      <a href="/marketplace" class="btn btn-secondary" style="margin-right: 10px;">← Open Web Marketplace</a>
+      <a href="/admin" class="btn btn-secondary">Open Admin Panel →</a>
+    </div>
+  </div>
+
+</body>
+</html>
