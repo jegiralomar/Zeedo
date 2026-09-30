@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
 } from 'react-native';
-import { MobileAuctionItem } from '../components/AuctionCard';
+import { MobileAuctionItem, AuctionCard } from '../components/AuctionCard';
+import { EviraTheme } from '../lib/theme';
 
 interface WatchlistScreenProps {
   savedIds: string[];
@@ -15,7 +15,7 @@ interface WatchlistScreenProps {
   onToggleSave: (id: string) => void;
   onQuickBid: (item: MobileAuctionItem) => void;
   onViewItem: (item: MobileAuctionItem) => void;
-  language: 'ckb' | 'badini' | 'ar' | 'en';
+  language?: 'ckb' | 'badini' | 'ar' | 'en';
 }
 
 export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
@@ -26,70 +26,82 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
   onViewItem,
   language,
 }) => {
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const savedItems = items.filter((it) => savedIds.includes(it.id));
+
+  const filtered = savedItems.filter((it) =>
+    selectedCategory === 'all'
+      ? true
+      : it.category.toLowerCase().includes(selectedCategory.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
+      {/* Evira Wishlist Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Watchlist</Text>
-        <Text style={styles.headerSub}>{savedItems.length} Saved Drops</Text>
+        <View>
+          <Text style={styles.headerTitle}>My Wishlist</Text>
+          <Text style={styles.headerSub}>{savedItems.length} Saved Drops</Text>
+        </View>
+
+        <TouchableOpacity style={styles.searchIconButton}>
+          <Text style={styles.searchIconText}>🔍</Text>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {savedItems.length === 0 ? (
+      {/* Horizontal Category Filter Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterPillsRow}
+      >
+        {['all', 'gaming', 'smartphones', 'watches', 'computers'].map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            onPress={() => setSelectedCategory(cat)}
+            style={[
+              styles.filterPill,
+              selectedCategory === cat && styles.filterPillActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterPillText,
+                selectedCategory === cat && styles.filterPillTextActive,
+              ]}
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* 2-Column Product Grid */}
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {filtered.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>⭐</Text>
-            <Text style={styles.emptyTitle}>Your Watchlist is Empty</Text>
+            <View style={styles.emptyIconCircle}>
+              <Text style={styles.emptyIcon}>♡</Text>
+            </View>
+            <Text style={styles.emptyTitle}>Your Wishlist is Empty</Text>
             <Text style={styles.emptySub}>
-              Tap the bookmark icon on any live drop to monitor timer resets and outbid activity here.
+              Tap the heart icon on any auction lot to monitor live timers, anti-sniping resets, and outbid activity here.
             </Text>
           </View>
         ) : (
-          savedItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              activeOpacity={0.9}
-              onPress={() => onViewItem(item)}
-              style={styles.card}
-            >
-              <Image
-                source={{
-                  uri:
-                    item.photos?.[0] ||
-                    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
-                }}
-                style={styles.cardImage}
+          <View style={styles.productGrid}>
+            {filtered.map((item) => (
+              <AuctionCard
+                key={item.id}
+                item={item}
+                language={language}
+                onQuickBid={onQuickBid}
+                onPressCard={onViewItem}
+                onToggleSave={onToggleSave}
+                isSaved={true}
               />
-              <View style={styles.cardContent}>
-                <View style={styles.topRow}>
-                  <Text style={styles.category}>{item.category.toUpperCase()}</Text>
-                  <TouchableOpacity onPress={() => onToggleSave(item.id)}>
-                    <Text style={styles.bookmarkActive}>★ Remove</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.title} numberOfLines={2}>
-                  {item.title}
-                </Text>
-
-                <View style={styles.bottomRow}>
-                  <View>
-                    <Text style={styles.priceLabel}>Current Bid</Text>
-                    <Text style={styles.priceValue}>
-                      {item.currentBid.toLocaleString()} <Text style={styles.iqd}>IQD</Text>
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => onQuickBid(item)}
-                    style={styles.bidButton}
-                  >
-                    <Text style={styles.bidButtonText}>+1,000 IQD</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
+            ))}
+          </View>
         )}
       </ScrollView>
     </View>
@@ -99,125 +111,101 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 8,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
+    color: EviraTheme.colors.textPrimary,
   },
   headerSub: {
-    color: '#A7C1B5',
-    fontSize: 11,
+    fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
+    fontWeight: '500',
     marginTop: 2,
   },
+  searchIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchIconText: {
+    fontSize: 16,
+  },
+  filterPillsRow: {
+    paddingHorizontal: 20,
+    gap: 8,
+    paddingBottom: 14,
+  },
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: EviraTheme.radii.full,
+    backgroundColor: EviraTheme.colors.background,
+    borderWidth: 1.5,
+    borderColor: EviraTheme.colors.border,
+  },
+  filterPillActive: {
+    backgroundColor: EviraTheme.colors.primary,
+    borderColor: EviraTheme.colors.primary,
+  },
+  filterPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
+  },
+  filterPillTextActive: {
+    color: EviraTheme.colors.textWhite,
+  },
   scroll: {
-    padding: 16,
-    gap: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  productGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   emptyContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 20,
-    padding: 36,
     alignItems: 'center',
-    marginTop: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    paddingVertical: 56,
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyIcon: {
-    fontSize: 40,
-    marginBottom: 10,
+    fontSize: 26,
+    color: EviraTheme.colors.textTertiary,
   },
   emptyTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
     marginBottom: 6,
   },
   emptySub: {
-    color: '#A7C1B5',
     fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  cardImage: {
-    width: 100,
-    height: '100%',
-    backgroundColor: '#1E293B',
-  },
-  cardContent: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  category: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  bookmarkActive: {
-    color: '#F59E0B',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-    lineHeight: 18,
-    marginVertical: 6,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  priceLabel: {
-    fontSize: 10,
-    color: '#64748B',
-  },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#072F1F',
-  },
-  iqd: {
-    fontSize: 11,
-    color: '#059669',
-    fontWeight: '700',
-  },
-  bidButton: {
-    backgroundColor: '#072F1F',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  bidButtonText: {
-    color: '#B4F105',
-    fontWeight: '900',
-    fontSize: 11,
+    maxWidth: 280,
   },
 });

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MobileAuctionItem } from '../components/AuctionCard';
 import { MobileBuyerSession } from '../lib/session';
+import { EviraTheme } from '../lib/theme';
 
 interface MyBidsScreenProps {
   session: MobileBuyerSession | null;
@@ -16,7 +17,7 @@ interface MyBidsScreenProps {
   onReBid: (item: MobileAuctionItem) => void;
   onViewItem: (item: MobileAuctionItem) => void;
   onSignInRequired: () => void;
-  language: 'ckb' | 'badini' | 'ar' | 'en';
+  language?: 'ckb' | 'badini' | 'ar' | 'en';
 }
 
 export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
@@ -25,26 +26,30 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
   onReBid,
   onViewItem,
   onSignInRequired,
-  language,
 }) => {
   const [activeTab, setActiveTab] = useState<'active' | 'won' | 'history'>('active');
 
   if (!session) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.emptyIcon}>🔒</Text>
+        <View style={styles.lockedIconCircle}>
+          <Text style={styles.lockedIcon}>🔒</Text>
+        </View>
         <Text style={styles.emptyTitle}>Sign In to View Bids</Text>
         <Text style={styles.emptySub}>
           Track your live winning bids, outbid alerts, and won items ready for doorstep cash inspection.
         </Text>
-        <TouchableOpacity onPress={onSignInRequired} style={styles.signInBtn}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onSignInRequired}
+          style={styles.signInBtn}
+        >
           <Text style={styles.signInBtnText}>Sign In with WhatsApp</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Segment items based on user activity
   const activeItems = items.filter((it) => it.totalBids > 0);
   const wonItems = items.filter((it) => {
     const isExpired = new Date(it.endsAt).getTime() <= Date.now();
@@ -53,13 +58,27 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 3-Segment Filter Bar */}
+      {/* Evira Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Bids</Text>
+        <Text style={styles.headerSubtitle}>
+          {activeTab === 'active'
+            ? `${activeItems.length} Active Lots`
+            : activeTab === 'won'
+            ? `${wonItems.length} Won Items`
+            : 'Completed History'}
+        </Text>
+      </View>
+
+      {/* Evira 3-Segment Filter Pills */}
       <View style={styles.segmentBar}>
         <TouchableOpacity
           onPress={() => setActiveTab('active')}
           style={[styles.segmentTab, activeTab === 'active' && styles.segmentTabActive]}
         >
-          <Text style={[styles.segmentText, activeTab === 'active' && styles.segmentTextActive]}>
+          <Text
+            style={[styles.segmentText, activeTab === 'active' && styles.segmentTextActive]}
+          >
             Active Bids ({activeItems.length})
           </Text>
         </TouchableOpacity>
@@ -77,13 +96,15 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
           onPress={() => setActiveTab('history')}
           style={[styles.segmentTab, activeTab === 'history' && styles.segmentTabActive]}
         >
-          <Text style={[styles.segmentText, activeTab === 'history' && styles.segmentTextActive]}>
+          <Text
+            style={[styles.segmentText, activeTab === 'history' && styles.segmentTextActive]}
+          >
             History
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {activeTab === 'active' && (
           <>
             {activeItems.length === 0 ? (
@@ -96,31 +117,44 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
               </View>
             ) : (
               activeItems.map((item, idx) => {
-                // Mock leading vs outbid for active items
                 const isLeading = idx % 2 === 0;
                 return (
                   <TouchableOpacity
                     key={item.id}
                     onPress={() => onViewItem(item)}
-                    activeOpacity={0.9}
+                    activeOpacity={0.88}
                     style={styles.bidCard}
                   >
-                    <Image
-                      source={{
-                        uri:
-                          item.photos?.[0] ||
-                          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
-                      }}
-                      style={styles.cardImage}
-                    />
+                    <View style={styles.imageContainer}>
+                      <Image
+                        source={{
+                          uri:
+                            item.photos?.[0] ||
+                            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
+                        }}
+                        style={styles.cardImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+
                     <View style={styles.cardDetails}>
                       <View style={styles.statusRow}>
-                        <View style={[styles.statusPill, isLeading ? styles.pillWinning : styles.pillOutbid]}>
-                          <Text style={[styles.statusText, isLeading ? styles.textWinning : styles.textOutbid]}>
-                            {isLeading ? '🟢 HIGHEST BIDDER' : '🔴 OUTBID'}
+                        <View
+                          style={[
+                            styles.statusPill,
+                            isLeading ? styles.pillWinning : styles.pillOutbid,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusText,
+                              isLeading ? styles.textWinning : styles.textOutbid,
+                            ]}
+                          >
+                            {isLeading ? 'HIGHEST BIDDER' : 'OUTBID'}
                           </Text>
                         </View>
-                        <Text style={styles.timeTag}>Live Stream</Text>
+                        <Text style={styles.timeTag}>Live Lot</Text>
                       </View>
 
                       <Text style={styles.cardTitle} numberOfLines={2}>
@@ -129,10 +163,10 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
 
                       <View style={styles.cardBottom}>
                         <View>
+                          <Text style={styles.priceLabel}>Current Bid</Text>
                           <Text style={styles.currentPrice}>
-                            {item.currentBid.toLocaleString()} <Text style={styles.iqd}>IQD</Text>
+                            {item.currentBid.toLocaleString()} IQD
                           </Text>
-                          <Text style={styles.usdText}>~${(item.currentBid / 1500).toFixed(2)} USD</Text>
                         </View>
 
                         {!isLeading && (
@@ -140,7 +174,7 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
                             onPress={() => onReBid(item)}
                             style={styles.reBidBtn}
                           >
-                            <Text style={styles.reBidBtnText}>+1,000 Re-bid</Text>
+                            <Text style={styles.reBidBtnText}>+Re-bid</Text>
                           </TouchableOpacity>
                         )}
                       </View>
@@ -159,36 +193,39 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
                 <Text style={styles.emptyBoxIcon}>🏆</Text>
                 <Text style={styles.emptyBoxTitle}>No Won Auctions Yet</Text>
                 <Text style={styles.emptyBoxSub}>
-                  When you win an auction, your Cash-on-Delivery doorstep dispatch order appears here.
+                  Keep bidding! When an auction timer concludes, your won items will appear here with live courier dispatch tracking.
                 </Text>
               </View>
             ) : (
               wonItems.map((item) => (
                 <View key={item.id} style={styles.wonCard}>
-                  <View style={styles.wonHeader}>
-                    <Text style={styles.wonTag}>✓ AUCTION WON</Text>
-                    <Text style={styles.wonPrice}>{item.currentBid.toLocaleString()} IQD</Text>
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={{
+                        uri:
+                          item.photos?.[0] ||
+                          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
+                      }}
+                      style={styles.cardImage}
+                      resizeMode="contain"
+                    />
                   </View>
 
-                  <Text style={styles.wonTitle}>{item.title}</Text>
-
-                  {/* Delivery Tracking Bar */}
-                  <View style={styles.deliveryProgress}>
-                    <View style={styles.stepDone}>
-                      <Text style={styles.stepText}>1. Won ✓</Text>
+                  <View style={styles.cardDetails}>
+                    <View style={styles.wonTag}>
+                      <Text style={styles.wonTagText}>🎉 AUCTION WON</Text>
                     </View>
-                    <View style={styles.stepActive}>
-                      <Text style={styles.stepText}>2. Dispatching 🚚</Text>
-                    </View>
-                    <View style={styles.stepPending}>
-                      <Text style={styles.stepText}>3. Inspection</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.codNotice}>
-                    <Text style={styles.codNoticeText}>
-                      💵 Pay on doorstep arrival: You have the right to inspect the item before paying cash.
+                    <Text style={styles.cardTitle} numberOfLines={1}>
+                      {item.title}
                     </Text>
+                    <Text style={styles.wonPrice}>
+                      Won at: {item.currentBid.toLocaleString()} IQD
+                    </Text>
+                    <View style={styles.awbBadge}>
+                      <Text style={styles.awbText}>
+                        AWB: AWB-IQ-{item.id.replace(/^auc-/, '')}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               ))
@@ -199,9 +236,9 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
         {activeTab === 'history' && (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyBoxIcon}>📜</Text>
-            <Text style={styles.emptyBoxTitle}>Past Activity</Text>
+            <Text style={styles.emptyBoxTitle}>Bid History</Text>
             <Text style={styles.emptyBoxSub}>
-              All your concluded auctions and past delivery receipts are archived securely.
+              All your historical bids are backed by 90-day device cryptographic keys.
             </Text>
           </View>
         )}
@@ -213,263 +250,248 @@ export const MyBidsScreen: React.FC<MyBidsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 32,
+    padding: 24,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+  lockedIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  lockedIcon: {
+    fontSize: 28,
   },
   emptyTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
     marginBottom: 8,
   },
   emptySub: {
-    color: '#A7C1B5',
     fontSize: 13,
+    color: EviraTheme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
+    lineHeight: 18,
+    marginBottom: 20,
+    maxWidth: 280,
   },
   signInBtn: {
-    backgroundColor: '#B4F105',
+    backgroundColor: EviraTheme.colors.primary,
     paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 16,
+    paddingVertical: 12,
+    borderRadius: EviraTheme.radii.full,
   },
   signInBtnText: {
-    color: '#072F1F',
+    color: EviraTheme.colors.textWhite,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 22,
     fontWeight: '900',
-    fontSize: 14,
+    color: EviraTheme.colors.textPrimary,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
+    marginTop: 2,
+    fontWeight: '500',
   },
   segmentBar: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
     gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 14,
   },
   segmentTab: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: EviraTheme.radii.full,
     alignItems: 'center',
+    backgroundColor: EviraTheme.colors.surface,
   },
   segmentTabActive: {
-    backgroundColor: '#B4F105',
+    backgroundColor: EviraTheme.colors.primary,
   },
   segmentText: {
-    color: '#A7C1B5',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
+    color: EviraTheme.colors.textSecondary,
   },
   segmentTextActive: {
-    color: '#072F1F',
-    fontWeight: '900',
+    color: EviraTheme.colors.textWhite,
   },
   scroll: {
-    padding: 16,
-    gap: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    gap: 12,
   },
   emptyBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 20,
-    padding: 36,
     alignItems: 'center',
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    justifyContent: 'center',
+    paddingVertical: 48,
   },
   emptyBoxIcon: {
     fontSize: 36,
     marginBottom: 10,
   },
   emptyBoxTitle: {
-    color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
     marginBottom: 4,
   },
   emptyBoxSub: {
-    color: '#A7C1B5',
     fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
+    maxWidth: 260,
   },
   bidCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: EviraTheme.colors.background,
+    borderRadius: EviraTheme.radii.xl,
+    padding: 12,
     flexDirection: 'row',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    alignItems: 'center',
+    gap: 14,
+    borderWidth: 1,
+    borderColor: EviraTheme.colors.border,
+  },
+  wonCard: {
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xl,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: EviraTheme.radii.lg,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardImage: {
-    width: 100,
-    height: '100%',
-    backgroundColor: '#1E293B',
+    width: '85%',
+    height: '85%',
   },
   cardDetails: {
     flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
   },
   statusRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
   statusPill: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   pillWinning: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: '#DCFCE7',
   },
   pillOutbid: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: '#FEE2E2',
   },
   statusText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontSize: 9,
+    fontWeight: '800',
   },
   textWinning: {
-    color: '#059669',
+    color: '#15803D',
   },
   textOutbid: {
-    color: '#DC2626',
+    color: '#B91C1C',
   },
   timeTag: {
     fontSize: 10,
-    color: '#94A3B8',
-    fontWeight: '600',
+    color: EviraTheme.colors.textTertiary,
+    fontWeight: '500',
   },
   cardTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
     lineHeight: 18,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   cardBottom: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  priceLabel: {
+    fontSize: 9,
+    color: EviraTheme.colors.textTertiary,
+    fontWeight: '600',
   },
   currentPrice: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#072F1F',
-  },
-  iqd: {
-    fontSize: 11,
-    color: '#059669',
-    fontWeight: '700',
-  },
-  usdText: {
-    fontSize: 10,
-    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
   },
   reBidBtn: {
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: EviraTheme.radii.full,
   },
   reBidBtnText: {
-    color: '#B4F105',
-    fontWeight: '900',
+    color: EviraTheme.colors.textWhite,
     fontSize: 11,
-  },
-  wonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#10B981',
-  },
-  wonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    fontWeight: '700',
   },
   wonTag: {
-    color: '#059669',
-    fontWeight: '900',
-    fontSize: 12,
-    letterSpacing: 0.5,
+    backgroundColor: '#DCFCE7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginBottom: 4,
   },
-  wonPrice: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#072F1F',
-  },
-  wonTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 14,
-  },
-  deliveryProgress: {
-    flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 8,
-    gap: 6,
-    marginBottom: 12,
-  },
-  stepDone: {
-    flex: 1,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  stepActive: {
-    flex: 1,
-    backgroundColor: 'rgba(180, 241, 5, 0.25)',
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  stepPending: {
-    flex: 1,
-    backgroundColor: '#E2E8F0',
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  stepText: {
+  wonTagText: {
+    color: '#15803D',
     fontSize: 10,
     fontWeight: '800',
-    color: '#0F172A',
   },
-  codNotice: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    padding: 10,
-    borderRadius: 10,
+  wonPrice: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
+    marginTop: 2,
   },
-  codNoticeText: {
-    fontSize: 11,
-    color: '#047857',
-    lineHeight: 16,
-    fontWeight: '600',
+  awbBadge: {
+    marginTop: 4,
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: EviraTheme.colors.border,
+  },
+  awbText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: EviraTheme.colors.textSecondary,
   },
 });

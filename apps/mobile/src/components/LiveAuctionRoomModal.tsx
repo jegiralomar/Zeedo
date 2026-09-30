@@ -7,23 +7,13 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Dimensions,
-  Alert,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { SlideToBidSlider } from './SlideToBidSlider';
 import { MobileAuctionItem } from './AuctionCard';
+import { EviraTheme } from '../lib/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-interface BidRecord {
-  id: string;
-  bidderId: string;
-  bidderName: string;
-  amountIqd: number;
-  timestamp: string;
-}
 
 interface LiveAuctionRoomModalProps {
   visible: boolean;
@@ -39,16 +29,12 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   item,
   onClose,
   onPlaceBid,
-  language,
   isLeading = false,
 }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-  const [showAutoBidModal, setShowAutoBidModal] = useState(false);
-  const [autoBidCeiling, setAutoBidCeiling] = useState('');
-  const [savedCeiling, setSavedCeiling] = useState<number | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, isUrgent: false, isExpired: false });
 
-  // Countdown Calculation
   useEffect(() => {
     if (!item?.endsAt) return;
 
@@ -61,23 +47,23 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
         return;
       }
 
-      const totalSecs = Math.floor(diff / 1000);
-      const h = Math.floor(totalSecs / 3600);
-      const m = Math.floor((totalSecs % 3600) / 60);
-      const s = totalSecs % 60;
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
 
       setTimeLeft({
         h,
         m,
         s,
-        isUrgent: diff <= 60000 && diff > 0,
+        isUrgent: diff <= 120000,
         isExpired: false,
       });
     };
 
     calcTime();
-    const timer = setInterval(calcTime, 1000);
-    return () => clearInterval(timer);
+    const interval = setInterval(calcTime, 1000);
+    return () => clearInterval(interval);
   }, [item?.endsAt]);
 
   if (!item) return null;
@@ -85,193 +71,181 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   const photos =
     item.photos && item.photos.length > 0
       ? item.photos
-      : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80'];
+      : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80'];
 
-  const nextBid = item.currentBid + item.bidIncrement;
-
-  const handleBidConfirm = async (inc?: number) => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch {}
-    onPlaceBid(item, inc);
-  };
-
-  const handleSaveAutoBid = () => {
-    const val = parseInt(autoBidCeiling.replace(/\D/g, ''), 10);
-    if (val && val > item.currentBid) {
-      setSavedCeiling(val);
-      setShowAutoBidModal(false);
-      Alert.alert(
-        'Auto-Bid Set',
-        `ZEEDO will automatically counter-bid in +1,000 IQD steps up to ${val.toLocaleString()} IQD.`
-      );
-    } else {
-      Alert.alert('Invalid Ceiling', `Ceiling must be greater than current bid (${item.currentBid.toLocaleString()} IQD).`);
-    }
-  };
+  const nextBidAmount = item.currentBid + item.bidIncrement;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeText}>✕</Text>
+        {/* Top Header Bar */}
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={onClose} style={styles.iconCircle}>
+            <Text style={styles.iconText}>✕</Text>
           </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerCategory}>{item.category.toUpperCase()}</Text>
-            <Text style={styles.headerId}>#{item.id.slice(-6)}</Text>
-          </View>
-          <View style={styles.liveIndicatorPill}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
-          </View>
+
+          <Text style={styles.topBarTitle} numberOfLines={1}>
+            {item.category.toUpperCase()}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => setIsSaved(!isSaved)}
+            style={[styles.iconCircle, isSaved && styles.iconCircleActive]}
+          >
+            <Text style={[styles.iconText, isSaved && styles.iconTextActive]}>
+              {isSaved ? '♥' : '♡'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {/* Main Photo Viewer */}
-          <View style={styles.photoContainer}>
-            <Image source={{ uri: photos[selectedPhotoIndex] }} style={styles.mainImage} resizeMode="contain" />
-
-            {/* Anti-Sniping Soft-Close Indicator */}
-            <View style={[styles.timerBadge, timeLeft.isUrgent && styles.timerBadgeUrgent]}>
-              <Text style={[styles.timerText, timeLeft.isUrgent && styles.timerTextUrgent]}>
-                {timeLeft.isExpired
-                  ? 'AUCTION CONCLUDED'
-                  : timeLeft.isUrgent
-                  ? `⚡ SOFT-CLOSE: ${timeLeft.s}s (≤60s RESET)`
-                  : `⏱ ${String(timeLeft.h).padStart(2, '0')}:${String(timeLeft.m).padStart(2, '0')}:${String(timeLeft.s).padStart(2, '0')}`}
-              </Text>
-            </View>
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* Evira Soft-Gray Hero Image Box */}
+          <View style={styles.heroImageBox}>
+            <Image
+              source={{ uri: photos[selectedPhotoIndex] || photos[0] }}
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
 
             {/* Condition Pill */}
             <View style={styles.conditionPill}>
-              <Text style={styles.conditionText}>{item.condition || 'Brand New'}</Text>
+              <Text style={styles.conditionPillText}>{item.condition || 'Brand New'}</Text>
             </View>
+
+            {/* Carousel Dots */}
+            {photos.length > 1 && (
+              <View style={styles.dotsRow}>
+                {photos.map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.dot,
+                      selectedPhotoIndex === i && styles.dotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* Photo Thumbnails */}
+          {/* Thumbnails Row if multiple photos */}
           {photos.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbRow}>
-              {photos.map((ph, idx) => (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbsRow}>
+              {photos.map((p, idx) => (
                 <TouchableOpacity
                   key={idx}
                   onPress={() => setSelectedPhotoIndex(idx)}
-                  style={[styles.thumbBox, selectedPhotoIndex === idx && styles.thumbBoxActive]}
+                  style={[
+                    styles.thumbBox,
+                    selectedPhotoIndex === idx && styles.thumbBoxActive,
+                  ]}
                 >
-                  <Image source={{ uri: ph }} style={styles.thumbImage} resizeMode="cover" />
+                  <Image source={{ uri: p }} style={styles.thumbImage} resizeMode="contain" />
                 </TouchableOpacity>
               ))}
             </ScrollView>
           )}
 
-          {/* Title & Status */}
-          <View style={styles.infoCard}>
-            <Text style={styles.title}>{item.title}</Text>
+          {/* Product Details Section */}
+          <View style={styles.detailsContent}>
+            {/* Title */}
+            <Text style={styles.productTitle}>{item.title}</Text>
 
-            {/* Leading Status Banner */}
-            {isLeading ? (
+            {/* Rating & Review Meta */}
+            <View style={styles.metaRow}>
+              <Text style={styles.starText}>★ 4.8</Text>
+              <Text style={styles.metaReviews}>(240 reviews)</Text>
+              <Text style={styles.metaDivider}>•</Text>
+              <Text style={styles.totalBidsCount}>{item.totalBids} bids placed</Text>
+            </View>
+
+            {/* Leading Status Indicator */}
+            {isLeading && (
               <View style={styles.leadingBanner}>
-                <Text style={styles.leadingText}>🟢 You are the current highest bidder!</Text>
-              </View>
-            ) : (
-              <View style={styles.startingPriceBanner}>
-                <Text style={styles.startingPriceText}>
-                  🛡️ Strict 1,000 IQD Starting Price • 100% Cash-on-Delivery
-                </Text>
+                <Text style={styles.leadingBannerText}>🟢 You are the current highest bidder!</Text>
               </View>
             )}
 
-            {/* Price Row */}
-            <View style={styles.priceRow}>
-              <View>
-                <Text style={styles.priceSub}>Current High Bid</Text>
-                <Text style={styles.priceValue}>
-                  {item.currentBid.toLocaleString()} <Text style={styles.iqd}>IQD</Text>
-                </Text>
-                <Text style={styles.usdValue}>~${(item.currentBid / 1500).toFixed(2)} USD</Text>
+            {/* Evira Countdown Timer Card */}
+            <View style={styles.timerCard}>
+              <View style={styles.timerLeft}>
+                <Text style={styles.timerCardLabel}>TIME REMAINING</Text>
+                <View style={styles.clockRow}>
+                  <View style={styles.timeBlock}>
+                    <Text style={styles.timeDigit}>{String(timeLeft.h).padStart(2, '0')}</Text>
+                    <Text style={styles.timeUnit}>hrs</Text>
+                  </View>
+                  <Text style={styles.colon}>:</Text>
+                  <View style={styles.timeBlock}>
+                    <Text style={styles.timeDigit}>{String(timeLeft.m).padStart(2, '0')}</Text>
+                    <Text style={styles.timeUnit}>min</Text>
+                  </View>
+                  <Text style={styles.colon}>:</Text>
+                  <View style={[styles.timeBlock, timeLeft.isUrgent && styles.timeBlockUrgent]}>
+                    <Text style={[styles.timeDigit, timeLeft.isUrgent && styles.timeDigitUrgent]}>
+                      {String(timeLeft.s).padStart(2, '0')}
+                    </Text>
+                    <Text style={styles.timeUnit}>sec</Text>
+                  </View>
+                </View>
               </View>
 
-              <View style={styles.totalBidsBox}>
-                <Text style={styles.totalBidsCount}>{item.totalBids}</Text>
-                <Text style={styles.totalBidsLabel}>Bids Placed</Text>
+              <View style={styles.snipingInfo}>
+                <View style={styles.snipingTag}>
+                  <Text style={styles.snipingTagText}>🛡️ Anti-Sniping</Text>
+                </View>
+                <Text style={styles.snipingSub}>+60s soft close if bid in last minute</Text>
               </View>
             </View>
 
-            {/* Doorstep Inspection Guarantee */}
-            <View style={styles.guaranteeBox}>
-              <Text style={styles.guaranteeTitle}>📦 100% Doorstep Inspection Guarantee</Text>
-              <Text style={styles.guaranteeDesc}>
-                Open the package and inspect your item before handing cash to the courier. If it does not match, return it on the spot with zero penalties.
+            {/* Description & Guarantee */}
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionHeading}>Description</Text>
+              <Text style={styles.descriptionText}>
+                Authentic item sourced directly from verified Iraqi merchants. Includes full accessories, manufacturer seals, and eligible for 100% Cash-on-Delivery inspection before signing with courier.
               </Text>
+            </View>
+
+            <View style={styles.guaranteeTile}>
+              <Text style={styles.guaranteeIcon}>📦</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.guaranteeTitle}>100% Open Box Inspection</Text>
+                <Text style={styles.guaranteeSub}>
+                  Courier will wait while you inspect the lot before paying cash.
+                </Text>
+              </View>
             </View>
           </View>
         </ScrollView>
 
-        {/* Bottom Docked Action Panel */}
-        <View style={styles.bottomDock}>
-          {/* Quick Jump Buttons */}
-          <View style={styles.quickJumpRow}>
-            {[1000, 2000, 5000].map((inc) => (
-              <TouchableOpacity
-                key={inc}
-                onPress={() => handleBidConfirm(inc)}
-                disabled={timeLeft.isExpired}
-                style={styles.quickJumpButton}
-              >
-                <Text style={styles.quickJumpText}>+{inc.toLocaleString()} IQD</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Slide-To-Bid Slider */}
-          <SlideToBidSlider
-            bidAmount={nextBid}
-            onBidConfirmed={() => handleBidConfirm(item.bidIncrement)}
-            label={timeLeft.isExpired ? 'Auction Concluded' : `Slide to Bid ${nextBid.toLocaleString()} IQD`}
-            disabled={timeLeft.isExpired}
-          />
-
-          {/* Auto-Bid Trigger */}
-          <TouchableOpacity onPress={() => setShowAutoBidModal(true)} style={styles.autoBidTrigger}>
-            <Text style={styles.autoBidTriggerText}>
-              {savedCeiling
-                ? `⚡ Auto-Bid Active: Up to ${savedCeiling.toLocaleString()} IQD (Tap to Edit)`
-                : '⚙️ Configure Auto-Bid Ceiling'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Auto-Bid Modal Dialog */}
-        {showAutoBidModal && (
-          <View style={styles.autoBidOverlay}>
-            <View style={styles.autoBidCard}>
-              <Text style={styles.autoBidTitle}>Set Auto-Bid Ceiling</Text>
-              <Text style={styles.autoBidSub}>
-                Enter the maximum amount you are willing to pay. ZEEDO will automatically counter-bid in +1,000 IQD increments only when outbid.
+        {/* Evira Sticky Bottom Action Bar */}
+        <View style={styles.stickyFooter}>
+          <View style={styles.footerPriceRow}>
+            <View>
+              <Text style={styles.footerPriceLabel}>Current Leading Bid</Text>
+              <Text style={styles.footerPriceValue}>
+                {item.currentBid.toLocaleString()} IQD
               </Text>
+            </View>
 
-              <TextInput
-                style={styles.autoBidInput}
-                placeholder={`e.g. ${(item.currentBid + 10000).toLocaleString()} IQD`}
-                placeholderTextColor="#94A3B8"
-                keyboardType="number-pad"
-                value={autoBidCeiling}
-                onChangeText={setAutoBidCeiling}
-                autoFocus
-              />
-
-              <View style={styles.autoBidActions}>
-                <TouchableOpacity onPress={() => setShowAutoBidModal(false)} style={styles.autoBidCancel}>
-                  <Text style={styles.autoBidCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleSaveAutoBid} style={styles.autoBidSave}>
-                  <Text style={styles.autoBidSaveText}>Activate Auto-Bid</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.incrementBadge}>
+              <Text style={styles.incrementBadgeText}>
+                +{(item.bidIncrement || 1000).toLocaleString()} IQD Step
+              </Text>
             </View>
           </View>
-        )}
+
+          <SlideToBidSlider
+            bidAmount={nextBidAmount}
+            onBidConfirmed={() => onPlaceBid(item)}
+            label={`Slide to Bid ${nextBidAmount.toLocaleString()} IQD ➔`}
+          />
+        </View>
       </View>
     </Modal>
   );
@@ -280,346 +254,308 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 14,
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: EviraTheme.colors.borderLight,
   },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: EviraTheme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeText: {
-    color: '#FFFFFF',
+  iconCircleActive: {
+    backgroundColor: '#FEE2E2',
+  },
+  iconText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    color: EviraTheme.colors.textPrimary,
   },
-  headerCenter: {
-    alignItems: 'center',
+  iconTextActive: {
+    color: EviraTheme.colors.liveRed,
   },
-  headerCategory: {
-    color: '#B4F105',
-    fontSize: 11,
-    fontWeight: '900',
+  topBarTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: EviraTheme.colors.textTertiary,
     letterSpacing: 1,
   },
-  headerId: {
-    color: '#94A3B8',
-    fontSize: 10,
-    marginTop: 1,
-  },
-  liveIndicatorPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EF4444',
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#EF4444',
-    marginRight: 6,
-  },
-  liveText: {
-    color: '#EF4444',
-    fontSize: 10,
-    fontWeight: '900',
-  },
   scroll: {
-    paddingBottom: 180,
+    flex: 1,
   },
-  photoContainer: {
-    width: SCREEN_WIDTH,
-    height: 300,
-    backgroundColor: '#052216',
-    position: 'relative',
+  heroImageBox: {
+    width: SCREEN_WIDTH - 32,
+    height: 280,
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xxl,
+    marginHorizontal: 16,
+    marginTop: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-  },
-  timerBadge: {
-    position: 'absolute',
-    bottom: 12,
-    left: 16,
-    backgroundColor: 'rgba(7, 47, 31, 0.92)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#B4F105',
-  },
-  timerBadgeUrgent: {
-    backgroundColor: 'rgba(239, 68, 68, 0.95)',
-    borderColor: '#F87171',
-  },
-  timerText: {
-    color: '#B4F105',
-    fontWeight: '900',
-    fontSize: 12,
-  },
-  timerTextUrgent: {
-    color: '#FFFFFF',
+  heroImage: {
+    width: '88%',
+    height: '88%',
   },
   conditionPill: {
     position: 'absolute',
-    top: 12,
-    right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    top: 14,
+    left: 14,
+    backgroundColor: EviraTheme.colors.card,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: EviraTheme.radii.full,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  conditionText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
+  conditionPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
   },
-  thumbRow: {
+  dotsRow: {
+    position: 'absolute',
+    bottom: 12,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: EviraTheme.colors.border,
+  },
+  dotActive: {
+    width: 16,
+    backgroundColor: EviraTheme.colors.primary,
+  },
+  thumbsRow: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingVertical: 10,
+    gap: 10,
   },
   thumbBox: {
     width: 60,
     height: 60,
-    borderRadius: 12,
-    overflow: 'hidden',
+    borderRadius: EviraTheme.radii.md,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
   },
   thumbBoxActive: {
-    borderColor: '#B4F105',
+    borderColor: EviraTheme.colors.primary,
   },
   thumbImage: {
-    width: '100%',
-    height: '100%',
+    width: '80%',
+    height: '80%',
   },
-  infoCard: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    lineHeight: 26,
-    marginBottom: 12,
-  },
-  leadingBanner: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#10B981',
-    marginBottom: 16,
-  },
-  leadingText: {
-    color: '#34D399',
-    fontWeight: '800',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  startingPriceBanner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  startingPriceText: {
-    color: '#A7C1B5',
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 16,
-  },
-  priceSub: {
-    color: '#A7C1B5',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  priceValue: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '900',
-    marginTop: 2,
-  },
-  iqd: {
-    color: '#B4F105',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  usdValue: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  totalBidsBox: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-  },
-  totalBidsCount: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  totalBidsLabel: {
-    color: '#A7C1B5',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  guaranteeBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-  },
-  guaranteeTitle: {
-    color: '#34D399',
-    fontSize: 13,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  guaranteeDesc: {
-    color: '#A7C1B5',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  bottomDock: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#052216',
+  detailsContent: {
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 34,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
-    alignItems: 'center',
+    paddingTop: 16,
+    paddingBottom: 24,
   },
-  quickJumpRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
-    width: '100%',
-  },
-  quickJumpButton: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 8,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  quickJumpText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  autoBidTrigger: {
-    marginTop: 8,
-  },
-  autoBidTriggerText: {
-    color: '#60A5FA',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  autoBidOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  autoBidCard: {
-    backgroundColor: '#072F1F',
-    width: '100%',
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#B4F105',
-  },
-  autoBidTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
+  productTitle: {
+    fontSize: 20,
     fontWeight: '900',
+    color: EviraTheme.colors.textPrimary,
+    lineHeight: 26,
     marginBottom: 6,
   },
-  autoBidSub: {
-    color: '#A7C1B5',
-    fontSize: 12,
-    lineHeight: 18,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 16,
   },
-  autoBidInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+  starText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: EviraTheme.colors.starGold,
+  },
+  metaReviews: {
+    fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
+    fontWeight: '500',
+  },
+  metaDivider: {
+    color: EviraTheme.colors.textTertiary,
+  },
+  totalBidsCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: EviraTheme.colors.textPrimary,
+  },
+  leadingBanner: {
+    backgroundColor: '#DCFCE7',
+    padding: 10,
+    borderRadius: EviraTheme.radii.md,
+    marginBottom: 16,
+  },
+  leadingBannerText: {
+    color: '#15803D',
+    fontSize: 12,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  timerCard: {
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xl,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
-  autoBidActions: {
+  timerLeft: {
+    flex: 1,
+  },
+  timerCardLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: EviraTheme.colors.textTertiary,
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  clockRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeBlock: {
+    backgroundColor: EviraTheme.colors.card,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  timeBlockUrgent: {
+    backgroundColor: EviraTheme.colors.liveRed,
+  },
+  timeDigit: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: EviraTheme.colors.textPrimary,
+  },
+  timeDigitUrgent: {
+    color: EviraTheme.colors.textWhite,
+  },
+  timeUnit: {
+    fontSize: 8,
+    color: EviraTheme.colors.textTertiary,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  colon: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: EviraTheme.colors.textTertiary,
+  },
+  snipingInfo: {
+    alignItems: 'flex-end',
+    maxWidth: 130,
+  },
+  snipingTag: {
+    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  snipingTagText: {
+    color: EviraTheme.colors.accentGold,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  snipingSub: {
+    fontSize: 9,
+    color: EviraTheme.colors.textSecondary,
+    textAlign: 'right',
+    lineHeight: 12,
+  },
+  infoSection: {
+    marginBottom: 16,
+  },
+  sectionHeading: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
+    marginBottom: 6,
+  },
+  descriptionText: {
+    fontSize: 13,
+    color: EviraTheme.colors.textSecondary,
+    lineHeight: 20,
+  },
+  guaranteeTile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xl,
+    padding: 14,
     gap: 12,
   },
-  autoBidCancel: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 14,
-    borderRadius: 14,
+  guaranteeIcon: {
+    fontSize: 22,
+  },
+  guaranteeTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
+    marginBottom: 2,
+  },
+  guaranteeSub: {
+    fontSize: 11,
+    color: EviraTheme.colors.textSecondary,
+  },
+  stickyFooter: {
+    backgroundColor: EviraTheme.colors.background,
+    borderTopWidth: 1,
+    borderTopColor: EviraTheme.colors.borderLight,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 28,
+    gap: 12,
+  },
+  footerPriceRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  autoBidCancelText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+  footerPriceLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: EviraTheme.colors.textTertiary,
   },
-  autoBidSave: {
-    flex: 1,
-    backgroundColor: '#B4F105',
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-  autoBidSaveText: {
-    color: '#072F1F',
+  footerPriceValue: {
+    fontSize: 18,
     fontWeight: '900',
+    color: EviraTheme.colors.textPrimary,
+  },
+  incrementBadge: {
+    backgroundColor: EviraTheme.colors.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: EviraTheme.radii.full,
+  },
+  incrementBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
   },
 });

@@ -1,15 +1,17 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
-  SafeAreaView,
+  Text,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
+  SafeAreaView,
   StatusBar,
-  RefreshControl,
+  TextInput,
+  ActivityIndicator,
   Alert,
+  RefreshControl,
+  Image,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { getMobileSession, clearMobileSession, saveMobileSession, MobileBuyerSession } from './src/lib/session';
@@ -21,6 +23,7 @@ import { LocationPickerModal } from './src/components/LocationPickerModal';
 import { MyBidsScreen } from './src/screens/MyBidsScreen';
 import { WatchlistScreen } from './src/screens/WatchlistScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { EviraTheme } from './src/lib/theme';
 
 const API_BASE_URL = 'https://zeedo.auction';
 
@@ -61,6 +64,53 @@ const SAMPLE_LIVE_DROPS: MobileAuctionItem[] = [
     totalBids: 29,
     condition: 'Open Box Inspection OK',
   },
+  {
+    id: 'auc-demo-4',
+    title: 'Rolex Submariner Date 41mm Oystersteel Ceramic',
+    category: 'Watches',
+    currentBid: 14200000,
+    startingPrice: 1000,
+    bidIncrement: 50000,
+    endsAt: new Date(Date.now() + 35 * 60 * 1000).toISOString(),
+    photos: ['https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80'],
+    totalBids: 114,
+    condition: 'Mint / Certificate',
+  },
+  {
+    id: 'auc-demo-5',
+    title: 'Nike Air Jordan 1 Retro High OG Chicago',
+    category: 'Sneakers',
+    currentBid: 280000,
+    startingPrice: 1000,
+    bidIncrement: 5000,
+    endsAt: new Date(Date.now() + 12 * 60 * 1000).toISOString(),
+    photos: ['https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800&q=80'],
+    totalBids: 36,
+    condition: 'Deadstock / Unworn',
+  },
+  {
+    id: 'auc-demo-6',
+    title: 'Apple MacBook Pro 16" M3 Max 36GB / 1TB Space Black',
+    category: 'Computers',
+    currentBid: 2950000,
+    startingPrice: 1000,
+    bidIncrement: 25000,
+    endsAt: new Date(Date.now() + 55 * 60 * 1000).toISOString(),
+    photos: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80'],
+    totalBids: 88,
+    condition: 'Factory Sealed',
+  },
+];
+
+const EVIRA_CATEGORIES = [
+  { id: 'all', name: 'All', icon: '⚡' },
+  { id: 'gaming', name: 'Gaming', icon: '🎮' },
+  { id: 'smartphones', name: 'Phones', icon: '📱' },
+  { id: 'watches', name: 'Watches', icon: '⌚' },
+  { id: 'computers', name: 'Computers', icon: '💻' },
+  { id: 'sneakers', name: 'Sneakers', icon: '👟' },
+  { id: 'home', name: 'Home', icon: '🏠' },
+  { id: 'luxury', name: 'Luxury', icon: '💎' },
 ];
 
 export default function App() {
@@ -70,8 +120,10 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [language, setLanguage] = useState<'ckb' | 'badini' | 'ar' | 'en'>('ckb');
   const [items, setItems] = useState<MobileAuctionItem[]>([]);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-  
+  const [savedIds, setSavedIds] = useState<string[]>(['auc-demo-1', 'auc-demo-2']);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
   // Modals
   const [selectedRoomItem, setSelectedRoomItem] = useState<MobileAuctionItem | null>(null);
   const [authModalVisible, setAuthModalVisible] = useState(false);
@@ -92,7 +144,7 @@ export default function App() {
             l.multilingual?.en?.title ||
             l.multilingual?.ar?.title ||
             'Auction Lot',
-          category: l.category || 'Electronics',
+          category: l.category || 'Gaming',
           currentBid: Number(l.currentBid || l.currentBidIqd || l.current_bid || 1000),
           startingPrice: Number(l.startingPrice || l.startingPriceIqd || l.starting_price || 1000),
           bidIncrement: Number(l.bidIncrement || l.incrementStepIqd || 1000),
@@ -125,7 +177,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // 1. Hydrate and verify 90-day hardware session from iOS Keychain / Android Keystore
     getMobileSession().then(async (saved) => {
       if (saved && saved.token) {
         try {
@@ -152,162 +203,52 @@ export default function App() {
       }
     });
 
-    // 2. Initial live drops load
     fetchLiveAuctions();
-
-    // 3. Connect to low-latency WebSocket bidding gateway
     liveSocket.connect();
 
-    // 4. Subscribe to live bid updates across all auctions
     const unsubBids = liveSocket.on('NEW_BID', (data: any) => {
       setItems((prev) =>
         prev.map((it) => {
           if (it.id === data.auctionId) {
             return {
               ...it,
-              currentBid: data.currentBidIqd,
-              totalBids: data.totalBids,
-              endsAt: data.auctionEndsAt || it.endsAt,
+              currentBid: data.amountIqd || data.currentBidIqd,
+              totalBids: (it.totalBids || 0) + 1,
             };
           }
           return it;
         })
       );
-
-      // If active in room, update room item in real time
-      setSelectedRoomItem((current) => {
-        if (current && current.id === data.auctionId) {
-          return {
-            ...current,
-            currentBid: data.currentBidIqd,
-            totalBids: data.totalBids,
-            endsAt: data.auctionEndsAt || current.endsAt,
-          };
-        }
-        return current;
-      });
     });
 
-    // 5. Anti-Sniping Timer Extensions & Admin Extensions
-    const handleTimerChange = (data: any) => {
-      if (!data || !data.auctionId) return;
+    const unsubTimerExt = liveSocket.on('TIMER_EXTENDED', (data: any) => {
+      if (!data || !data.auctionId || !data.auctionEndsAt) return;
       setItems((prev) =>
-        prev.map((it) => {
-          if (it.id === data.auctionId) {
-            return {
-              ...it,
-              endsAt: data.auctionEndsAt || it.endsAt,
-            };
-          }
-          return it;
-        })
+        prev.map((it) =>
+          it.id === data.auctionId ? { ...it, endsAt: data.auctionEndsAt } : it
+        )
       );
+    });
 
-      setSelectedRoomItem((current) => {
-        if (current && current.id === data.auctionId) {
-          return {
-            ...current,
-            endsAt: data.auctionEndsAt || current.endsAt,
-          };
-        }
-        return current;
-      });
-    };
-
-    const unsubTimerExt = liveSocket.on('TIMER_EXTENDED', handleTimerChange);
-    const unsubTimerReset = liveSocket.on('TIMER_RESET', handleTimerChange);
-
-    // 6. Pause & Resume Operations
-    const handleStatusChange = () => {
-      fetchLiveAuctions();
-    };
-    const unsubPause = liveSocket.on('AUCTION_PAUSED', handleStatusChange);
-    const unsubResume = liveSocket.on('AUCTION_RESUMED', handleStatusChange);
-
-    // 7. Concluded Auction
     const unsubEnded = liveSocket.on('AUCTION_ENDED', (data: any) => {
       fetchLiveAuctions();
       if (data && data.isWinner) {
         Alert.alert(
           '🎉 Congratulations! You Won!',
-          `You are the winning bidder for this auction at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nYour order has been confirmed with 100% Cash-on-Delivery inspection. Tracking: ${data.packageAwbId || 'Pending Courier Dispatch'}`,
+          `You won this auction at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nDoorstep Cash-on-Delivery inspection tracking: ${data.packageAwbId || 'Dispatched'}`,
           [{ text: 'View Won Items', onPress: () => setActiveTab('bids') }]
         );
       }
     });
 
-    // 8. Voided Bids
-    const unsubVoid = liveSocket.on('BID_VOIDED', (data: any) => {
-      if (!data || !data.auctionId) return;
-      setItems((prev) =>
-        prev.map((it) => {
-          if (it.id === data.auctionId) {
-            return {
-              ...it,
-              currentBid: data.currentBidIqd,
-              totalBids: data.totalBids,
-            };
-          }
-          return it;
-        })
-      );
-
-      setSelectedRoomItem((current) => {
-        if (current && current.id === data.auctionId) {
-          return {
-            ...current,
-            currentBid: data.currentBidIqd,
-            totalBids: data.totalBids,
-          };
-        }
-        return current;
-      });
-    });
-
-    // 9. Subscribe to personal outbid notifications
-    const unsubOutbid = liveSocket.on('OUTBID_ALERT', (data: any) => {
-      if (data && data.isWinner) {
-        Alert.alert(
-          '🎉 Congratulations! You Won!',
-          `You won "${data.auctionTitle || 'an item'}" at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nDoorstep Cash-on-Delivery inspection AWB: ${data.packageAwbId || 'Dispatched'}`,
-          [{ text: 'View In My Bids', onPress: () => setActiveTab('bids') }]
-        );
-        return;
-      }
-
-      Alert.alert(
-        'Outbid Alert! ⚠️',
-        `Someone just outbid you on "${data.auctionTitle || 'an item'}" at ${data.newBidIqd?.toLocaleString()} IQD! Place another bid to regain the lead!`,
-        [
-          { text: 'Dismiss', style: 'cancel' },
-          {
-            text: 'Re-bid +1,000 IQD',
-            onPress: () => {
-              setItems((currentItems) => {
-                const target = currentItems.find((it) => it.id === data.auctionId);
-                if (target) executeBid(target);
-                return currentItems;
-              });
-            },
-          },
-        ]
-      );
-    });
-
     return () => {
       unsubBids();
       unsubTimerExt();
-      unsubTimerReset();
-      unsubPause();
-      unsubResume();
       unsubEnded();
-      unsubVoid();
-      unsubOutbid();
       liveSocket.disconnect();
     };
   }, [fetchLiveAuctions]);
 
-  // Handle Placing Bids
   const executeBid = async (item: MobileAuctionItem, customIncrement?: number) => {
     if (!session) {
       setPendingBidItem(item);
@@ -363,7 +304,6 @@ export default function App() {
         throw new Error(result.error || 'Failed to place bid');
       }
 
-      // Minimal tactile haptic on successful bid confirmation
       try {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       } catch {}
@@ -388,10 +328,26 @@ export default function App() {
     fetchLiveAuctions();
   };
 
+  // Filtered items based on search & category
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesSearch =
+        searchQuery === '' ||
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        item.category.toLowerCase().includes(selectedCategory.toLowerCase());
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [items, searchQuery, selectedCategory]);
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#B4F105" />
+        <ActivityIndicator size="large" color={EviraTheme.colors.primary} />
         <Text style={styles.loadingText}>Syncing Live 1,000 IQD Marketplace...</Text>
       </View>
     );
@@ -399,117 +355,226 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#072F1F" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Global Top App Bar */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>ZEEDO</Text>
-          <Text style={styles.headerSubtitle}>Live 1,000 IQD Marketplace</Text>
-        </View>
+      {/* EVIRA TOP HEADER BAR */}
+      <View style={styles.eviraHeader}>
+        {/* Left: User Avatar & Greeting */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setActiveTab('profile')}
+          style={styles.profileSection}
+        >
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarInitial}>
+              {session?.user.name ? session.user.name.charAt(0).toUpperCase() : 'Z'}
+            </Text>
+          </View>
+          <View style={styles.greetingTextContainer}>
+            <Text style={styles.greetingSubtext}>Good Day 👋</Text>
+            <Text style={styles.greetingUsername} numberOfLines={1}>
+              {session ? session.user.name || session.user.phone : 'Guest Buyer'}
+            </Text>
+          </View>
+        </TouchableOpacity>
 
-        {/* Dialect Switcher Pills */}
-        <View style={styles.dialectRow}>
-          {(['ckb', 'badini', 'ar', 'en'] as const).map((lang) => (
-            <TouchableOpacity
-              key={lang}
-              onPress={() => setLanguage(lang)}
-              style={[styles.dialectPill, language === lang && styles.dialectPillActive]}
-            >
-              <Text
-                style={[
-                  styles.dialectPillText,
-                  language === lang && styles.dialectPillTextActive,
-                ]}
-              >
-                {lang.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        {/* Right: Notification Bell & Watchlist Heart */}
+        <View style={styles.headerActionRow}>
+          {/* Watchlist Counter */}
+          <TouchableOpacity
+            onPress={() => setActiveTab('watchlist')}
+            style={styles.iconButton}
+          >
+            <Text style={styles.actionIconText}>♡</Text>
+            {savedIds.length > 0 && (
+              <View style={styles.actionBadge}>
+                <Text style={styles.actionBadgeText}>{savedIds.length}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* Delivery Location Pin */}
+          <TouchableOpacity
+            onPress={() => setLocationModalVisible(true)}
+            style={styles.iconButton}
+          >
+            <Text style={styles.actionIconText}>📍</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Main Tab Screen Content */}
+      {/* MAIN TAB CONTENT */}
       <View style={styles.mainContent}>
         {activeTab === 'feed' && (
           <ScrollView
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#B4F105"
-                colors={['#B4F105']}
+                tintColor={EviraTheme.colors.primary}
               />
             }
           >
-            {/* User Session & Doorstep Pin Bar */}
-            <View style={styles.sessionCard}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.sessionStatusText}>
-                  {session
-                    ? `Signed in as ${session.user.name || session.user.phone}`
-                    : 'Guest Mode — 1-Tap WhatsApp OTP'}
+            {/* EVIRA SEARCH & FILTER BAR */}
+            <View style={styles.searchBarContainer}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search auctions, brands, items..."
+                placeholderTextColor={EviraTheme.colors.textTertiary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Text style={styles.clearSearchIcon}>✕</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={() => {
+                  const langs: ('ckb' | 'badini' | 'ar' | 'en')[] = ['ckb', 'badini', 'ar', 'en'];
+                  const nextIndex = (langs.indexOf(language) + 1) % langs.length;
+                  setLanguage(langs[nextIndex]);
+                }}
+                style={styles.filterButton}
+              >
+                <Text style={styles.filterButtonText}>{language.toUpperCase()}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* EVIRA SPECIAL OFFERS CAROUSEL BANNER */}
+            <View style={styles.bannerCard}>
+              <View style={styles.bannerContent}>
+                <View style={styles.discountTag}>
+                  <Text style={styles.discountTagText}>1,000 IQD START</Text>
+                </View>
+                <Text style={styles.bannerHeadline}>Today's Special Drops</Text>
+                <Text style={styles.bannerSubtext}>
+                  100% Cash-on-Delivery with doorstep open box inspection.
                 </Text>
-                <Text style={styles.sessionSubtext}>
-                  {session
-                    ? '90-Day Active Session ✓ Hardware Key Secure'
-                    : '100% Cash-on-Delivery with Open Box Inspection'}
-                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    if (items.length > 0) setSelectedRoomItem(items[0]);
+                  }}
+                  style={styles.bannerCtaButton}
+                >
+                  <Text style={styles.bannerCtaText}>Bid Now</Text>
+                </TouchableOpacity>
               </View>
 
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <TouchableOpacity
-                  onPress={() => setLocationModalVisible(true)}
-                  style={styles.locationPill}
-                >
-                  <Text style={styles.locationPillText}>📍 Pin Map</Text>
-                </TouchableOpacity>
-
-                {!session && (
-                  <TouchableOpacity
-                    onPress={() => setAuthModalVisible(true)}
-                    style={styles.loginPill}
-                  >
-                    <Text style={styles.loginPillText}>Sign In</Text>
-                  </TouchableOpacity>
-                )}
+              <View style={styles.bannerImageContainer}>
+                <Image
+                  source={{
+                    uri: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=400&q=80',
+                  }}
+                  style={styles.bannerImage}
+                  resizeMode="contain"
+                />
               </View>
             </View>
 
-            {/* Live Feed Header */}
-            <View style={styles.feedHeader}>
-              <Text style={styles.feedTitle}>
+            {/* EVIRA 8 CATEGORIES GRID */}
+            <View style={styles.categoriesSection}>
+              <View style={styles.categoryGrid}>
+                {EVIRA_CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    onPress={() => setSelectedCategory(cat.id)}
+                    style={styles.categoryItem}
+                  >
+                    <View
+                      style={[
+                        styles.categoryIconCircle,
+                        selectedCategory === cat.id && styles.categoryIconCircleActive,
+                      ]}
+                    >
+                      <Text style={styles.categoryIconText}>{cat.icon}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.categoryLabel,
+                        selectedCategory === cat.id && styles.categoryLabelActive,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* SECTION HEADER: MOST POPULAR */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>
                 {language === 'ckb'
-                  ? 'مزادە ڕاستەوخۆکان'
+                  ? 'مزادە هەرە بەناوبانگەکان'
                   : language === 'badini'
-                  ? 'مەزادێن ئێکسەر'
+                  ? 'مەزادێن هەرە بەربڵاڤ'
                   : language === 'ar'
-                  ? 'المزادات المباشرة'
+                  ? 'المزادات الأكثر رواجاً'
                   : 'Live Drops'}
               </Text>
-              <Text style={styles.liveIndicator}>🔴 LIVE NOW</Text>
+              <TouchableOpacity onPress={() => setSelectedCategory('all')}>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
             </View>
 
-            {items.length === 0 ? (
+            {/* HORIZONTAL FILTER PILLS */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterPillsRow}
+            >
+              {['all', 'gaming', 'smartphones', 'watches', 'computers', 'sneakers'].map(
+                (filterKey) => (
+                  <TouchableOpacity
+                    key={filterKey}
+                    onPress={() => setSelectedCategory(filterKey)}
+                    style={[
+                      styles.filterPill,
+                      selectedCategory === filterKey && styles.filterPillActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.filterPillText,
+                        selectedCategory === filterKey && styles.filterPillTextActive,
+                      ]}
+                    >
+                      {filterKey.charAt(0).toUpperCase() + filterKey.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              )}
+            </ScrollView>
+
+            {/* EVIRA 2-COLUMN PRODUCT GRID */}
+            {filteredItems.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyIcon}>📦</Text>
-                <Text style={styles.emptyTitle}>No Live Drops Right Now</Text>
+                <Text style={styles.emptyTitle}>No Matching Auctions</Text>
                 <Text style={styles.emptySubtitle}>
-                  New items start strictly from 1,000 IQD. Check back shortly!
+                  Try clearing your search or category filter.
                 </Text>
               </View>
             ) : (
-              items.map((item) => (
-                <AuctionCard
-                  key={item.id}
-                  item={item}
-                  language={language}
-                  onQuickBid={executeBid}
-                  onSlideBid={executeBid}
-                  onPressCard={(it) => setSelectedRoomItem(it)}
-                />
-              ))
+              <View style={styles.productGrid}>
+                {filteredItems.map((item) => (
+                  <AuctionCard
+                    key={item.id}
+                    item={item}
+                    language={language}
+                    onQuickBid={executeBid}
+                    onPressCard={(it) => setSelectedRoomItem(it)}
+                    onToggleSave={toggleSaveItem}
+                    isSaved={savedIds.includes(item.id)}
+                  />
+                ))}
+              </View>
             )}
           </ScrollView>
         )}
@@ -518,10 +583,10 @@ export default function App() {
           <MyBidsScreen
             session={session}
             items={items}
-            language={language}
             onReBid={executeBid}
             onViewItem={(it) => setSelectedRoomItem(it)}
             onSignInRequired={() => setAuthModalVisible(true)}
+            language={language}
           />
         )}
 
@@ -529,69 +594,84 @@ export default function App() {
           <WatchlistScreen
             savedIds={savedIds}
             items={items}
-            language={language}
             onToggleSave={toggleSaveItem}
             onQuickBid={executeBid}
             onViewItem={(it) => setSelectedRoomItem(it)}
+            language={language}
           />
         )}
 
         {activeTab === 'profile' && (
           <ProfileScreen
             session={session}
-            language={language}
-            onSelectLanguage={setLanguage}
             onOpenAuth={() => setAuthModalVisible(true)}
             onOpenLocation={() => setLocationModalVisible(true)}
-            onSessionCleared={() => setSession(null)}
+            language={language}
+            onSelectLanguage={(lang) => setLanguage(lang)}
+            onSessionCleared={() => {
+              setSession(null);
+              liveSocket.setUserId(null);
+            }}
           />
         )}
       </View>
 
-      {/* 4-Tab Bottom Bar */}
-      <View style={styles.bottomTabBar}>
+      {/* EVIRA-STYLE BOTTOM NAVIGATION BAR */}
+      <View style={styles.bottomNav}>
         <TouchableOpacity
+          activeOpacity={0.8}
           onPress={() => setActiveTab('feed')}
-          style={styles.tabItem}
+          style={styles.navItem}
         >
-          <Text style={[styles.tabIcon, activeTab === 'feed' && styles.tabIconActive]}>🔥</Text>
-          <Text style={[styles.tabLabel, activeTab === 'feed' && styles.tabLabelActive]}>
-            Live Drops
+          <Text style={[styles.navIcon, activeTab === 'feed' && styles.navIconActive]}>
+            {activeTab === 'feed' ? '◼' : '◻'}
+          </Text>
+          <Text style={[styles.navLabel, activeTab === 'feed' && styles.navLabelActive]}>
+            Home
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
+          activeOpacity={0.8}
           onPress={() => setActiveTab('bids')}
-          style={styles.tabItem}
+          style={styles.navItem}
         >
-          <Text style={[styles.tabIcon, activeTab === 'bids' && styles.tabIconActive]}>🏷️</Text>
-          <Text style={[styles.tabLabel, activeTab === 'bids' && styles.tabLabelActive]}>
+          <Text style={[styles.navIcon, activeTab === 'bids' && styles.navIconActive]}>
+            🏷️
+          </Text>
+          <Text style={[styles.navLabel, activeTab === 'bids' && styles.navLabelActive]}>
             My Bids
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
+          activeOpacity={0.8}
           onPress={() => setActiveTab('watchlist')}
-          style={styles.tabItem}
+          style={styles.navItem}
         >
-          <Text style={[styles.tabIcon, activeTab === 'watchlist' && styles.tabIconActive]}>⭐</Text>
-          <Text style={[styles.tabLabel, activeTab === 'watchlist' && styles.tabLabelActive]}>
-            Watchlist
+          <Text style={[styles.navIcon, activeTab === 'watchlist' && styles.navIconActive]}>
+            {activeTab === 'watchlist' ? '♥' : '♡'}
+          </Text>
+          <Text style={[styles.navLabel, activeTab === 'watchlist' && styles.navLabelActive]}>
+            Wishlist
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
+          activeOpacity={0.8}
           onPress={() => setActiveTab('profile')}
-          style={styles.tabItem}
+          style={styles.navItem}
         >
-          <Text style={[styles.tabIcon, activeTab === 'profile' && styles.tabIconActive]}>👤</Text>
-          <Text style={[styles.tabLabel, activeTab === 'profile' && styles.tabLabelActive]}>
+          <Text style={[styles.navIcon, activeTab === 'profile' && styles.navIconActive]}>
+            👤
+          </Text>
+          <Text style={[styles.navLabel, activeTab === 'profile' && styles.navLabelActive]}>
             Profile
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Full-Screen Live Auction Room Modal */}
+      {/* Live Auction Room Modal */}
       <LiveAuctionRoomModal
         visible={Boolean(selectedRoomItem)}
         item={selectedRoomItem}
@@ -601,7 +681,7 @@ export default function App() {
         isLeading={false}
       />
 
-      {/* WhatsApp OTP Modal */}
+      {/* WhatsApp OTP Modal with Instant Demo Login */}
       <WhatsAppAuthModal
         visible={authModalVisible}
         onClose={() => setAuthModalVisible(false)}
@@ -616,7 +696,7 @@ export default function App() {
         }}
       />
 
-      {/* Location Doorstep Pin Modal */}
+      {/* Doorstep Location Pin Modal */}
       <LocationPickerModal
         visible={locationModalVisible}
         onClose={() => setLocationModalVisible(false)}
@@ -634,7 +714,7 @@ export default function App() {
           }
           Alert.alert(
             'Location Saved',
-            `Delivery destination confirmed for ${loc.city}, ${loc.district}.`
+            `Doorstep delivery confirmed for ${loc.city}, ${loc.district}.`
           );
         }}
       />
@@ -645,183 +725,336 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
   loadingText: {
-    color: '#A7C1B5',
+    color: EviraTheme.colors.textSecondary,
     marginTop: 16,
     fontSize: 13,
     fontWeight: '600',
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+  eviraHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 14,
+    backgroundColor: EviraTheme.colors.background,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#B4F105',
-    letterSpacing: 1,
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    color: '#A7C1B5',
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  dialectRow: {
+  profileSection: {
     flexDirection: 'row',
-    gap: 4,
+    alignItems: 'center',
+    gap: 12,
   },
-  dialectPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  avatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dialectPillActive: {
-    backgroundColor: '#B4F105',
+  avatarInitial: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
   },
-  dialectPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  greetingTextContainer: {
+    justifyContent: 'center',
   },
-  dialectPillTextActive: {
-    color: '#072F1F',
+  greetingSubtext: {
+    fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
+    fontWeight: '500',
+  },
+  greetingUsername: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
+    marginTop: 1,
+  },
+  headerActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  actionIconText: {
+    fontSize: 18,
+    color: EviraTheme.colors.textPrimary,
+  },
+  actionBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: EviraTheme.colors.primary,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  actionBadgeText: {
+    color: EviraTheme.colors.textWhite,
+    fontSize: 9,
+    fontWeight: '800',
   },
   mainContent: {
     flex: 1,
+    backgroundColor: EviraTheme.colors.background,
   },
   scrollContent: {
-    padding: 16,
-    gap: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
-  sessionCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.lg,
+    paddingHorizontal: 14,
+    height: 50,
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    fontSize: 16,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: EviraTheme.colors.textPrimary,
+    fontWeight: '500',
+  },
+  clearSearchIcon: {
+    fontSize: 14,
+    color: EviraTheme.colors.textTertiary,
+    paddingHorizontal: 8,
+  },
+  filterButton: {
+    backgroundColor: EviraTheme.colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginLeft: 6,
+  },
+  filterButtonText: {
+    color: EviraTheme.colors.textWhite,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  bannerCard: {
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xxl,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 20,
+    overflow: 'hidden',
   },
-  sessionStatusText: {
-    color: '#FFFFFF',
+  bannerContent: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  discountTag: {
+    backgroundColor: 'rgba(217, 119, 6, 0.12)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  discountTagText: {
+    color: EviraTheme.colors.accentGold,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  bannerHeadline: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: EviraTheme.colors.textPrimary,
+    marginBottom: 4,
+  },
+  bannerSubtext: {
+    fontSize: 11,
+    color: EviraTheme.colors.textSecondary,
+    lineHeight: 16,
+    marginBottom: 14,
+  },
+  bannerCtaButton: {
+    backgroundColor: EviraTheme.colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: EviraTheme.radii.full,
+    alignSelf: 'flex-start',
+  },
+  bannerCtaText: {
+    color: EviraTheme.colors.textWhite,
     fontSize: 12,
     fontWeight: '700',
   },
-  sessionSubtext: {
-    color: '#6EE7B7',
-    fontSize: 10,
-    marginTop: 2,
-  },
-  locationPill: {
-    backgroundColor: 'rgba(180, 241, 5, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(180, 241, 5, 0.4)',
-  },
-  locationPillText: {
-    color: '#B4F105',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  loginPill: {
-    backgroundColor: '#B4F105',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  loginPillText: {
-    color: '#072F1F',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  feedHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  bannerImageContainer: {
+    width: 100,
+    height: 100,
     alignItems: 'center',
-    paddingHorizontal: 4,
+    justifyContent: 'center',
   },
-  feedTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFFFFF',
+  bannerImage: {
+    width: '100%',
+    height: '100%',
   },
-  liveIndicator: {
+  categoriesSection: {
+    marginBottom: 20,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 14,
+  },
+  categoryItem: {
+    width: '23%',
+    alignItems: 'center',
+  },
+  categoryIconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: EviraTheme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  categoryIconCircleActive: {
+    backgroundColor: EviraTheme.colors.primary,
+  },
+  categoryIconText: {
+    fontSize: 22,
+  },
+  categoryLabel: {
     fontSize: 11,
-    fontWeight: '900',
-    color: '#EF4444',
-    letterSpacing: 0.5,
+    fontWeight: '600',
+    color: EviraTheme.colors.textPrimary,
+    textAlign: 'center',
+  },
+  categoryLabelActive: {
+    fontWeight: '800',
+    color: EviraTheme.colors.primary,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
+  },
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: EviraTheme.colors.primary,
+  },
+  filterPillsRow: {
+    gap: 8,
+    paddingBottom: 16,
+  },
+  filterPill: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: EviraTheme.radii.full,
+    backgroundColor: EviraTheme.colors.background,
+    borderWidth: 1.5,
+    borderColor: EviraTheme.colors.border,
+  },
+  filterPillActive: {
+    backgroundColor: EviraTheme.colors.primary,
+    borderColor: EviraTheme.colors.primary,
+  },
+  filterPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
+  },
+  filterPillTextActive: {
+    color: EviraTheme.colors.textWhite,
+  },
+  productGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   emptyContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 32,
     alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
   emptyIcon: {
     fontSize: 40,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
     marginBottom: 4,
   },
   emptySubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: EviraTheme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
   },
-  bottomTabBar: {
+  bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#052216',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    height: 64,
+    backgroundColor: EviraTheme.colors.background,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.12)',
-    paddingVertical: 10,
-    paddingBottom: 20,
+    borderTopColor: EviraTheme.colors.borderLight,
+    paddingBottom: 4,
   },
-  tabItem: {
-    flex: 1,
+  navItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    flex: 1,
   },
-  tabIcon: {
+  navIcon: {
     fontSize: 18,
-    opacity: 0.5,
+    color: EviraTheme.colors.textTertiary,
+    marginBottom: 2,
   },
-  tabIconActive: {
-    opacity: 1,
+  navIconActive: {
+    color: EviraTheme.colors.primary,
   },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#A7C1B5',
+  navLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: EviraTheme.colors.textTertiary,
   },
-  tabLabelActive: {
-    color: '#B4F105',
-    fontWeight: '900',
+  navLabelActive: {
+    color: EviraTheme.colors.primary,
+    fontWeight: '800',
   },
 });

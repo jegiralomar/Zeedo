@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { MobileBuyerSession, clearMobileSession } from '../lib/session';
+import { EviraTheme } from '../lib/theme';
 
 interface ProfileScreenProps {
   session: MobileBuyerSession | null;
@@ -40,105 +41,154 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     ]);
   };
 
+  const languages: { code: 'ckb' | 'badini' | 'ar' | 'en'; label: string }[] = [
+    { code: 'ckb', label: 'کوردی (سۆرانی)' },
+    { code: 'badini', label: 'بادینی' },
+    { code: 'ar', label: 'العربية' },
+    { code: 'en', label: 'English' },
+  ];
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
-      {/* Header */}
+    <ScrollView style={styles.container} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      {/* Evira Profile Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Account & Delivery</Text>
-        <Text style={styles.headerSub}>Doorstep Precision & Preferences</Text>
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      {/* User Session Card */}
+      {/* User Card */}
       {session ? (
-        <View style={styles.sessionCard}>
-          <View style={styles.avatar}>
+        <View style={styles.userCard}>
+          <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>
               {(session.user.name || session.user.phone || 'U').charAt(0).toUpperCase()}
             </Text>
           </View>
-          <View style={styles.sessionInfo}>
-            <Text style={styles.userName}>{session.user.name || 'Verified Buyer'}</Text>
-            <Text style={styles.userPhone}>{session.user.phone}</Text>
-            <View style={styles.verifiedPill}>
-              <Text style={styles.verifiedPillText}>✓ 90-Day Hardware Session Active</Text>
+          <View style={styles.userInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.userName}>{session.user.name || 'Verified Buyer'}</Text>
+              <View style={styles.verifiedBadge}>
+                <Text style={styles.verifiedBadgeText}>✓ Verified</Text>
+              </View>
             </View>
+            <Text style={styles.userPhone}>{session.user.phone}</Text>
+            <Text style={styles.userCity}>📍 {session.user.city || 'Erbil, Kurdistan Region'}</Text>
           </View>
         </View>
       ) : (
-        <View style={styles.guestCard}>
-          <Text style={styles.guestTitle}>Guest Mode</Text>
-          <Text style={styles.guestDesc}>
-            Sign in with WhatsApp in 1 tap to authorize 90-day instant bidding on all live drops.
-          </Text>
-          <TouchableOpacity onPress={onOpenAuth} style={styles.signInButton}>
-            <Text style={styles.signInButtonText}>Sign In with WhatsApp</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={onOpenAuth}
+          style={styles.signInCard}
+        >
+          <View style={styles.signInIconBox}>
+            <Text style={styles.signInIcon}>📱</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.signInTitle}>Sign In with WhatsApp</Text>
+            <Text style={styles.signInSub}>
+              90-day hardware active session with 1-tap OTP.
+            </Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
+        </TouchableOpacity>
       )}
 
-      {/* Delivery Doorstep Location Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>DELIVERY DESTINATION</Text>
-        <View style={styles.card}>
-          <View style={styles.locationHeader}>
-            <Text style={styles.locationCity}>📍 {session?.user.city || 'Erbil (Default)'}</Text>
-            <TouchableOpacity onPress={onOpenLocation} style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Edit Map Pin</Text>
-            </TouchableOpacity>
+      {/* Section: Delivery & Settings */}
+      <Text style={styles.sectionHeader}>Preferences & Delivery</Text>
+
+      {/* Doorstep Location Item */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onOpenLocation}
+        style={styles.menuItem}
+      >
+        <View style={styles.menuIconContainer}>
+          <Text style={styles.menuIcon}>📍</Text>
+        </View>
+        <View style={styles.menuTextContainer}>
+          <Text style={styles.menuTitle}>Doorstep Delivery Pin</Text>
+          <Text style={styles.menuSubtitle}>
+            {session?.user.city ? `Saved: ${session.user.city}` : 'Pin rooftop location on map'}
+          </Text>
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </TouchableOpacity>
+
+      {/* Language Selector Item */}
+      <View style={styles.languageContainer}>
+        <View style={styles.languageHeader}>
+          <View style={styles.menuIconContainer}>
+            <Text style={styles.menuIcon}>🌐</Text>
           </View>
-          <Text style={styles.locationSub}>
-            Doorstep cash-on-delivery couriers dispatch to your pinned coordinates.
+          <View style={{ flex: 1 }}>
+            <Text style={styles.menuTitle}>Language / زمان</Text>
+            <Text style={styles.menuSubtitle}>Kurdish, Arabic, English</Text>
+          </View>
+        </View>
+
+        <View style={styles.langPillsRow}>
+          {languages.map((l) => (
+            <TouchableOpacity
+              key={l.code}
+              onPress={() => onSelectLanguage(l.code)}
+              style={[
+                styles.langPill,
+                language === l.code && styles.langPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.langPillText,
+                  language === l.code && styles.langPillTextActive,
+                ]}
+              >
+                {l.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Trust & Guarantee */}
+      <Text style={styles.sectionHeader}>Trust & Inspection</Text>
+
+      <View style={styles.menuItemStatic}>
+        <View style={styles.menuIconContainer}>
+          <Text style={styles.menuIcon}>🛡️</Text>
+        </View>
+        <View style={styles.menuTextContainer}>
+          <Text style={styles.menuTitle}>100% Cash-on-Delivery Guarantee</Text>
+          <Text style={styles.menuSubtitle}>
+            Inspect item with courier before handing over payment.
           </Text>
         </View>
       </View>
 
-      {/* Dialect / Language Selector */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>APP DIALECT / زمان</Text>
-        <View style={styles.dialectGrid}>
-          {[
-            { id: 'ckb', label: 'کوردی (سۆرانی)', sub: 'Sorani' },
-            { id: 'badini', label: 'کوردی (بادینی)', sub: 'Badini' },
-            { id: 'ar', label: 'العربية (عراقي)', sub: 'Iraqi Arabic' },
-            { id: 'en', label: 'English', sub: 'Default' },
-          ].map((item) => {
-            const isSelected = language === item.id;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                onPress={() => onSelectLanguage(item.id as any)}
-                style={[styles.dialectCard, isSelected && styles.dialectCardActive]}
-              >
-                <Text style={[styles.dialectLabel, isSelected && styles.dialectLabelActive]}>
-                  {item.label}
-                </Text>
-                <Text style={[styles.dialectSub, isSelected && styles.dialectSubActive]}>
-                  {item.sub}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+      <View style={styles.menuItemStatic}>
+        <View style={styles.menuIconContainer}>
+          <Text style={styles.menuIcon}>⚡</Text>
         </View>
-      </View>
-
-      {/* Marketplace Guarantees */}
-      <View style={styles.section}>
-        <Text style={styles.sectionHeader}>ZEEDO GUARANTEES</Text>
-        <View style={styles.guaranteeCard}>
-          <Text style={styles.guaranteeRow}>• Strictly 1,000 IQD starting price on all lots</Text>
-          <Text style={styles.guaranteeRow}>• Real-time anti-sniping resets (≤60s timer extension)</Text>
-          <Text style={styles.guaranteeRow}>• 100% open-box doorstep cash inspection before payment</Text>
+        <View style={styles.menuTextContainer}>
+          <Text style={styles.menuTitle}>Strict 1,000 IQD Bidding Rule</Text>
+          <Text style={styles.menuSubtitle}>
+            All auctions start at 1,000 IQD with no seller hidden reserves.
+          </Text>
         </View>
       </View>
 
       {/* Sign Out Button */}
       {session && (
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Sign Out from this Device</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleLogout}
+          style={styles.logoutButton}
+        >
+          <Text style={styles.logoutButtonText}>Sign Out of Device</Text>
         </TouchableOpacity>
       )}
 
-      <Text style={styles.versionText}>ZEEDO Mobile • v1.0.0 (Production Release)</Text>
+      {/* Version Tag */}
+      <Text style={styles.versionText}>Zeedo Auction Mobile v1.0.0 • Evira Design System</Text>
     </ScrollView>
   );
 };
@@ -146,215 +196,218 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#072F1F',
+    backgroundColor: EviraTheme.colors.background,
   },
   scroll: {
-    padding: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 36,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   headerTitle: {
-    color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '900',
+    color: EviraTheme.colors.textPrimary,
   },
-  headerSub: {
-    color: '#A7C1B5',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  sessionCard: {
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    padding: 18,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 24,
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xxl,
+    padding: 16,
+    marginBottom: 20,
+    gap: 14,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#B4F105',
+  avatarCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: EviraTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
   },
   avatarText: {
-    color: '#072F1F',
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: '800',
+    color: EviraTheme.colors.textWhite,
   },
-  sessionInfo: {
+  userInfo: {
     flex: 1,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
   userName: {
-    color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
+  },
+  verifiedBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  verifiedBadgeText: {
+    color: '#15803D',
+    fontSize: 10,
     fontWeight: '800',
   },
   userPhone: {
-    color: '#A7C1B5',
     fontSize: 12,
+    color: EviraTheme.colors.textSecondary,
+    fontWeight: '500',
+  },
+  userCity: {
+    fontSize: 11,
+    color: EviraTheme.colors.textTertiary,
     marginTop: 2,
   },
-  verifiedPill: {
-    marginTop: 6,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  verifiedPillText: {
-    color: '#34D399',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  guestCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 24,
-  },
-  guestTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  guestDesc: {
-    color: '#A7C1B5',
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  signInButton: {
-    backgroundColor: '#B4F105',
-    paddingVertical: 14,
-    borderRadius: 14,
+  signInCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xxl,
+    padding: 16,
+    marginBottom: 20,
+    gap: 14,
   },
-  signInButtonText: {
-    color: '#072F1F',
-    fontWeight: '900',
-    fontSize: 13,
+  signInIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: EviraTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  section: {
-    marginBottom: 24,
+  signInIcon: {
+    fontSize: 20,
+  },
+  signInTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: EviraTheme.colors.textPrimary,
+    marginBottom: 2,
+  },
+  signInSub: {
+    fontSize: 11,
+    color: EviraTheme.colors.textSecondary,
   },
   sectionHeader: {
-    color: '#A7C1B5',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    color: EviraTheme.colors.textPrimary,
     marginBottom: 10,
+    marginTop: 8,
+    letterSpacing: 0.2,
   },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    padding: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  locationHeader: {
+  menuItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
-  },
-  locationCity: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  editBtn: {
-    backgroundColor: 'rgba(180, 241, 5, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  editBtnText: {
-    color: '#B4F105',
-    fontWeight: '800',
-    fontSize: 11,
-  },
-  locationSub: {
-    color: '#A7C1B5',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  dialectGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  dialectCard: {
-    width: '48%',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xl,
     padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 10,
+    gap: 12,
   },
-  dialectCardActive: {
-    backgroundColor: '#B4F105',
-    borderColor: '#B4F105',
+  menuItemStatic: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xl,
+    padding: 14,
+    marginBottom: 10,
+    gap: 12,
   },
-  dialectLabel: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
+  menuIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dialectLabelActive: {
-    color: '#072F1F',
+  menuIcon: {
+    fontSize: 18,
   },
-  dialectSub: {
-    color: '#A7C1B5',
-    fontSize: 10,
-    marginTop: 2,
+  menuTextContainer: {
+    flex: 1,
   },
-  dialectSubActive: {
-    color: '#072F1F',
+  menuTitle: {
+    fontSize: 14,
     fontWeight: '700',
+    color: EviraTheme.colors.textPrimary,
+    marginBottom: 2,
   },
-  guaranteeCard: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
-    gap: 8,
+  menuSubtitle: {
+    fontSize: 11,
+    color: EviraTheme.colors.textSecondary,
   },
-  guaranteeRow: {
-    color: '#6EE7B7',
-    fontSize: 12,
-    lineHeight: 18,
+  chevron: {
+    fontSize: 20,
+    color: EviraTheme.colors.textTertiary,
     fontWeight: '600',
   },
-  logoutButton: {
-    backgroundColor: 'rgba(244, 63, 94, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(244, 63, 94, 0.3)',
-    paddingVertical: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 20,
+  languageContainer: {
+    backgroundColor: EviraTheme.colors.surface,
+    borderRadius: EviraTheme.radii.xl,
+    padding: 14,
+    marginBottom: 10,
   },
-  logoutText: {
-    color: '#FB7185',
-    fontWeight: '800',
+  languageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  langPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  langPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: EviraTheme.radii.full,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: EviraTheme.colors.border,
+  },
+  langPillActive: {
+    backgroundColor: EviraTheme.colors.primary,
+    borderColor: EviraTheme.colors.primary,
+  },
+  langPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: EviraTheme.colors.textPrimary,
+  },
+  langPillTextActive: {
+    color: EviraTheme.colors.textWhite,
+    fontWeight: '700',
+  },
+  logoutButton: {
+    marginTop: 20,
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 14,
+    borderRadius: EviraTheme.radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutButtonText: {
+    color: '#B91C1C',
     fontSize: 13,
+    fontWeight: '800',
   },
   versionText: {
-    color: 'rgba(255, 255, 255, 0.25)',
-    fontSize: 11,
     textAlign: 'center',
+    fontSize: 11,
+    color: EviraTheme.colors.textTertiary,
+    marginTop: 24,
   },
 });

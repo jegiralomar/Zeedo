@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { EviraTheme } from '../lib/theme';
 
 interface SlideToBidSliderProps {
   onBidConfirmed: () => void;
@@ -18,15 +19,13 @@ interface SlideToBidSliderProps {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDER_WIDTH = SCREEN_WIDTH - 48;
-const THUMB_SIZE = 56;
+const THUMB_SIZE = 52;
 const MAX_SLIDE = SLIDER_WIDTH - THUMB_SIZE - 8;
 
 export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
   onBidConfirmed,
   disabled = false,
-  bidAmount = 1000,
-  currency = 'IQD',
-  label = 'Slide to Bid +1,000 IQD',
+  label = 'Slide to Place Bid ➔',
 }) => {
   const pan = useRef(new Animated.Value(0)).current;
   const [completed, setCompleted] = useState(false);
@@ -41,8 +40,7 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
       },
       onPanResponderRelease: (_, gestureState) => {
         if (disabled || completed) return;
-        if (gestureState.dx >= MAX_SLIDE * 0.85) {
-          // Slide completed!
+        if (gestureState.dx >= MAX_SLIDE * 0.82) {
           Animated.timing(pan, {
             toValue: MAX_SLIDE,
             duration: 100,
@@ -50,7 +48,6 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
           }).start(() => {
             setCompleted(true);
             onBidConfirmed();
-            // Reset after 1.5 seconds
             setTimeout(() => {
               Animated.spring(pan, {
                 toValue: 0,
@@ -62,7 +59,6 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
             }, 1200);
           });
         } else {
-          // Reset slider back to start
           Animated.spring(pan, {
             toValue: 0,
             friction: 6,
@@ -78,7 +74,7 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
       {/* Background Track */}
       <View style={styles.track}>
         <Text style={styles.trackLabel}>
-          {completed ? '✓ BID PLACED!' : label}
+          {completed ? '✓ BID ACCEPTED' : label}
         </Text>
       </View>
 
@@ -88,12 +84,19 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
           styles.thumb,
           {
             transform: [{ translateX: pan }],
-            backgroundColor: completed ? '#10B981' : '#B4F105',
+            backgroundColor: completed ? EviraTheme.colors.success : EviraTheme.colors.textWhite,
           },
         ]}
         {...panResponder.panHandlers}
       >
-        <Text style={styles.thumbArrow}>{completed ? '✓' : '➔'}</Text>
+        <Text
+          style={[
+            styles.thumbArrow,
+            completed && { color: EviraTheme.colors.textWhite },
+          ]}
+        >
+          {completed ? '✓' : '➔'}
+        </Text>
       </Animated.View>
     </View>
   );
@@ -102,14 +105,17 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: SLIDER_WIDTH,
-    height: 64,
-    backgroundColor: '#0F3826',
-    borderRadius: 32,
+    height: 60,
+    backgroundColor: EviraTheme.colors.primary,
+    borderRadius: EviraTheme.radii.full,
     padding: 4,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(180, 241, 5, 0.25)',
     overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   disabledContainer: {
     opacity: 0.5,
@@ -120,11 +126,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   trackLabel: {
-    color: '#E5E7EB',
+    color: EviraTheme.colors.textWhite,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
-    paddingLeft: 40,
+    paddingLeft: 36,
   },
   thumb: {
     width: THUMB_SIZE,
@@ -132,15 +138,15 @@ const styles = StyleSheet.create({
     borderRadius: THUMB_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 3,
   },
   thumbArrow: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
-    color: '#072F1F',
+    color: EviraTheme.colors.primary,
   },
 });
