@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Gavel,
   ShieldCheck,
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
+  ArrowUpRight,
 } from 'lucide-react';
 import { MobileAuctionItem } from '@/types/marketplace';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
@@ -17,6 +18,9 @@ import { useBuyerAuctionStore } from '@/store/useBuyerAuctionStore';
 import { TRANSLATIONS, isRTL } from '@/i18n/translations';
 import { PriceOdometer } from './PriceOdometer';
 import { PriceSparkline } from './PriceSparkline';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ListingCardProps {
   item: MobileAuctionItem;
@@ -36,11 +40,15 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
-  const localized = item.multilingual?.[language] || item.multilingual?.en || { title: 'Listing Details Unavailable', description: '', specs: [] };
+  const localized = item.multilingual?.[language] || item.multilingual?.en || {
+    title: 'Listing Details Unavailable',
+    description: '',
+    specs: [],
+  };
   const isSaved = savedAuctionIds.includes(item.id);
 
   // Price pulse tracking for visual-only highlight
-  const prevBidRef = React.useRef(item.currentBidIqd);
+  const prevBidRef = useRef(item.currentBidIqd);
   const [isPricePulsing, setIsPricePulsing] = useState(false);
   const [biddingSuccess, setBiddingSuccess] = useState(false);
 
@@ -135,15 +143,16 @@ export const ListingCard: React.FC<ListingCardProps> = ({
     return (
       <div
         onClick={() => onOpenLiveRoom(item)}
-        className={`group relative bg-white rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
+        className={cn(
+          'group relative bg-white rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none',
           isHighlighted
             ? 'border-emerald-500 ring-2 ring-emerald-500/80 shadow-md shadow-emerald-500/10'
-            : 'border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-md'
-        }`}
+            : 'border-slate-200/90 hover:border-[#5B50D6]/40 shadow-xs hover:shadow-lg hover:-translate-y-0.5'
+        )}
       >
         <div>
           {/* Product Image Stage */}
-          <div className="relative aspect-[4/3] bg-slate-50 overflow-hidden">
+          <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
             <img
               src={item.imageUrl}
               alt={localized.title}
@@ -152,34 +161,36 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
             {/* Top Badges Overlay */}
             <div className="absolute top-2 inset-x-2 flex items-center justify-between pointer-events-none">
-              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider bg-white/95 backdrop-blur-md text-slate-800 border border-slate-200/60 shadow-2xs">
+              <Badge variant="outline" size="sm" className="bg-white/95 backdrop-blur-md shadow-2xs font-bold text-slate-800">
                 {item.condition}
-              </span>
+              </Badge>
 
               <button
                 type="button"
                 onClick={handleToggleSave}
-                className={`w-7 h-7 rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md transition-all shadow-2xs active:scale-90 ${
+                className={cn(
+                  'w-7 h-7 rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md transition-all shadow-2xs active:scale-90',
                   isSaved
                     ? 'bg-rose-50 text-rose-600 border border-rose-200'
                     : 'bg-white/85 hover:bg-white text-slate-600 border border-slate-200/60'
-                }`}
+                )}
                 title="Save Auction"
               >
-                <Bookmark className={`w-3 h-3 ${isSaved ? 'fill-rose-500' : ''}`} />
+                <Bookmark className={cn('w-3 h-3', isSaved && 'fill-rose-500')} />
               </button>
             </div>
 
             {/* Bottom Timer Pill Overlay */}
             <div className="absolute bottom-2 inset-x-2 flex items-center justify-between pointer-events-none">
               <div
-                className={`px-2 py-1 rounded-full text-[10px] font-mono font-bold backdrop-blur-md shadow-2xs flex items-center gap-1 transition-colors ${
+                className={cn(
+                  'px-2.5 py-1 rounded-full text-[10px] font-mono font-black backdrop-blur-md shadow-2xs flex items-center gap-1.5 transition-colors',
                   timeLeft.isUrgent
-                    ? 'bg-rose-500 text-white animate-pulse'
+                    ? 'bg-rose-600 text-white animate-pulse shadow-rose-600/40'
                     : timeLeft.isExpired
                     ? 'bg-slate-900/85 text-slate-300'
-                    : 'bg-slate-950/80 text-white'
-                }`}
+                    : 'bg-[#1E2235]/90 text-white border border-white/10'
+                )}
               >
                 {timeLeft.isUrgent ? (
                   <Flame className="w-3 h-3 text-amber-300 animate-bounce" />
@@ -196,24 +207,24 @@ export const ListingCard: React.FC<ListingCardProps> = ({
               </div>
 
               {item.isAntiSnipingActive && (
-                <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-2xs">
+                <Badge variant="live" size="sm" className="bg-rose-600 text-white border-none py-0.5">
                   ≤60S
-                </span>
+                </Badge>
               )}
             </div>
           </div>
 
           {/* Card Body */}
-          <div className="p-2.5 sm:p-3 space-y-1.5">
+          <div className="p-3 space-y-2">
             <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2">
               {localized.title}
             </h3>
 
             {/* Pricing Details */}
-            <div className="pt-1.5 border-t border-slate-100 flex items-end justify-between gap-1">
+            <div className="pt-2 border-t border-slate-100 flex items-end justify-between gap-1">
               <div>
                 <div className="flex items-center gap-1">
-                  <span className="text-[9px] text-slate-400 uppercase font-mono font-semibold block">
+                  <span className="text-[9px] text-slate-400 uppercase font-mono font-bold block">
                     {t.currentBid}
                   </span>
                   {isHighlighted && (
@@ -225,7 +236,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
               </div>
 
               <div className="text-right shrink-0">
-                <span className="text-[9px] text-slate-400 uppercase font-mono font-semibold block">
+                <span className="text-[9px] text-slate-400 uppercase font-mono font-bold block">
                   Retail
                 </span>
                 <span className="text-[10px] sm:text-xs font-mono font-bold text-slate-400 line-through">
@@ -239,28 +250,19 @@ export const ListingCard: React.FC<ListingCardProps> = ({
         </div>
 
         {/* 1-Tap Quick Action */}
-        <div className="p-2 sm:p-2.5 bg-slate-50/70 border-t border-slate-100">
-          <button
+        <div className="p-2 sm:p-2.5 bg-[#F5F6FA] border-t border-slate-100">
+          <Button
             type="button"
             onClick={handleQuickBid}
-            className={`w-full py-1.5 sm:py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 ${
-              biddingSuccess
-                ? 'bg-emerald-600 text-white'
-                : 'bg-[#5B50D6] hover:bg-[#4A40C4] text-white shadow-xs'
-            }`}
+            variant={biddingSuccess ? 'success' : 'default'}
+            size="sm"
+            className="w-full text-[11px] sm:text-xs font-black shadow-xs"
+            leftIcon={biddingSuccess ? <CheckCircle2 className="w-3 h-3" /> : <Gavel className="w-3 h-3" />}
           >
-            {biddingSuccess ? (
-              <>
-                <CheckCircle2 className="w-3 h-3" />
-                <span>Bid Placed!</span>
-              </>
-            ) : (
-              <>
-                <Gavel className="w-3 h-3" />
-                <span>+{(item.incrementStepIqd || 1000).toLocaleString()} IQD</span>
-              </>
-            )}
-          </button>
+            {biddingSuccess
+              ? 'Bid Placed!'
+              : `+${(item.incrementStepIqd || 1000).toLocaleString()} IQD`}
+          </Button>
         </div>
       </div>
     );
@@ -272,15 +274,16 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   return (
     <div
       onClick={() => onOpenLiveRoom(item)}
-      className={`group relative bg-white rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
+      className={cn(
+        'group relative bg-white rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none',
         isHighlighted
           ? 'border-emerald-500 ring-2 ring-emerald-500/80 shadow-lg shadow-emerald-500/10'
-          : 'border-slate-200/70 hover:border-slate-300 shadow-xs hover:shadow-lg'
-      }`}
+          : 'border-slate-200/90 hover:border-[#5B50D6]/40 shadow-xs hover:shadow-xl hover:-translate-y-1'
+      )}
     >
       <div>
         {/* Product Image Box with Floating Badges */}
-        <div className="relative aspect-[4/3] bg-slate-50 overflow-hidden">
+        <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
           <img
             src={item.imageUrl}
             alt={localized.title}
@@ -289,34 +292,36 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
           {/* Top Pill Bar */}
           <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/90 backdrop-blur-md text-slate-800 border border-slate-200/60 shadow-2xs">
+            <Badge variant="outline" size="default" className="bg-white/95 backdrop-blur-md shadow-2xs font-extrabold text-slate-800">
               {item.condition}
-            </span>
+            </Badge>
 
             <button
               type="button"
               onClick={handleToggleSave}
-              className={`w-8 h-8 rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md transition-all shadow-xs active:scale-90 ${
+              className={cn(
+                'w-8 h-8 rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md transition-all shadow-xs active:scale-90',
                 isSaved
                   ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                  : 'bg-white/80 hover:bg-white text-slate-600 border border-slate-200/60'
-              }`}
+                  : 'bg-white/85 hover:bg-white text-slate-600 border border-slate-200/60'
+              )}
               title="Save Auction"
             >
-              <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-rose-500' : ''}`} />
+              <Bookmark className={cn('w-3.5 h-3.5', isSaved && 'fill-rose-500')} />
             </button>
           </div>
 
           {/* Bottom Countdown Timer Bar */}
           <div className="absolute bottom-3 inset-x-3 flex items-center justify-between pointer-events-none">
             <div
-              className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold backdrop-blur-md shadow-xs flex items-center gap-1.5 transition-colors ${
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-mono font-black backdrop-blur-md shadow-xs flex items-center gap-1.5 transition-colors',
                 timeLeft.isUrgent
-                  ? 'bg-rose-500 text-white animate-pulse'
+                  ? 'bg-rose-600 text-white animate-pulse shadow-lg shadow-rose-600/40'
                   : timeLeft.isExpired
                   ? 'bg-slate-900/80 text-slate-300'
-                  : 'bg-slate-950/75 text-white'
-              }`}
+                  : 'bg-[#1E2235]/90 text-white border border-white/10'
+              )}
             >
               {timeLeft.isUrgent ? (
                 <Flame className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
@@ -333,7 +338,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
             </div>
 
             {/* Sparkline mini trajectory */}
-            <div className="hidden sm:block bg-white/85 backdrop-blur-md px-2 py-1 rounded-xl border border-slate-200/50 shadow-2xs">
+            <div className="hidden sm:block bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-200/70 shadow-2xs">
               <PriceSparkline
                 bidsHistory={item.bidsHistory}
                 startingPriceIqd={item.startingPriceIqd}
@@ -349,10 +354,10 @@ export const ListingCard: React.FC<ListingCardProps> = ({
         <div className="p-4 space-y-3">
           <div>
             <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-              <span>{item.sellerName}</span>
-              <span className="font-mono">{item.totalBids || 0} bids</span>
+              <span className="font-bold text-slate-600">{item.sellerName}</span>
+              <span className="font-mono bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 font-bold">{item.totalBids || 0} bids</span>
             </div>
-            <h3 className="font-extrabold text-slate-900 text-sm leading-snug line-clamp-2 mt-0.5">
+            <h3 className="font-extrabold text-slate-900 text-sm leading-snug line-clamp-2 mt-1">
               {localized.title}
             </h3>
           </div>
@@ -361,11 +366,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
           <div className="pt-2 border-t border-slate-100 flex items-end justify-between">
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block">
+                <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">
                   {t.currentBid}
                 </span>
                 {isHighlighted && (
-                  <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full animate-bounce">
+                  <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full animate-bounce">
                     <Sparkles className="w-2.5 h-2.5" />
                     <span>+{((item.incrementStepIqd || 1000)).toLocaleString()} IQD</span>
                   </span>
@@ -375,10 +380,10 @@ export const ListingCard: React.FC<ListingCardProps> = ({
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block">
+              <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">
                 Retail Ref
               </span>
-              <span className="text-xs font-mono font-bold text-slate-500 line-through">
+              <span className="text-xs font-mono font-bold text-slate-400 line-through">
                 {item.estimatedRetailMarketPriceIqd.toLocaleString()} IQD
               </span>
             </div>
@@ -387,37 +392,30 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       </div>
 
       {/* Card Footer Quick Action */}
-      <div className="p-3 bg-slate-50/60 border-t border-slate-100 flex items-center gap-2">
-        <button
+      <div className="p-3 bg-[#F5F6FA] border-t border-slate-100 flex items-center gap-2">
+        <Button
           type="button"
           onClick={handleQuickBid}
-          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 ${
-            biddingSuccess
-              ? 'bg-emerald-600 text-white'
-              : 'bg-[#5B50D6] hover:bg-[#4A40C4] text-white shadow-md shadow-indigo-500/20'
-          }`}
+          variant={biddingSuccess ? 'success' : 'default'}
+          size="default"
+          className="flex-1 font-black shadow-md shadow-indigo-500/25"
+          leftIcon={biddingSuccess ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Gavel className="w-3.5 h-3.5" />}
         >
-          {biddingSuccess ? (
-            <>
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Bid Placed!</span>
-            </>
-          ) : (
-            <>
-              <Gavel className="w-3.5 h-3.5" />
-              <span>Quick Bid (+{(item.incrementStepIqd || 1000).toLocaleString()})</span>
-            </>
-          )}
-        </button>
+          {biddingSuccess
+            ? 'Bid Placed!'
+            : `Quick Bid (+${(item.incrementStepIqd || 1000).toLocaleString()})`}
+        </Button>
 
-        <button
+        <Button
           type="button"
           onClick={() => onOpenLiveRoom(item)}
-          className="px-3.5 py-2 rounded-xl bg-[#EEEDFB] hover:bg-[#E0DEFA] text-[#5B50D6] border border-[#D8D4F7] text-xs font-bold transition-colors"
-          title="Open War Room"
+          variant="secondary"
+          size="default"
+          className="px-4 font-bold"
+          rightIcon={<ArrowUpRight className="w-3.5 h-3.5" />}
         >
           Details
-        </button>
+        </Button>
       </div>
     </div>
   );

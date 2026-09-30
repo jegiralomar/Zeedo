@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Gavel, Check, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SlideToBidSliderProps {
   onConfirm: () => void;
@@ -103,7 +104,10 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
     >
       {/* Background Fill Track */}
       <div
-        className="absolute inset-y-0 left-0 bg-emerald-500/20 rounded-2xl transition-all duration-75"
+        className={cn(
+          'absolute inset-y-0 left-0 rounded-2xl transition-all duration-75',
+          isConfirmed ? 'bg-emerald-600/30' : 'bg-[#5B50D6]/15'
+        )}
         style={{ width: `${Math.max(52, dragProgress * 100)}%` }}
       />
 
@@ -143,8 +147,8 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
           isConfirmed
             ? 'bg-white text-emerald-600'
             : isDragging
-            ? 'bg-emerald-600 text-white scale-105'
-            : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'
+            ? 'bg-[#5B50D6] text-white scale-105 shadow-indigo-500/30'
+            : 'bg-white text-[#5B50D6] border border-slate-200/90 hover:bg-slate-50 shadow-xs'
         }`}
         style={{
           transform: `translateX(${
@@ -158,7 +162,7 @@ export const SlideToBidSlider: React.FC<SlideToBidSliderProps> = ({
         {isConfirmed ? (
           <Check className="w-5 h-5 stroke-[3]" />
         ) : (
-          <Gavel className="w-5 h-5 text-emerald-600" />
+          <Gavel className="w-5 h-5 text-[#5B50D6]" />
         )}
       </div>
     </div>

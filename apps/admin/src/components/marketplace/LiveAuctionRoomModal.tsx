@@ -24,6 +24,9 @@ import { PriceSparkline } from './PriceSparkline';
 import { SlideToBidSlider } from './SlideToBidSlider';
 import { PhotoCarousel } from './PhotoCarousel';
 import { LiveBidTickerPill } from './LiveBidTickerPill';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface LiveAuctionRoomModalProps {
   item: MobileAuctionItem | null;
@@ -90,7 +93,11 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 
   if (!isOpen || !item) return null;
 
-  const localized = item.multilingual?.[language] || item.multilingual?.en || { title: 'Listing Details Unavailable', description: '', specs: [] };
+  const localized = item.multilingual?.[language] || item.multilingual?.en || {
+    title: 'Listing Details Unavailable',
+    description: '',
+    specs: [],
+  };
   const currentAutoCeiling = myAutoBids[item.id];
   const currentStep = item.incrementStepIqd || 1000;
 
@@ -133,7 +140,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
       <div
         dir={rtl ? 'rtl' : 'ltr'}
-        className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
+        className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
       >
         {/* Top Header Bar */}
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 backdrop-blur-sm">
@@ -143,7 +150,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors shadow-2xs"
+            className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -179,9 +186,9 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                <Badge variant="outline" size="sm" className="bg-slate-100 text-slate-700 font-extrabold">
                   {item.condition}
-                </span>
+                </Badge>
                 <span className="text-[11px] text-slate-500 font-mono">
                   Store: <strong className="text-slate-900">{item.sellerName}</strong>
                 </span>
@@ -197,20 +204,20 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 
               {/* Badges Bar */}
               <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-[#F5F6FA] border border-slate-200/80 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="font-bold text-slate-800">5-Min Doorstep Inspection</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-blue-600 shrink-0" />
+                <div className="p-2.5 rounded-xl bg-[#F5F6FA] border border-slate-200/80 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[#5B50D6] shrink-0" />
                   <span className="font-bold text-slate-800">Pay Cash on Delivery</span>
                 </div>
               </div>
 
               {/* Retail Baseline */}
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-500">Retail Value:</span>
-                <span className="font-bold text-slate-800">
+                <span className="text-slate-500 font-bold">Retail Value:</span>
+                <span className="font-black text-slate-800">
                   {item.estimatedRetailMarketPriceIqd.toLocaleString()} IQD
                 </span>
               </div>
@@ -218,7 +225,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
           </div>
 
           {/* Real-Time Price Console */}
-          <div className="p-5 rounded-3xl bg-slate-950 text-white shadow-xl space-y-4">
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-[#141724] via-[#1E2235] to-[#141724] text-white shadow-xl space-y-4 border border-white/10">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block tracking-wider">
@@ -232,9 +239,10 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
                   Time Remaining
                 </span>
                 <div
-                  className={`text-xl font-mono font-black ${
+                  className={cn(
+                    'text-xl font-mono font-black',
                     timeLeft.isUrgent ? 'text-amber-400 animate-pulse' : 'text-white'
-                  }`}
+                  )}
                 >
                   {timeLeft.isExpired
                     ? 'AUCTION ENDED'
@@ -278,7 +286,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
                   type="button"
                   onClick={() => handlePlaceBid(inc)}
                   disabled={bidding || timeLeft.isExpired}
-                  className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-900 border border-slate-200/80 text-xs font-mono font-bold transition-all disabled:opacity-40"
+                  className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-[#EEEDFB] hover:text-[#5B50D6] hover:border-[#D8D4F7] active:scale-95 text-slate-900 border border-slate-200/80 text-xs font-mono font-bold transition-all disabled:opacity-40 cursor-pointer"
                 >
                   +{inc.toLocaleString()} IQD
                 </button>
@@ -298,7 +306,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAutoBidModal(true)}
-                className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors"
+                className="text-xs font-bold text-[#5B50D6] hover:text-[#4A40C4] flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>
@@ -308,7 +316,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
                 </span>
               </button>
 
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-[11px] text-slate-400 font-mono font-bold">
                 Step: +{currentStep.toLocaleString()} IQD
               </span>
             </div>
@@ -316,12 +324,12 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 
           {/* Auto-Bid Dialog */}
           {showAutoBidModal && (
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 animate-in fade-in">
+            <div className="p-4 rounded-2xl bg-[#F5F6FA] border border-[#D8D4F7] space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-900">Set Maximum Auto-Bid Ceiling</span>
                 <button
                   onClick={() => setShowAutoBidModal(false)}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800"
+                  className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   Close
                 </button>
@@ -335,15 +343,16 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
                   value={autoBidAmount}
                   onChange={(e) => setAutoBidAmount(e.target.value)}
                   placeholder={`Min: ${(item.currentBidIqd + currentStep).toLocaleString()} IQD`}
-                  className="flex-1 py-2 px-3 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900"
+                  className="flex-1 py-2 px-3 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 focus:outline-hidden focus:border-[#5B50D6] focus:ring-2 focus:ring-[#5B50D6]/20"
                 />
-                <button
+                <Button
                   type="button"
                   onClick={handleSaveAutoBid}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold"
+                  variant="default"
+                  size="sm"
                 >
                   Set Ceiling
-                </button>
+                </Button>
               </div>
             </div>
           )}
