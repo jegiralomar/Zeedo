@@ -139,6 +139,29 @@
   - `profile/page.tsx`: Replaced Gate 1 Civil ID card with Step 1 (Phone Verified via WhatsApp OTP ✓) and Step 2 (Delivery Location).
   - `useBuyerAuthStore.ts`: Updated `isTwoGateVerified()` to `Boolean(b.phone && b.rooftopPin && b.rooftopPin.isVerified)` and automatically sets `kycStatus: 'verified'` when location is pinned.
 
+### K. First-Launch Intro Walkthrough & Unified 3-Step Phone-First Onboarding (Completed & Deployed ✅)
+- **First-Launch Intro Screen (`IntroWalkthroughModal.tsx`):**
+  - Displays automatically on first visit across any marketplace page (persisted in `localStorage.getItem('zeedo_intro_seen_v1')`).
+  - 4 polished slides highlighting core marketplace guarantees:
+    1. **1,000 IQD Strict Starting Price:** Zero hidden reserves on every item.
+    2. **Real-Time Anti-Sniping Soft-Close (≤60s):** Automatic timer resets preventing last-second sniping.
+    3. **100% Cash-on-Delivery Doorstep Inspection:** Open box inspection before payment.
+    4. **Doorstep GPS Precision Dispatch:** OpenStreetMap pinpoint routing across all Iraqi governorates.
+  - Interactive controls: progress dots, dialect switch pills (`ckb`, `badini`, `ar`, `en`), Skip Tour button, Next/Get Started button.
+  - Replay trigger: "App Tour" button placed in `marketplace/profile/page.tsx` for both guests and authenticated users to revisit anytime.
+- **Guest Browsing Boundary:**
+  - Guests can freely scroll the home feed, search, filter categories, toggle compact/detailed views, and view listing details in read-only mode.
+  - Any interactive action triggers the streamlined sign-up/sign-in wizard:
+    - Nav tabs: `My Bids`, `Saved/Watchlist`, `Profile` (intercepted in `MarketplaceLayoutShell.tsx`).
+    - Listing actions: 1-tap quick bid (`+1,000 IQD`), slide-to-bid, or bookmark (intercepted in `ListingCard.tsx` and `LiveAuctionRoomModal.tsx`).
+    - The intended action is preserved in `useBuyerAuthStore.pendingAction`.
+- **Unified 3-Step WhatsApp OTP & Location Wizard (`BuyerAuthModal.tsx`):**
+  - **Step 1 (Phone & WhatsApp OTP):** User enters Iraqi phone (+964) and requests 6-digit WhatsApp code. In sandbox/preview mode, the test code is displayed with 1-tap auto-fill. Entering an existing verified phone automatically logs in, resumes the intended action, and closes the modal.
+  - **Step 2 (Full Name):** User enters their legal name (printed on courier delivery invoice).
+  - **Step 3 (Interactive Delivery Location Map):** Interactive Leaflet OpenStreetMap with quick city selector chips, GPS "Locate Me" button, draggable pin, and district/landmark inputs.
+  - **Instant Action Auto-Resume:** Upon clicking "Complete Registration & Start Bidding", `completeFullRegistration` is executed, the user's pending action (placing the bid, saving to watchlist, or navigating) is immediately executed, a success toast displays, and the modal closes seamlessly.
+- **Zero Friction Guarantee:** Civil ID image upload remains 100% eliminated.
+
 ---
 
 ## 2. Active System Architecture
@@ -151,23 +174,31 @@
 | `GET /api/listings?status=live` | Live Marketplace Listings | Neon PostgreSQL (`auctions` table) | **Operational** |
 | `POST /api/listings` | Merchant Listing Creation | Neon PostgreSQL | **Operational** |
 | `POST /api/scraper/product` | Product Catalog Scraper | Jina Reader + Gemini `url_context` | **Operational** |
-| `POST /api/ai/ocr-id` | Bataqa Wataniya Civil ID OCR | Self-contained Tesseract.js (`ara` + `eng`) | **Operational** |
+| `POST /api/auth/whatsapp/send-otp` | WhatsApp 6-Digit OTP Dispatch | Meta Cloud API / Sandbox Fallback | **Operational** |
+| `POST /api/auth/whatsapp/verify-otp` | OTP Verification & Validation | Session Verifier / Master Key | **Operational** |
 
 ---
 
 ## 3. Key Credentials & Configurations
 
 - **Admin Login:** `ZAdmin9898` / `ZEEDOA98`
-- **Buyer Test Account:** Phone auth / OTP simulation (auto-verifies in development/preview)
+- **Buyer WhatsApp Test Code:** `782910` or displayed sandbox code
 - **Merchant ID:** `sel-01` (Zeedo Merchant Hub, Erbil)
 - **Vercel Project:** `zeedo1/admin` (`prj_CjmLqSrWrPki65DICvgMeCeUKWNI`)
-- **Git Branches:** `master` and `main` are synchronized at commit `f8e29ba`.
+- **Latest Deployment:** `admin-hbc0xkhul-zeedo1.vercel.app` (Aliased to `https://zeedo.auction`)
+- **Git Branches:** `master` and `main` are synchronized at commit `01f52d3`.
 
 ---
 
 ## 4. Verification Instructions
 
 If verifying on a client browser:
-1. Open [zeedo.auction](https://zeedo.auction).
-2. Perform a hard refresh (`Ctrl + Shift + R` on Windows/Linux or `Cmd + Shift + R` on Mac).
-3. The marketplace renders with Kurdish Sorani (`ckb`) by default, category pills, live auction cards, and zero console TypeErrors.
+1. Open [zeedo.auction](https://zeedo.auction) in a fresh private/incognito window (or clear `zeedo_intro_seen_v1` from localStorage).
+2. The **Intro Walkthrough Screen** immediately welcomes the user with feature highlights and dialect selector.
+3. Tap "Start Exploring Live Auctions" or "Skip" to enter the feed in guest read-only mode.
+4. Tap "+1,000 IQD" quick bid on any listing or tap "My Bids" / "Profile" in navigation.
+5. The unified 3-step modal opens:
+   - Enter Iraqi mobile number -> Tap "Send WhatsApp Code" -> Enter OTP `782910`.
+   - Enter Full Name -> Tap "Continue to Location Pin".
+   - Pick city or tap GPS "Locate Me" on the interactive map -> Tap "Complete Registration & Start Bidding".
+6. The account is instantly verified, and the pending action (placing your bid or opening your bids page) executes automatically.
