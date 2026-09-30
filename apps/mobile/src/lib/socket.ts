@@ -15,10 +15,8 @@ class ZeedoBiddingSocket {
   private currentUserId: string | null = null;
 
   constructor(url?: string) {
-    this.url =
-      url ||
-      process.env.EXPO_PUBLIC_WS_URL ||
-      'wss://zeedo.auction/ws';
+    const envUrl = typeof process !== 'undefined' && (process.env as any)?.EXPO_PUBLIC_WS_URL;
+    this.url = url || envUrl || 'wss://zeedo.auction/ws';
   }
 
   public setUserId(userId: string | null) {

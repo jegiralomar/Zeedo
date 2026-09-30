@@ -11,22 +11,30 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { getMobileSession, clearMobileSession, MobileBuyerSession } from './src/lib/session';
+import * as Haptics from 'expo-haptics';
+import { getMobileSession, clearMobileSession, saveMobileSession, MobileBuyerSession } from './src/lib/session';
 import { liveSocket } from './src/lib/socket';
 import { AuctionCard, MobileAuctionItem } from './src/components/AuctionCard';
+import { LiveAuctionRoomModal } from './src/components/LiveAuctionRoomModal';
 import { WhatsAppAuthModal } from './src/components/WhatsAppAuthModal';
 import { LocationPickerModal } from './src/components/LocationPickerModal';
+import { MyBidsScreen } from './src/screens/MyBidsScreen';
+import { WatchlistScreen } from './src/screens/WatchlistScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 
 const API_BASE_URL = 'https://zeedo.auction';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'feed' | 'bids' | 'watchlist' | 'profile'>('feed');
   const [session, setSession] = useState<MobileBuyerSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [language, setLanguage] = useState<'ckb' | 'badini' | 'ar' | 'en'>('ckb');
   const [items, setItems] = useState<MobileAuctionItem[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
   
   // Modals
+  const [selectedRoomItem, setSelectedRoomItem] = useState<MobileAuctionItem | null>(null);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [pendingBidItem, setPendingBidItem] = useState<MobileAuctionItem | null>(null);
@@ -64,7 +72,6 @@ export default function App() {
     getMobileSession().then(async (saved) => {
       if (saved && saved.token) {
         try {
-          // Verify with server
           const verifyRes = await fetch(`${API_BASE_URL}/api/auth/session/verify`, {
             method: 'POST',
             headers: {
@@ -77,13 +84,11 @@ export default function App() {
             setSession(saved);
             liveSocket.setUserId(saved.user.id);
           } else {
-            // Expired or revoked after 90 days
             await clearMobileSession();
             setSession(null);
             liveSocket.setUserId(null);
           }
         } catch {
-          // Offline mode / network hiccup: preserve local session
           setSession(saved);
           liveSocket.setUserId(saved.user.id);
         }
@@ -111,6 +116,19 @@ export default function App() {
           return it;
         })
       );
+
+      // If active in room, update room item in real time
+      setSelectedRoomItem((current) => {
+        if (current && current.id === data.auctionId) {
+          return {
+            ...current,
+            currentBid: data.currentBidIqd,
+            totalBids: data.totalBids,
+            endsAt: data.auctionEndsAt || current.endsAt,
+          };
+        }
+        return current;
+      });
     });
 
     // 5. Subscribe to personal outbid notifications
@@ -142,14 +160,15 @@ export default function App() {
   }, [fetchLiveAuctions]);
 
   // Handle Placing Bids
-  const executeBid = async (item: MobileAuctionItem) => {
+  const executeBid = async (item: MobileAuctionItem, customIncrement?: number) => {
     if (!session) {
       setPendingBidItem(item);
       setAuthModalVisible(true);
       return;
     }
 
-    const nextAmount = item.currentBid + item.bidIncrement;
+    const inc = customIncrement || item.bidIncrement;
+    const nextAmount = item.currentBid + inc;
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/listings/bid`, {
@@ -173,6 +192,11 @@ export default function App() {
         throw new Error(result.error || 'Failed to place bid');
       }
 
+      // Minimal tactile haptic on successful bid confirmation
+      try {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {}
+
       Alert.alert(
         'Bid Accepted! 🎯',
         `You are now the highest bidder at ${nextAmount.toLocaleString()} IQD.`
@@ -180,6 +204,12 @@ export default function App() {
     } catch (err: any) {
       Alert.alert('Bid Error', err.message || 'Could not place bid.');
     }
+  };
+
+  const toggleSaveItem = (id: string) => {
+    setSavedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
   const onRefresh = () => {
@@ -200,14 +230,14 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#072F1F" />
 
-      {/* Header */}
+      {/* Global Top App Bar */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>ZEEDO</Text>
           <Text style={styles.headerSubtitle}>Live 1,000 IQD Marketplace</Text>
         </View>
 
-        {/* Dialect Switcher */}
+        {/* Dialect Switcher Pills */}
         <View style={styles.dialectRow}>
           {(['ckb', 'badini', 'ar', 'en'] as const).map((lang) => (
             <TouchableOpacity
@@ -228,98 +258,177 @@ export default function App() {
         </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#B4F105"
-            colors={['#B4F105']}
-          />
-        }
-      >
-        {/* User Session & Doorstep Pin Bar */}
-        <View style={styles.sessionCard}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sessionStatusText}>
-              {session
-                ? `Signed in as ${session.user.name || session.user.phone}`
-                : 'Guest Mode — 1-Tap WhatsApp OTP'}
-            </Text>
-            <Text style={styles.sessionSubtext}>
-              {session
-                ? '90-Day Active Session ✓ Hardware Key Secure'
-                : '100% Cash-on-Delivery with Open Box Inspection'}
-            </Text>
-          </View>
+      {/* Main Tab Screen Content */}
+      <View style={styles.mainContent}>
+        {activeTab === 'feed' && (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#B4F105"
+                colors={['#B4F105']}
+              />
+            }
+          >
+            {/* User Session & Doorstep Pin Bar */}
+            <View style={styles.sessionCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sessionStatusText}>
+                  {session
+                    ? `Signed in as ${session.user.name || session.user.phone}`
+                    : 'Guest Mode — 1-Tap WhatsApp OTP'}
+                </Text>
+                <Text style={styles.sessionSubtext}>
+                  {session
+                    ? '90-Day Active Session ✓ Hardware Key Secure'
+                    : '100% Cash-on-Delivery with Open Box Inspection'}
+                </Text>
+              </View>
 
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            <TouchableOpacity
-              onPress={() => setLocationModalVisible(true)}
-              style={styles.locationPill}
-            >
-              <Text style={styles.locationPillText}>📍 Pin Map</Text>
-            </TouchableOpacity>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <TouchableOpacity
+                  onPress={() => setLocationModalVisible(true)}
+                  style={styles.locationPill}
+                >
+                  <Text style={styles.locationPillText}>📍 Pin Map</Text>
+                </TouchableOpacity>
 
-            {session ? (
-              <TouchableOpacity
-                onPress={async () => {
-                  await clearMobileSession();
-                  setSession(null);
-                }}
-                style={styles.logoutButton}
-              >
-                <Text style={styles.logoutButtonText}>Exit</Text>
-              </TouchableOpacity>
+                {!session && (
+                  <TouchableOpacity
+                    onPress={() => setAuthModalVisible(true)}
+                    style={styles.loginPill}
+                  >
+                    <Text style={styles.loginPillText}>Sign In</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {/* Live Feed Header */}
+            <View style={styles.feedHeader}>
+              <Text style={styles.feedTitle}>
+                {language === 'ckb'
+                  ? 'مزادە ڕاستەوخۆکان'
+                  : language === 'badini'
+                  ? 'مەزادێن ئێکسەر'
+                  : language === 'ar'
+                  ? 'المزادات المباشرة'
+                  : 'Live Drops'}
+              </Text>
+              <Text style={styles.liveIndicator}>🔴 LIVE NOW</Text>
+            </View>
+
+            {items.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>📦</Text>
+                <Text style={styles.emptyTitle}>No Live Drops Right Now</Text>
+                <Text style={styles.emptySubtitle}>
+                  New items start strictly from 1,000 IQD. Check back shortly!
+                </Text>
+              </View>
             ) : (
-              <TouchableOpacity
-                onPress={() => setAuthModalVisible(true)}
-                style={styles.loginPill}
-              >
-                <Text style={styles.loginPillText}>Sign In</Text>
-              </TouchableOpacity>
+              items.map((item) => (
+                <AuctionCard
+                  key={item.id}
+                  item={item}
+                  language={language}
+                  onQuickBid={executeBid}
+                  onSlideBid={executeBid}
+                  onPressCard={(it) => setSelectedRoomItem(it)}
+                />
+              ))
             )}
-          </View>
-        </View>
-
-        {/* Live Auctions Feed */}
-        <View style={styles.feedHeader}>
-          <Text style={styles.feedTitle}>
-            {language === 'ckb'
-              ? 'مزادە ڕاستەوخۆکان'
-              : language === 'badini'
-              ? 'مەزادێن ئێکسەر'
-              : language === 'ar'
-              ? 'المزادات المباشرة'
-              : 'Live Auctions'}
-          </Text>
-          <Text style={styles.liveIndicator}>🔴 LIVE NOW</Text>
-        </View>
-
-        {items.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📦</Text>
-            <Text style={styles.emptyTitle}>No Live Drops Right Now</Text>
-            <Text style={styles.emptySubtitle}>
-              New items start strictly from 1,000 IQD. Check back shortly!
-            </Text>
-          </View>
-        ) : (
-          items.map((item) => (
-            <AuctionCard
-              key={item.id}
-              item={item}
-              language={language}
-              onQuickBid={executeBid}
-              onSlideBid={executeBid}
-              onPressCard={(it) => {
-                // View auction details
-              }}
-            />
-          ))
+          </ScrollView>
         )}
-      </ScrollView>
+
+        {activeTab === 'bids' && (
+          <MyBidsScreen
+            session={session}
+            items={items}
+            language={language}
+            onReBid={executeBid}
+            onViewItem={(it) => setSelectedRoomItem(it)}
+            onSignInRequired={() => setAuthModalVisible(true)}
+          />
+        )}
+
+        {activeTab === 'watchlist' && (
+          <WatchlistScreen
+            savedIds={savedIds}
+            items={items}
+            language={language}
+            onToggleSave={toggleSaveItem}
+            onQuickBid={executeBid}
+            onViewItem={(it) => setSelectedRoomItem(it)}
+          />
+        )}
+
+        {activeTab === 'profile' && (
+          <ProfileScreen
+            session={session}
+            language={language}
+            onSelectLanguage={setLanguage}
+            onOpenAuth={() => setAuthModalVisible(true)}
+            onOpenLocation={() => setLocationModalVisible(true)}
+            onSessionCleared={() => setSession(null)}
+          />
+        )}
+      </View>
+
+      {/* 4-Tab Bottom Bar */}
+      <View style={styles.bottomTabBar}>
+        <TouchableOpacity
+          onPress={() => setActiveTab('feed')}
+          style={styles.tabItem}
+        >
+          <Text style={[styles.tabIcon, activeTab === 'feed' && styles.tabIconActive]}>🔥</Text>
+          <Text style={[styles.tabLabel, activeTab === 'feed' && styles.tabLabelActive]}>
+            Live Drops
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setActiveTab('bids')}
+          style={styles.tabItem}
+        >
+          <Text style={[styles.tabIcon, activeTab === 'bids' && styles.tabIconActive]}>🏷️</Text>
+          <Text style={[styles.tabLabel, activeTab === 'bids' && styles.tabLabelActive]}>
+            My Bids
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setActiveTab('watchlist')}
+          style={styles.tabItem}
+        >
+          <Text style={[styles.tabIcon, activeTab === 'watchlist' && styles.tabIconActive]}>⭐</Text>
+          <Text style={[styles.tabLabel, activeTab === 'watchlist' && styles.tabLabelActive]}>
+            Watchlist
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setActiveTab('profile')}
+          style={styles.tabItem}
+        >
+          <Text style={[styles.tabIcon, activeTab === 'profile' && styles.tabIconActive]}>👤</Text>
+          <Text style={[styles.tabLabel, activeTab === 'profile' && styles.tabLabelActive]}>
+            Profile
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Full-Screen Live Auction Room Modal */}
+      <LiveAuctionRoomModal
+        visible={Boolean(selectedRoomItem)}
+        item={selectedRoomItem}
+        onClose={() => setSelectedRoomItem(null)}
+        onPlaceBid={executeBid}
+        language={language}
+        isLeading={false}
+      />
 
       {/* WhatsApp OTP Modal */}
       <WhatsAppAuthModal
@@ -328,6 +437,7 @@ export default function App() {
         apiBaseUrl={API_BASE_URL}
         onSuccess={(newSession) => {
           setSession(newSession);
+          liveSocket.setUserId(newSession.user.id);
           if (pendingBidItem) {
             executeBid(pendingBidItem);
             setPendingBidItem(null);
@@ -421,9 +531,13 @@ const styles = StyleSheet.create({
   dialectPillTextActive: {
     color: '#072F1F',
   },
+  mainContent: {
+    flex: 1,
+  },
   scrollContent: {
     padding: 16,
     gap: 16,
+    paddingBottom: 20,
   },
   sessionCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -469,17 +583,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '900',
   },
-  logoutButton: {
-    backgroundColor: 'rgba(244, 63, 94, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  logoutButtonText: {
-    color: '#FB7185',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
   feedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -519,5 +622,35 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     lineHeight: 18,
+  },
+  bottomTabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#052216',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    paddingVertical: 10,
+    paddingBottom: 20,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  tabIcon: {
+    fontSize: 18,
+    opacity: 0.5,
+  },
+  tabIconActive: {
+    opacity: 1,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#A7C1B5',
+  },
+  tabLabelActive: {
+    color: '#B4F105',
+    fontWeight: '900',
   },
 });
