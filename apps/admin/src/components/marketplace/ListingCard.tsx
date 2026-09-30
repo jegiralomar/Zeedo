@@ -34,7 +34,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
-  const localized = item.multilingual[language] || item.multilingual.en;
+  const localized = item.multilingual?.[language] || item.multilingual?.en || { title: 'Listing Details Unavailable', description: '', specs: [] };
   const isSaved = savedAuctionIds.includes(item.id);
 
   // Countdown timer calculation

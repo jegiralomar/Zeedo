@@ -90,7 +90,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
 
   if (!isOpen || !item) return null;
 
-  const localized = item.multilingual[language] || item.multilingual.en;
+  const localized = item.multilingual?.[language] || item.multilingual?.en || { title: 'Listing Details Unavailable', description: '', specs: [] };
   const currentAutoCeiling = myAutoBids[item.id];
   const currentStep = item.incrementStepIqd || 1000;
 
