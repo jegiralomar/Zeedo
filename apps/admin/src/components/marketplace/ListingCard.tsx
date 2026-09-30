@@ -246,7 +246,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
             className={`w-full py-1.5 sm:py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 ${
               biddingSuccess
                 ? 'bg-emerald-600 text-white'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-[#5B50D6] hover:bg-[#4A40C4] text-white shadow-xs'
             }`}
           >
             {biddingSuccess ? (
@@ -394,7 +394,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
           className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 ${
             biddingSuccess
               ? 'bg-emerald-600 text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-[#5B50D6] hover:bg-[#4A40C4] text-white shadow-md shadow-indigo-500/20'
           }`}
         >
           {biddingSuccess ? (
@@ -413,7 +413,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
         <button
           type="button"
           onClick={() => onOpenLiveRoom(item)}
-          className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-bold transition-colors"
+          className="px-3.5 py-2 rounded-xl bg-[#EEEDFB] hover:bg-[#E0DEFA] text-[#5B50D6] border border-[#D8D4F7] text-xs font-bold transition-colors"
           title="Open War Room"
         >
           Details

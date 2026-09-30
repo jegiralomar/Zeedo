@@ -161,7 +161,7 @@ export default function BuyerMarketplacePage() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 border shadow-2xs ${
                 isSelected
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20'
+                  ? 'bg-[#5B50D6] text-white border-[#5B50D6] shadow-md shadow-indigo-500/25'
                   : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >

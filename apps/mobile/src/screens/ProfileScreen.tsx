@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { MobileBuyerSession, clearMobileSession } from '../lib/session';
-import { EviraTheme } from '../lib/theme';
+import { AppTheme } from '../lib/theme';
 
 interface ProfileScreenProps {
   session: MobileBuyerSession | null;
@@ -23,36 +23,58 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   session,
   onOpenAuth,
   onOpenLocation,
-  language,
+  language = 'ar',
   onSelectLanguage,
   onSessionCleared,
 }) => {
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to end your active session on this device?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await clearMobileSession();
-          onSessionCleared();
+    Alert.alert(
+      language === 'ar' ? 'تسجيل الخروج' : 'Sign Out',
+      language === 'ar' ? 'هل أنت متأكد من إنهاء جلستك على هذا الجهاز؟' : 'Are you sure you want to end your active session on this device?',
+      [
+        { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        {
+          text: language === 'ar' ? 'خروج' : 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await clearMobileSession();
+            onSessionCleared();
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const languages: { code: 'ckb' | 'badini' | 'ar' | 'en'; label: string }[] = [
+    { code: 'ar', label: 'العربية' },
     { code: 'ckb', label: 'کوردی (سۆرانی)' },
     { code: 'badini', label: 'بادینی' },
-    { code: 'ar', label: 'العربية' },
     { code: 'en', label: 'English' },
   ];
 
+  const t = {
+    title: language === 'ar' ? 'الملف الشخصي' : language === 'ckb' ? 'پڕۆفایل' : 'Profile',
+    verifiedBuyer: language === 'ar' ? 'مشتري موثّق' : 'Verified Buyer',
+    signInTitle: language === 'ar' ? 'تسجيل الدخول عبر واتساب' : 'Sign In with WhatsApp',
+    signInSub: language === 'ar' ? 'جلسة نشطة لمدة 90 يوماً مع رمز تحقق فوري بضغطة واحدة.' : '90-day active session with 1-tap OTP verification.',
+    preferencesHeader: language === 'ar' ? 'التفضيلات والتسليم' : 'Preferences & Delivery',
+    locationTitle: language === 'ar' ? 'عنوان التسليم عند الباب' : 'Doorstep Delivery Location',
+    locationSub: (city?: string) => city ? `${city}` : (language === 'ar' ? 'تحديد الموقع على الخريطة' : 'Pin location on map'),
+    languageTitle: language === 'ar' ? 'اللغة / زمان' : 'Language / زمان',
+    trustHeader: language === 'ar' ? 'الأمان والضمان' : 'Trust & Protection',
+    guaranteeTitle: language === 'ar' ? 'ضمان الدفع عند الاستلام 100%' : '100% Cash-on-Delivery Guarantee',
+    guaranteeSub: language === 'ar' ? 'افحص البضاعة وتأكد منها قبل تسليم المبلغ للمندوب.' : 'Open and inspect the item before handing over cash.',
+    antiSnipingTitle: language === 'ar' ? 'نظام الحماية من القنص' : 'Anti-Sniping Live Reset',
+    antiSnipingSub: language === 'ar' ? 'تمديد تلقائي لدقيقتين عند وجود مزايدة في الثواني الأخيرة.' : 'Auto-extends 2 minutes on last-minute bids.',
+    logout: language === 'ar' ? 'تسجيل الخروج من الحساب' : 'Sign Out of Session',
+    version: 'Zeedo Auction v2.4.0 • أربيل، كوردستان العراق',
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-      {/* Evira Profile Header */}
+      {/* Top Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>{t.title}</Text>
       </View>
 
       {/* User Card */}
@@ -65,13 +87,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
           <View style={styles.userInfo}>
             <View style={styles.nameRow}>
-              <Text style={styles.userName}>{session.user.name || 'Verified Buyer'}</Text>
+              <Text style={styles.userName}>{session.user.name || t.verifiedBuyer}</Text>
               <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedBadgeText}>✓ Verified</Text>
+                <Text style={styles.verifiedBadgeText}>✓ موثّق</Text>
               </View>
             </View>
             <Text style={styles.userPhone}>{session.user.phone}</Text>
-            <Text style={styles.userCity}>📍 {session.user.city || 'Erbil, Kurdistan Region'}</Text>
+            <Text style={styles.userCity}>📍 {session.user.city || 'أربيل، إقليم كوردستان'}</Text>
           </View>
         </View>
       ) : (
@@ -84,17 +106,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <Text style={styles.signInIcon}>📱</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.signInTitle}>Sign In with WhatsApp</Text>
-            <Text style={styles.signInSub}>
-              90-day hardware active session with 1-tap OTP.
-            </Text>
+            <Text style={styles.signInTitle}>{t.signInTitle}</Text>
+            <Text style={styles.signInSub}>{t.signInSub}</Text>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
       )}
 
       {/* Section: Delivery & Settings */}
-      <Text style={styles.sectionHeader}>Preferences & Delivery</Text>
+      <Text style={styles.sectionHeader}>{t.preferencesHeader}</Text>
 
       {/* Doorstep Location Item */}
       <TouchableOpacity
@@ -102,13 +122,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onPress={onOpenLocation}
         style={styles.menuItem}
       >
-        <View style={styles.menuIconContainer}>
+        <View style={[styles.menuIconContainer, { backgroundColor: AppTheme.colors.pastelBlue }]}>
           <Text style={styles.menuIcon}>📍</Text>
         </View>
         <View style={styles.menuTextContainer}>
-          <Text style={styles.menuTitle}>Doorstep Delivery Pin</Text>
+          <Text style={styles.menuTitle}>{t.locationTitle}</Text>
           <Text style={styles.menuSubtitle}>
-            {session?.user.city ? `Saved: ${session.user.city}` : 'Pin rooftop location on map'}
+            {t.locationSub(session?.user.city)}
           </Text>
         </View>
         <Text style={styles.chevron}>›</Text>
@@ -117,12 +137,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {/* Language Selector Item */}
       <View style={styles.languageContainer}>
         <View style={styles.languageHeader}>
-          <View style={styles.menuIconContainer}>
+          <View style={[styles.menuIconContainer, { backgroundColor: AppTheme.colors.pastelPurple }]}>
             <Text style={styles.menuIcon}>🌐</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.menuTitle}>Language / زمان</Text>
-            <Text style={styles.menuSubtitle}>Kurdish, Arabic, English</Text>
+            <Text style={styles.menuTitle}>{t.languageTitle}</Text>
+            <Text style={styles.menuSubtitle}>العربية، کوردی، English</Text>
           </View>
         </View>
 
@@ -135,6 +155,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 styles.langPill,
                 language === l.code && styles.langPillActive,
               ]}
+              activeOpacity={0.8}
             >
               <Text
                 style={[
@@ -150,45 +171,39 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       </View>
 
       {/* Trust & Guarantee */}
-      <Text style={styles.sectionHeader}>Trust & Inspection</Text>
+      <Text style={styles.sectionHeader}>{t.trustHeader}</Text>
 
       <View style={styles.menuItemStatic}>
-        <View style={styles.menuIconContainer}>
+        <View style={[styles.menuIconContainer, { backgroundColor: AppTheme.colors.pastelAmber }]}>
           <Text style={styles.menuIcon}>🛡️</Text>
         </View>
         <View style={styles.menuTextContainer}>
-          <Text style={styles.menuTitle}>100% Cash-on-Delivery Guarantee</Text>
-          <Text style={styles.menuSubtitle}>
-            Inspect item with courier before handing over payment.
-          </Text>
+          <Text style={styles.menuTitle}>{t.guaranteeTitle}</Text>
+          <Text style={styles.menuSubtitle}>{t.guaranteeSub}</Text>
         </View>
       </View>
 
       <View style={styles.menuItemStatic}>
-        <View style={styles.menuIconContainer}>
-          <Text style={styles.menuIcon}>⚡</Text>
+        <View style={[styles.menuIconContainer, { backgroundColor: AppTheme.colors.pastelTeal }]}>
+          <Text style={styles.menuIcon}>⏱️</Text>
         </View>
         <View style={styles.menuTextContainer}>
-          <Text style={styles.menuTitle}>Strict 1,000 IQD Bidding Rule</Text>
-          <Text style={styles.menuSubtitle}>
-            All auctions start at 1,000 IQD with no seller hidden reserves.
-          </Text>
+          <Text style={styles.menuTitle}>{t.antiSnipingTitle}</Text>
+          <Text style={styles.menuSubtitle}>{t.antiSnipingSub}</Text>
         </View>
       </View>
 
-      {/* Sign Out Button */}
       {session && (
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={handleLogout}
           style={styles.logoutButton}
         >
-          <Text style={styles.logoutButtonText}>Sign Out of Device</Text>
+          <Text style={styles.logoutButtonText}>{t.logout}</Text>
         </TouchableOpacity>
       )}
 
-      {/* Version Tag */}
-      <Text style={styles.versionText}>Zeedo Auction Mobile v1.0.0 • Evira Design System</Text>
+      <Text style={styles.versionText}>{t.version}</Text>
     </ScrollView>
   );
 };
@@ -196,42 +211,54 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: EviraTheme.colors.background,
+    backgroundColor: AppTheme.colors.background,
   },
   scroll: {
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 36,
+    paddingTop: 12,
+    paddingBottom: 110,
   },
   header: {
     marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.xxl,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 18,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
+    shadowColor: AppTheme.colors.shadowColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
     gap: 14,
   },
   avatarCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: EviraTheme.colors.primary,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: AppTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AppTheme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   avatarText: {
     fontSize: 22,
-    fontWeight: '800',
-    color: EviraTheme.colors.textWhite,
+    fontWeight: '900',
+    color: '#FFFFFF',
   },
   userInfo: {
     flex: 1,
@@ -240,95 +267,104 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   userName: {
     fontSize: 16,
     fontWeight: '800',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
   },
   verifiedBadge: {
     backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   verifiedBadgeText: {
-    color: '#15803D',
     fontSize: 10,
     fontWeight: '800',
+    color: '#15803D',
   },
   userPhone: {
     fontSize: 12,
-    color: EviraTheme.colors.textSecondary,
-    fontWeight: '500',
+    color: AppTheme.colors.textSecondary,
+    marginBottom: 2,
   },
   userCity: {
     fontSize: 11,
-    color: EviraTheme.colors.textTertiary,
-    marginTop: 2,
+    color: AppTheme.colors.textTertiary,
   },
   signInCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.xxl,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 18,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
+    shadowColor: AppTheme.colors.shadowColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
     gap: 14,
   },
   signInIconBox: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: EviraTheme.colors.primary,
+    borderRadius: 14,
+    backgroundColor: AppTheme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   signInIcon: {
-    fontSize: 20,
+    fontSize: 24,
   },
   signInTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     marginBottom: 2,
   },
   signInSub: {
     fontSize: 11,
-    color: EviraTheme.colors.textSecondary,
+    color: AppTheme.colors.textSecondary,
+    lineHeight: 16,
   },
   sectionHeader: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     marginBottom: 10,
     marginTop: 8,
-    letterSpacing: 0.2,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
     gap: 12,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
   },
   menuItemStatic: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
     gap: 12,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
   },
   menuIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -339,25 +375,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: EviraTheme.colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+    color: AppTheme.colors.textPrimary,
     marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 11,
-    color: EviraTheme.colors.textSecondary,
+    color: AppTheme.colors.textSecondary,
   },
   chevron: {
     fontSize: 20,
-    color: EviraTheme.colors.textTertiary,
+    color: AppTheme.colors.textTertiary,
     fontWeight: '600',
   },
   languageContainer: {
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
   },
   languageHeader: {
     flexDirection: 'row',
@@ -372,30 +410,30 @@ const styles = StyleSheet.create({
   },
   langPill: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: EviraTheme.radii.full,
-    backgroundColor: '#FFFFFF',
+    paddingVertical: 7,
+    borderRadius: AppTheme.radii.full,
+    backgroundColor: AppTheme.colors.background,
     borderWidth: 1,
-    borderColor: EviraTheme.colors.border,
+    borderColor: AppTheme.colors.border,
   },
   langPillActive: {
-    backgroundColor: EviraTheme.colors.primary,
-    borderColor: EviraTheme.colors.primary,
+    backgroundColor: AppTheme.colors.primary,
+    borderColor: AppTheme.colors.primary,
   },
   langPillText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: EviraTheme.colors.textPrimary,
+    fontWeight: '700',
+    color: AppTheme.colors.textSecondary,
   },
   langPillTextActive: {
-    color: EviraTheme.colors.textWhite,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   logoutButton: {
     marginTop: 20,
     backgroundColor: '#FEE2E2',
     paddingVertical: 14,
-    borderRadius: EviraTheme.radii.full,
+    borderRadius: AppTheme.radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -407,7 +445,7 @@ const styles = StyleSheet.create({
   versionText: {
     textAlign: 'center',
     fontSize: 11,
-    color: EviraTheme.colors.textTertiary,
+    color: AppTheme.colors.textTertiary,
     marginTop: 24,
   },
 });

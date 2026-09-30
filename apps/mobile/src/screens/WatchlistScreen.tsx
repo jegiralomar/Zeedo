@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MobileAuctionItem, AuctionCard } from '../components/AuctionCard';
-import { EviraTheme } from '../lib/theme';
+import { AppTheme } from '../lib/theme';
 
 interface WatchlistScreenProps {
   savedIds: string[];
@@ -24,7 +24,7 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
   onToggleSave,
   onQuickBid,
   onViewItem,
-  language,
+  language = 'ar',
 }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const savedItems = items.filter((it) => savedIds.includes(it.id));
@@ -35,18 +35,41 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
       : it.category.toLowerCase().includes(selectedCategory.toLowerCase())
   );
 
+  const t = {
+    title: language === 'ar' ? 'قائمة الرغبات' : language === 'ckb' ? 'دڵخوازەکانم' : 'My Wishlist',
+    countText: (count: number) =>
+      language === 'ar'
+        ? `${count} مزادات محفوظة`
+        : language === 'ckb'
+        ? `${count} پارێزراو`
+        : `${count} Saved Drops`,
+    emptyTitle: language === 'ar' ? 'قائمة الرغبات فارغة' : 'Your Wishlist is Empty',
+    emptySub:
+      language === 'ar'
+        ? 'انقر على أيقونة القلب على أي مزاد لمتابعة التوقيت والصفقات المميزة هنا.'
+        : 'Tap the heart icon on any auction lot to monitor live timers and bids here.',
+  };
+
+  const categories = [
+    { id: 'all', label: language === 'ar' ? 'الكل' : 'All' },
+    { id: 'cars', label: language === 'ar' ? 'سيارات' : 'Cars' },
+    { id: 'gaming', label: language === 'ar' ? 'ألعاب' : 'Gaming' },
+    { id: 'watches', label: language === 'ar' ? 'ساعات' : 'Watches' },
+    { id: 'home', label: language === 'ar' ? 'أجهزة' : 'Devices' },
+  ];
+
   return (
     <View style={styles.container}>
-      {/* Evira Wishlist Header */}
+      {/* Top Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>My Wishlist</Text>
-          <Text style={styles.headerSub}>{savedItems.length} Saved Drops</Text>
+          <Text style={styles.headerTitle}>{t.title}</Text>
+          <Text style={styles.headerSub}>{t.countText(savedItems.length)}</Text>
         </View>
 
-        <TouchableOpacity style={styles.searchIconButton}>
-          <Text style={styles.searchIconText}>🔍</Text>
-        </TouchableOpacity>
+        <View style={styles.heartBadge}>
+          <Text style={styles.heartBadgeIcon}>♥</Text>
+        </View>
       </View>
 
       {/* Horizontal Category Filter Pills */}
@@ -55,22 +78,23 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterPillsRow}
       >
-        {['all', 'gaming', 'smartphones', 'watches', 'computers'].map((cat) => (
+        {categories.map((cat) => (
           <TouchableOpacity
-            key={cat}
-            onPress={() => setSelectedCategory(cat)}
+            key={cat.id}
+            onPress={() => setSelectedCategory(cat.id)}
             style={[
               styles.filterPill,
-              selectedCategory === cat && styles.filterPillActive,
+              selectedCategory === cat.id && styles.filterPillActive,
             ]}
+            activeOpacity={0.8}
           >
             <Text
               style={[
                 styles.filterPillText,
-                selectedCategory === cat && styles.filterPillTextActive,
+                selectedCategory === cat.id && styles.filterPillTextActive,
               ]}
             >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              {cat.label}
             </Text>
           </TouchableOpacity>
         ))}
@@ -83,10 +107,8 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
             <View style={styles.emptyIconCircle}>
               <Text style={styles.emptyIcon}>♡</Text>
             </View>
-            <Text style={styles.emptyTitle}>Your Wishlist is Empty</Text>
-            <Text style={styles.emptySub}>
-              Tap the heart icon on any auction lot to monitor live timers, anti-sniping resets, and outbid activity here.
-            </Text>
+            <Text style={styles.emptyTitle}>{t.emptyTitle}</Text>
+            <Text style={styles.emptySub}>{t.emptySub}</Text>
           </View>
         ) : (
           <View style={styles.productGrid}>
@@ -111,66 +133,68 @@ export const WatchlistScreen: React.FC<WatchlistScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: EviraTheme.colors.background,
+    backgroundColor: AppTheme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 12,
     paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '900',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
   },
   headerSub: {
     fontSize: 12,
-    color: EviraTheme.colors.textSecondary,
-    fontWeight: '500',
+    color: AppTheme.colors.textSecondary,
+    fontWeight: '600',
     marginTop: 2,
   },
-  searchIconButton: {
+  heartBadge: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: EviraTheme.colors.surface,
+    backgroundColor: '#FEE2E2',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchIconText: {
-    fontSize: 16,
+  heartBadgeIcon: {
+    fontSize: 20,
+    color: AppTheme.colors.liveRed,
   },
   filterPillsRow: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     gap: 8,
     paddingBottom: 14,
   },
   filterPill: {
     paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: EviraTheme.radii.full,
-    backgroundColor: EviraTheme.colors.background,
-    borderWidth: 1.5,
-    borderColor: EviraTheme.colors.border,
+    paddingVertical: 8,
+    borderRadius: AppTheme.radii.full,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
   },
   filterPillActive: {
-    backgroundColor: EviraTheme.colors.primary,
-    borderColor: EviraTheme.colors.primary,
+    backgroundColor: AppTheme.colors.primary,
+    borderColor: AppTheme.colors.primary,
   },
   filterPillText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textSecondary,
   },
   filterPillTextActive: {
-    color: EviraTheme.colors.textWhite,
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   scroll: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 100,
   },
   productGrid: {
     flexDirection: 'row',
@@ -180,32 +204,36 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 56,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 36,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
+    marginTop: 30,
   },
   emptyIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: EviraTheme.colors.surface,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: AppTheme.colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   emptyIcon: {
     fontSize: 26,
-    color: EviraTheme.colors.textTertiary,
+    color: AppTheme.colors.primary,
   },
   emptyTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     marginBottom: 6,
   },
   emptySub: {
     fontSize: 12,
-    color: EviraTheme.colors.textSecondary,
+    color: AppTheme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
-    maxWidth: 280,
   },
 });

@@ -94,28 +94,28 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
   return (
     <div
       dir={rtl ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900 selection:bg-blue-600 selection:text-white"
+      className="min-h-screen bg-[#F5F6FA] flex flex-col font-sans text-slate-900 selection:bg-[#5B50D6] selection:text-white"
     >
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           {/* Logo & Platform Tag */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <span className="text-xl tracking-tighter">Z</span>
+            <div className="w-10 h-10 rounded-2xl bg-[#5B50D6] text-white flex items-center justify-center font-extrabold shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+              <span className="text-xl">⚖️</span>
             </div>
             <div>
               <span className="font-extrabold text-lg text-slate-900 tracking-tight">
                 ZEEDO
               </span>
-              <p className="text-[10px] font-medium text-slate-400">
+              <p className="text-[10px] font-bold text-[#5B50D6]">
                 Live Auctions • مزادات حية
               </p>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1.5">
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href ||
@@ -135,7 +135,7 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
                   }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 relative ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-extrabold'
+                      ? 'bg-[#EEEDFB] text-[#5B50D6] font-extrabold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -197,9 +197,9 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
                 {/* Profile Link Badge */}
                 <Link
                   href="/marketplace/profile"
-                  className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-800 text-xs font-bold flex items-center gap-1.5 transition-colors max-w-[130px] sm:max-w-[160px]"
+                  className="px-3 py-1.5 rounded-xl bg-[#EEEDFB] border border-[#D8D4F7] hover:bg-[#E0DEFA] text-[#5B50D6] text-xs font-bold flex items-center gap-1.5 transition-colors max-w-[130px] sm:max-w-[160px]"
                 >
-                  <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <User className="w-3.5 h-3.5 text-[#5B50D6] shrink-0" />
                   <span className="truncate">{buyer.name.split(' ')[0]}</span>
                 </Link>
 
@@ -221,7 +221,7 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
                   }}
                   className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-1"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-blue-600" />
+                  <LogIn className="w-3.5 h-3.5 text-[#5B50D6]" />
                   <span>{rtl ? 'چوونەژوورەوە' : 'Sign In'}</span>
                 </button>
 
@@ -230,7 +230,7 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
                     setAuthModalMode('signup');
                     setShowAuthModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#5B50D6] hover:bg-[#4A40C4] text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>{rtl ? 'هەژماری نوێ' : 'Sign Up'}</span>

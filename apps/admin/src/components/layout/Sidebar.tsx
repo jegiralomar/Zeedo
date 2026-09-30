@@ -159,14 +159,14 @@ export const Sidebar: React.FC = () => {
         {/* Brand Header */}
         <div className={`p-4 border-b border-slate-100 flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
           <Link href={pathPrefix || '/'} className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <span className="text-xl tracking-tighter">Z</span>
+            <div className="w-10 h-10 rounded-xl bg-[#5B50D6] text-white flex items-center justify-center font-extrabold shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform shrink-0">
+              <span className="text-xl">⚖️</span>
             </div>
             {!collapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-extrabold text-base text-slate-900 tracking-tight">ZEEDO</span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[#EEEDFB] text-[#5B50D6] border border-[#D8D4F7]">
                     ADMIN
                   </span>
                 </div>
@@ -233,14 +233,14 @@ export const Sidebar: React.FC = () => {
                             : 'px-3 py-2.5 justify-between'
                         } ${
                           isActive
-                            ? 'bg-blue-50 text-blue-700 font-bold border-r-2 border-blue-600'
+                            ? 'bg-[#EEEDFB] text-[#5B50D6] font-bold border-r-2 border-[#5B50D6]'
                             : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <IconComp
                             className={`w-4 h-4 shrink-0 ${
-                              isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-900'
+                              isActive ? 'text-[#5B50D6]' : 'text-slate-500 group-hover:text-slate-900'
                             }`}
                           />
                           {!collapsed && <span className="truncate">{item.label}</span>}
@@ -288,7 +288,7 @@ export const Sidebar: React.FC = () => {
           <div className={`rounded-xl bg-white border border-slate-200/80 shadow-2xs ${collapsed ? 'p-2 flex flex-col items-center' : 'p-2.5 space-y-2'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-[#5B50D6] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                   {currentUser.name.charAt(0)}
                 </div>
                 {!collapsed && (
@@ -302,7 +302,7 @@ export const Sidebar: React.FC = () => {
 
             {!collapsed && (
               <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-[#EEEDFB] text-[#5B50D6] border border-[#D8D4F7]">
                   {roleConfig.roleLabel}
                 </span>
 
@@ -336,7 +336,7 @@ export const Sidebar: React.FC = () => {
         ) : (
           <Link
             href={pathPrefix ? `${pathPrefix}/login` : '/login'}
-            className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
+            className="w-full py-2 px-3 rounded-xl bg-[#5B50D6] hover:bg-[#4A40C4] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/20 transition-colors"
           >
             <LogIn className="w-4 h-4" />
             {!collapsed && <span>Staff Sign In</span>}

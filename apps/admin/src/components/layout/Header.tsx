@@ -132,10 +132,10 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
           {/* AI APIs Button */}
           <button
             onClick={() => setShowApiModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-blue-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-indigo-300"
             title="View Google Gemini & Meta WhatsApp API Status"
           >
-            <Cpu className="w-3.5 h-3.5 text-blue-600" />
+            <Cpu className="w-3.5 h-3.5 text-[#5B50D6]" />
             <span className="hidden sm:inline">AI APIs</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           </button>
@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
           {/* Staff User Avatar Pill */}
           {currentUser && (
             <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              <div className="w-7 h-7 rounded-full bg-[#5B50D6] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                 {currentUser.name.charAt(0)}
               </div>
               <div className="hidden lg:block text-left text-xs">
@@ -223,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
                 <button
                   type="submit"
                   disabled={updatingRate}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50 transition-colors shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-[#5B50D6] hover:bg-[#4A40C4] text-white text-xs font-bold disabled:opacity-50 transition-colors shadow-xs"
                 >
                   {updatingRate ? 'Saving...' : 'Apply Live Rate'}
                 </button>
