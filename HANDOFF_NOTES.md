@@ -112,6 +112,21 @@
   - Cleaned up control panel action buttons in `ActiveBidsCommandCenter.tsx`, removing toddler-style explanations ("Award to high bidder & gen AWB", "Halt bids for dispute check", "Re-open socket stream", "Spawn fresh 24h auction", "One-click adjustments update live for all buyers").
   - Result: High-end, clean, enterprise admin tool aesthetic on par with Linear and Stripe.
 
+### I. Delivery Location & Interactive Map System (Completed & Deployed ✅)
+- **Feature Renaming:** Replaced all colloquial references to "Rooftop Map Pin Dropper" with **"Location"** / **"Delivery Location"** across all 4 Iraqi dialects (`en`, `ar`, `ckb`, `badini`) and data tables.
+- **Interactive OpenStreetMap Popup (`LocationPickerModal.tsx` & `LeafletMapInner.tsx`):**
+  - Built with client-side dynamic Leaflet to eliminate any Next.js SSR window evaluation issues.
+  - **Draggable Custom Pin:** Retina-sharp SVG emerald beacon pin with drop shadow and radar pulse animation.
+  - **Click to Drop:** Clicking anywhere immediately moves the pin and smoothly centers the viewport.
+  - **Quick City Jump Bar:** 1-tap animated flyTo for all major Iraqi cities (Erbil, Baghdad, Sulaymaniyah, Basra, Duhok, Kirkuk, Najaf, Karbala).
+  - **Live GPS Detection:** Floating "Locate Me (GPS)" button querying browser Geolocation API with accuracy indicator (`±Xm`).
+  - **Reverse Geocoding:** Auto-queries OpenStreetMap Nominatim reverse geocoder with debouncing to suggest city and district names.
+  - **Address Fields:** Confirms Governorate, District/Neighborhood, and Nearest Landmark.
+- **Ubiquitous Marketplace Access:**
+  - Top Navigation Header: Added compact "Location" pill beside dialect selector (displays detected/pinned city like `📍 Erbil`).
+  - Two-Gate KYC Verification (`TwoGateKycModal.tsx`): Gate 2 upgraded to "Delivery Location" with interactive map launch banner.
+  - Buyer Profile (`marketplace/profile/page.tsx`): Gate 2 upgraded to "Delivery Location" with one-click "Edit on Map" trigger.
+
 ---
 
 ## 2. Active System Architecture
