@@ -332,9 +332,9 @@ export const PrintCenter: React.FC = () => {
                         </div>
                       )}
                       <span className="text-[8px] font-mono text-slate-600 text-center mt-1">
-                        Lat: {currentAuction.highestBidder?.rooftopPin?.latitude.toFixed(4) || '36.1911'}
+                        Lat: {currentAuction.highestBidder?.rooftopPin?.latitude?.toFixed(4) || '36.1911'}
                         <br />
-                        Lng: {currentAuction.highestBidder?.rooftopPin?.longitude.toFixed(4) || '44.0092'}
+                        Lng: {currentAuction.highestBidder?.rooftopPin?.longitude?.toFixed(4) || '44.0092'}
                       </span>
                     </div>
                   </div>

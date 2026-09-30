@@ -35,6 +35,14 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: false, error: 'Incorrect password' }, { status: 401 });
       }
 
+      let coords = seller.pickup_coordinates;
+      if (typeof coords === 'string') {
+        try { coords = JSON.parse(coords); } catch { coords = null; }
+      }
+      if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+        coords = { lat: 36.1911, lng: 44.0092 };
+      }
+
       return NextResponse.json({
         success: true,
         seller: {
@@ -46,6 +54,7 @@ export async function GET(request: Request) {
           commissionRate: Number(seller.commission_rate),
           auto_approve_listings: Boolean(seller.auto_approve_listings),
           pickupAddress: seller.pickup_address,
+          pickupCoordinates: coords,
           status: seller.status,
           totalListings: Number(seller.total_listings),
           completedSales: Number(seller.completed_sales),
@@ -59,23 +68,33 @@ export async function GET(request: Request) {
 
     // List sellers
     const rows = await sql`SELECT * FROM sellers ORDER BY created_at DESC`;
-    const sellers = rows.map((s: any) => ({
-      id: s.id,
-      storeName: s.store_name,
-      ownerName: s.owner_name,
-      phone: s.phone,
-      city: s.city,
-      commissionRate: Number(s.commission_rate),
-      auto_approve_listings: Boolean(s.auto_approve_listings),
-      pickupAddress: s.pickup_address,
-      status: s.status,
-      totalListings: Number(s.total_listings),
-      completedSales: Number(s.completed_sales),
-      totalCodVolumeIqd: Number(s.total_cod_volume_iqd),
-      rating: Number(s.rating),
-      username: s.username,
-      createdAt: s.created_at,
-    }));
+    const sellers = rows.map((s: any) => {
+      let coords = s.pickup_coordinates;
+      if (typeof coords === 'string') {
+        try { coords = JSON.parse(coords); } catch { coords = null; }
+      }
+      if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+        coords = { lat: 36.1911, lng: 44.0092 };
+      }
+      return {
+        id: s.id,
+        storeName: s.store_name,
+        ownerName: s.owner_name,
+        phone: s.phone,
+        city: s.city,
+        commissionRate: Number(s.commission_rate),
+        auto_approve_listings: Boolean(s.auto_approve_listings),
+        pickupAddress: s.pickup_address,
+        pickupCoordinates: coords,
+        status: s.status,
+        totalListings: Number(s.total_listings),
+        completedSales: Number(s.completed_sales),
+        totalCodVolumeIqd: Number(s.total_cod_volume_iqd),
+        rating: Number(s.rating),
+        username: s.username,
+        createdAt: s.created_at,
+      };
+    });
 
     return NextResponse.json({ success: true, sellers, count: sellers.length });
   } catch (error: any) {
@@ -95,6 +114,7 @@ export async function POST(request: Request) {
       commissionRate = 0.07,
       auto_approve_listings = false,
       pickupAddress = '',
+      pickupCoordinates = { lat: 36.1911, lng: 44.0092 },
       username,
       password = 'ZEEDOSeller2026',
     } = body;
@@ -114,15 +134,21 @@ export async function POST(request: Request) {
 
     const cleanUsername = (username || phone.replace(/\s+/g, '')).toLowerCase();
     const id = `sel-${Date.now().toString().slice(-6)}`;
+    const coordsJson = JSON.stringify(
+      pickupCoordinates?.lat != null && pickupCoordinates?.lng != null
+        ? pickupCoordinates
+        : { lat: 36.1911, lng: 44.0092 }
+    );
 
     const rows = await sql`
       INSERT INTO sellers (
         id, store_name, owner_name, phone, city, commission_rate,
-        auto_approve_listings, pickup_address, status, total_listings,
+        auto_approve_listings, pickup_address, pickup_coordinates, status, total_listings,
         completed_sales, total_cod_volume_iqd, rating, username, password, created_at
       ) VALUES (
         ${id}, ${storeName}, ${ownerName || storeName}, ${phone},
         ${city}, ${commissionRate}, ${auto_approve_listings}, ${pickupAddress},
+        ${coordsJson}::jsonb,
         'active', 0, 0, 0, 5.0, ${cleanUsername}, ${password}, NOW()
       )
       ON CONFLICT (username) DO UPDATE SET
@@ -133,11 +159,20 @@ export async function POST(request: Request) {
         commission_rate = EXCLUDED.commission_rate,
         auto_approve_listings = EXCLUDED.auto_approve_listings,
         pickup_address = EXCLUDED.pickup_address,
+        pickup_coordinates = EXCLUDED.pickup_coordinates,
         password = EXCLUDED.password
       RETURNING *;
     `;
 
     const s = rows[0];
+    let coords = s.pickup_coordinates;
+    if (typeof coords === 'string') {
+      try { coords = JSON.parse(coords); } catch { coords = null; }
+    }
+    if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+      coords = { lat: 36.1911, lng: 44.0092 };
+    }
+
     const seller = {
       id: s.id,
       storeName: s.store_name,
@@ -147,6 +182,7 @@ export async function POST(request: Request) {
       commissionRate: Number(s.commission_rate),
       auto_approve_listings: Boolean(s.auto_approve_listings),
       pickupAddress: s.pickup_address,
+      pickupCoordinates: coords,
       status: s.status,
       totalListings: Number(s.total_listings),
       completedSales: Number(s.completed_sales),

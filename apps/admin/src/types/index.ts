@@ -56,7 +56,7 @@ export interface SellerMerchant {
   commissionRate: number; // e.g. 0.08 for 8%
   auto_approve_listings: boolean; // Autonomy flag
   pickupAddress: string;
-  pickupCoordinates: { lat: number; lng: number };
+  pickupCoordinates?: { lat: number; lng: number };
   status: 'active' | 'suspended';
   totalListings: number;
   completedSales: number;

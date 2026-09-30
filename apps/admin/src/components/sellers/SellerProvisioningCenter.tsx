@@ -98,6 +98,7 @@ export const SellerProvisioningCenter: React.FC = () => {
         commissionRate,
         auto_approve_listings: autoApprove,
         pickupAddress: pickupAddress || `${city} Commercial District Hub`,
+        pickupCoordinates: { lat: pickupLat, lng: pickupLng },
         username: cleanUsername,
         password: cleanPassword,
       }),

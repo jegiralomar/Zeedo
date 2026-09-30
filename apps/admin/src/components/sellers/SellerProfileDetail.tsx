@@ -259,10 +259,15 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
               <span>Courier Pickup Warehouse</span>
             </span>
             <p className="text-[#0B130F] font-semibold text-[11px]">
-              {seller.pickupAddress}
+              {seller.pickupAddress || 'Gulan Street, Erbil Central Hub'}
             </p>
             <div className="flex items-center justify-between text-[11px] text-[#6C7E75] font-mono pt-1">
-              <span>GPS: {seller.pickupCoordinates.lat.toFixed(4)}, {seller.pickupCoordinates.lng.toFixed(4)}</span>
+              <span>
+                GPS:{' '}
+                {seller.pickupCoordinates?.lat != null && seller.pickupCoordinates?.lng != null
+                  ? `${seller.pickupCoordinates.lat.toFixed(4)}, ${seller.pickupCoordinates.lng.toFixed(4)}`
+                  : '36.1911, 44.0092'}
+              </span>
               <span className="text-[#15803d] font-bold">Standard 3PL Route</span>
             </div>
           </div>

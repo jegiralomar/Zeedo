@@ -139,6 +139,9 @@ export async function initDatabaseSchema() {
       );
     `;
 
+    // Ensure pickup_coordinates column exists
+    await sql`ALTER TABLE sellers ADD COLUMN IF NOT EXISTS pickup_coordinates JSONB DEFAULT '{"lat": 36.1911, "lng": 44.0092}'::jsonb;`;
+
     // Seed default pre-configured merchant if none exists
     await sql`
       INSERT INTO sellers (
