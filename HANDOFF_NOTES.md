@@ -246,6 +246,16 @@
   - Removed `@vercel/blob` lock-in by implementing local container disk storage in `storage.ts` with Cloudflare R2 zero-egress priority adapter.
   - Migrated database driver from `@neondatabase/serverless` to universal pure `postgres` (porsager/postgres), enabling zero-code-change execution against both containerized PostgreSQL 16 on VPS NVMe storage and remote databases.
 
+### P. Cloudflare R2 Zero-Egress Media Storage Connected (Completed & Verified ✅)
+- **Bucket Creation & Region:** `zeedo-media` in region `EEUR` (Eastern Europe, lowest latency to Iraq/Middle East).
+- **Public Edge CDN:** Public access enabled at `https://pub-fcbade1594ed4975bfb13512a9680406.r2.dev`.
+- **CORS Policy:** Applied rules allowing uploads and access from `https://zeedo.auction`, `https://admin.zeedo.auction`, `http://localhost:3000`, and `http://localhost:8081`.
+- **AWS S3 Client Integration:** Replaced mock fetch with official `@aws-sdk/client-s3` (`PutObjectCommand`, `HeadBucketCommand`) in `apps/admin/src/lib/storage.ts`.
+- **API Endpoints:**
+  - `GET /api/upload`: Dynamic R2 connection status and health probe.
+  - `POST /api/upload`: Multipart upload with automatic Cloudflare R2 storage and public CDN URL return.
+- **Verification:** Live end-to-end test script executed: `PutObjectCommand` uploaded test object, and public CDN fetch verified with HTTP 200.
+
 ---
 
 ## 2. Active System Architecture
