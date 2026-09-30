@@ -40,7 +40,24 @@ export default function BuyerMarketplacePage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
+
+  // Load persisted view mode preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('zeedo_view_mode');
+      if (saved === 'compact' || saved === 'detailed') {
+        setViewMode(saved);
+      }
+    }
+  }, []);
+
+  const handleViewModeChange = (mode: 'compact' | 'detailed') => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('zeedo_view_mode', mode);
+    }
+  };
 
   // Modals state
   const [selectedAuction, setSelectedAuction] = useState<MobileAuctionItem | null>(null);
@@ -140,29 +157,33 @@ export default function BuyerMarketplacePage() {
           />
         </div>
 
-        {/* View Mode Grid/List Switcher */}
-        <div className="flex items-center gap-1.5 self-end sm:self-auto bg-slate-100 p-1 rounded-2xl border border-slate-200">
+        {/* View Mode Compact/Detailed Switcher */}
+        <div className="flex items-center gap-1 self-end sm:self-auto bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
           <button
-            onClick={() => setViewMode('grid')}
-            className={`p-1.5 rounded-xl transition-all ${
-              viewMode === 'grid'
+            type="button"
+            onClick={() => handleViewModeChange('compact')}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              viewMode === 'compact'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
-            title="Grid View"
+            title={rtl ? 'تۆڕی چڕ (٢ ستوون)' : 'Compact Grid (2-col)'}
           >
-            <LayoutGrid className="w-4 h-4" />
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">{rtl ? 'چڕ' : '2-Col'}</span>
           </button>
           <button
-            onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-xl transition-all ${
-              viewMode === 'list'
+            type="button"
+            onClick={() => handleViewModeChange('detailed')}
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              viewMode === 'detailed'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-500 hover:text-slate-900'
             }`}
-            title="List View"
+            title={rtl ? 'لیستی وردەکاری (١ ستوون)' : 'Detailed Feed (1-col)'}
           >
-            <List className="w-4 h-4" />
+            <List className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">{rtl ? 'وردەکاری' : '1-Col'}</span>
           </button>
         </div>
       </div>
@@ -285,23 +306,25 @@ export default function BuyerMarketplacePage() {
               </p>
             </div>
           </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        ) : viewMode === 'compact' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-5">
             {filteredAuctions.map((item) => (
               <ListingCard
                 key={item.id}
                 item={item}
+                variant="compact"
                 onOpenLiveRoom={(target) => setSelectedAuction(target)}
                 onRequestKyc={() => setShowAuthModal(true)}
               />
             ))}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5 max-w-xl mx-auto sm:max-w-none">
             {filteredAuctions.map((item) => (
               <ListingCard
                 key={item.id}
                 item={item}
+                variant="detailed"
                 onOpenLiveRoom={(target) => setSelectedAuction(target)}
                 onRequestKyc={() => setShowAuthModal(true)}
               />

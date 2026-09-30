@@ -22,12 +22,14 @@ interface ListingCardProps {
   item: MobileAuctionItem;
   onOpenLiveRoom: (item: MobileAuctionItem) => void;
   onRequestKyc: () => void;
+  variant?: 'compact' | 'detailed';
 }
 
 export const ListingCard: React.FC<ListingCardProps> = ({
   item,
   onOpenLiveRoom,
   onRequestKyc,
+  variant = 'detailed',
 }) => {
   const { language, buyer } = useBuyerAuthStore();
   const { savedAuctionIds, toggleSaveAuction, placeSlideBid } = useBuyerAuctionStore();
@@ -36,6 +38,21 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
   const localized = item.multilingual?.[language] || item.multilingual?.en || { title: 'Listing Details Unavailable', description: '', specs: [] };
   const isSaved = savedAuctionIds.includes(item.id);
+
+  // Price pulse tracking for visual-only highlight
+  const prevBidRef = React.useRef(item.currentBidIqd);
+  const [isPricePulsing, setIsPricePulsing] = useState(false);
+  const [biddingSuccess, setBiddingSuccess] = useState(false);
+
+  useEffect(() => {
+    if (item.currentBidIqd > prevBidRef.current) {
+      setIsPricePulsing(true);
+      const timer = setTimeout(() => setIsPricePulsing(false), 1600);
+      prevBidRef.current = item.currentBidIqd;
+      return () => clearTimeout(timer);
+    }
+    prevBidRef.current = item.currentBidIqd;
+  }, [item.currentBidIqd]);
 
   // Countdown timer calculation
   const [timeLeft, setTimeLeft] = useState<{
@@ -51,8 +68,6 @@ export const ListingCard: React.FC<ListingCardProps> = ({
     isExpired: false,
     isUrgent: false,
   });
-
-  const [biddingSuccess, setBiddingSuccess] = useState(false);
 
   useEffect(() => {
     const calculateTime = () => {
@@ -92,7 +107,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
     );
     if (success) {
       setBiddingSuccess(true);
-      setTimeout(() => setBiddingSuccess(false), 2000);
+      setIsPricePulsing(true);
+      setTimeout(() => {
+        setBiddingSuccess(false);
+        setIsPricePulsing(false);
+      }, 2000);
     }
   };
 
@@ -101,10 +120,157 @@ export const ListingCard: React.FC<ListingCardProps> = ({
     toggleSaveAuction(item.id);
   };
 
+  const isHighlighted = isPricePulsing || biddingSuccess;
+
+  // ----------------------------------------------------
+  // COMPACT 2-COLUMN VIEW (Optimized for Mobile Browsing)
+  // ----------------------------------------------------
+  if (variant === 'compact') {
+    return (
+      <div
+        onClick={() => onOpenLiveRoom(item)}
+        className={`group relative bg-white rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
+          isHighlighted
+            ? 'border-emerald-500 ring-2 ring-emerald-500/80 shadow-md shadow-emerald-500/10'
+            : 'border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-md'
+        }`}
+      >
+        <div>
+          {/* Product Image Stage */}
+          <div className="relative aspect-[4/3] bg-slate-50 overflow-hidden">
+            <img
+              src={item.imageUrl}
+              alt={localized.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+
+            {/* Top Badges Overlay */}
+            <div className="absolute top-2 inset-x-2 flex items-center justify-between pointer-events-none">
+              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider bg-white/95 backdrop-blur-md text-slate-800 border border-slate-200/60 shadow-2xs">
+                {item.condition}
+              </span>
+
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                className={`w-7 h-7 rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md transition-all shadow-2xs active:scale-90 ${
+                  isSaved
+                    ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                    : 'bg-white/85 hover:bg-white text-slate-600 border border-slate-200/60'
+                }`}
+                title="Save Auction"
+              >
+                <Bookmark className={`w-3 h-3 ${isSaved ? 'fill-rose-500' : ''}`} />
+              </button>
+            </div>
+
+            {/* Bottom Timer Pill Overlay */}
+            <div className="absolute bottom-2 inset-x-2 flex items-center justify-between pointer-events-none">
+              <div
+                className={`px-2 py-1 rounded-full text-[10px] font-mono font-bold backdrop-blur-md shadow-2xs flex items-center gap-1 transition-colors ${
+                  timeLeft.isUrgent
+                    ? 'bg-rose-500 text-white animate-pulse'
+                    : timeLeft.isExpired
+                    ? 'bg-slate-900/85 text-slate-300'
+                    : 'bg-slate-950/80 text-white'
+                }`}
+              >
+                {timeLeft.isUrgent ? (
+                  <Flame className="w-3 h-3 text-amber-300 animate-bounce" />
+                ) : (
+                  <Clock className="w-3 h-3 text-slate-300" />
+                )}
+                <span>
+                  {timeLeft.isExpired
+                    ? 'ENDED'
+                    : `${String(timeLeft.h).padStart(2, '0')}:${String(timeLeft.m).padStart(2, '0')}:${String(
+                        timeLeft.s
+                      ).padStart(2, '0')}`}
+                </span>
+              </div>
+
+              {item.isAntiSnipingActive && (
+                <span className="hidden sm:inline-flex px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-2xs">
+                  ≤60S
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Card Body */}
+          <div className="p-2.5 sm:p-3 space-y-1.5">
+            <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2">
+              {localized.title}
+            </h3>
+
+            {/* Pricing Details */}
+            <div className="pt-1.5 border-t border-slate-100 flex items-end justify-between gap-1">
+              <div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] text-slate-400 uppercase font-mono font-semibold block">
+                    {t.currentBid}
+                  </span>
+                  {isHighlighted && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  )}
+                </div>
+                <PriceOdometer value={item.currentBidIqd} size="sm" className="sm:hidden" />
+                <PriceOdometer value={item.currentBidIqd} size="md" className="hidden sm:inline-flex" />
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="text-[9px] text-slate-400 uppercase font-mono font-semibold block">
+                  Retail
+                </span>
+                <span className="text-[10px] sm:text-xs font-mono font-bold text-slate-400 line-through">
+                  {item.estimatedRetailMarketPriceIqd >= 1000000
+                    ? `${(item.estimatedRetailMarketPriceIqd / 1000000).toFixed(1)}M`
+                    : `${Math.round(item.estimatedRetailMarketPriceIqd / 1000)}k`} IQD
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 1-Tap Quick Action */}
+        <div className="p-2 sm:p-2.5 bg-slate-50/70 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={handleQuickBid}
+            className={`w-full py-1.5 sm:py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95 ${
+              biddingSuccess
+                ? 'bg-emerald-600 text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            {biddingSuccess ? (
+              <>
+                <CheckCircle2 className="w-3 h-3" />
+                <span>Bid Placed!</span>
+              </>
+            ) : (
+              <>
+                <Gavel className="w-3 h-3" />
+                <span>+{(item.incrementStepIqd || 1000).toLocaleString()} IQD</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ----------------------------------------------------
+  // DETAILED 1-COLUMN FEED VIEW (Spacious & High-Impact)
+  // ----------------------------------------------------
   return (
     <div
       onClick={() => onOpenLiveRoom(item)}
-      className="group relative bg-white rounded-3xl border border-slate-200/70 hover:border-slate-300 shadow-xs hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none"
+      className={`group relative bg-white rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between cursor-pointer select-none ${
+        isHighlighted
+          ? 'border-emerald-500 ring-2 ring-emerald-500/80 shadow-lg shadow-emerald-500/10'
+          : 'border-slate-200/70 hover:border-slate-300 shadow-xs hover:shadow-lg'
+      }`}
     >
       <div>
         {/* Product Image Box with Floating Badges */}
@@ -194,9 +360,17 @@ export const ListingCard: React.FC<ListingCardProps> = ({
           {/* Pricing & Odometer */}
           <div className="pt-2 border-t border-slate-100 flex items-end justify-between">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block">
-                {t.currentBid}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-400 uppercase font-mono font-semibold block">
+                  {t.currentBid}
+                </span>
+                {isHighlighted && (
+                  <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full animate-bounce">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    <span>+{((item.incrementStepIqd || 1000)).toLocaleString()} IQD</span>
+                  </span>
+                )}
+              </div>
               <PriceOdometer value={item.currentBidIqd} size="lg" />
             </div>
 
