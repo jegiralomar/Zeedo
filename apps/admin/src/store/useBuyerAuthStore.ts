@@ -261,7 +261,7 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
               addressText: pin.addressText,
               isVerified: true,
             },
-            kycStatus: current.kycDocument ? 'verified' : 'pending',
+            kycStatus: 'verified',
           },
         });
       },
@@ -269,7 +269,8 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
       isTwoGateVerified: () => {
         const b = get().buyer;
         if (!b) return false;
-        return b.kycStatus === 'verified' || Boolean(b.kycDocument && b.rooftopPin);
+        // User confirmed number with WhatsApp OTP and chose delivery location
+        return Boolean(b.phone && b.rooftopPin && b.rooftopPin.isVerified);
       },
     }),
     {

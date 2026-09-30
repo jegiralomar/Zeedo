@@ -166,19 +166,19 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
             {/* Buyer Authentication / Profile State */}
             {mounted && isAuthenticated && buyer ? (
               <div className="flex items-center gap-1.5">
-                {/* Two-Gate KYC Status Pill */}
+                {/* Verification Status Pill */}
                 <button
-                  onClick={() => setShowKycModal(true)}
+                  onClick={() => setShowLocationModal(true)}
                   className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border ${
                     isKycDone
                       ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                       : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
                   }`}
-                  title="Two-Gate Anti-Sniping & COD Doorstep Verification"
+                  title="Phone verified via WhatsApp OTP & Delivery Location"
                 >
                   <ShieldCheck className={`w-3.5 h-3.5 ${isKycDone ? 'text-emerald-600' : 'text-amber-600'}`} />
                   <span className="hidden sm:inline">
-                    {isKycDone ? 'KYC Verified' : 'Verify ID'}
+                    {isKycDone ? 'Verified' : 'Set Location'}
                   </span>
                 </button>
 

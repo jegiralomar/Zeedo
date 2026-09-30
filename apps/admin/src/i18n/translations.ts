@@ -40,12 +40,12 @@ export const TRANSLATIONS = {
     setCeiling: 'Confirm Auto-Bid Ceiling',
     cancel: 'Cancel',
 
-    // Two-Gate Gating
-    gateModalTitle: 'Two-Gate Verification Required',
-    gateModalSubtitle: 'In our 100% Cash on Delivery ecosystem, verified delivery coordinates protect every bid.',
-    gate1Title: 'Gate 1: Civil ID Verification',
-    gate1Desc: 'Upload Iraqi National ID or Passport for instant OCR verification.',
-    gate2Title: 'Gate 2: Delivery Location',
+    // Buyer Verification (WhatsApp OTP + Delivery Location)
+    gateModalTitle: 'Delivery Location Required',
+    gateModalSubtitle: 'Verify your phone via WhatsApp OTP and set your delivery address on the interactive map to bid.',
+    gate1Title: 'Step 1: Phone Verification (WhatsApp OTP)',
+    gate1Desc: 'Phone verified with secure WhatsApp 6-digit OTP code.',
+    gate2Title: 'Step 2: Delivery Location',
     gate2Desc: 'Pin your precise delivery address on the interactive map for courier dispatch accuracy.',
     uploadId: 'Capture / Upload ID',
     locateMe: 'Locate My Position',
@@ -58,7 +58,7 @@ export const TRANSLATIONS = {
     landmarkPlaceholder: 'Nearest Landmark (e.g. Behind Family Mall, Street 10)',
     governorate: 'Governorate',
     district: 'District / Neighborhood',
-    confirmGates: 'Complete Verification & Place Bid',
+    confirmGates: 'Confirm Location & Start Bidding',
 
     // Tabs
     tabHome: 'Explore',
@@ -116,12 +116,12 @@ export const TRANSLATIONS = {
     setCeiling: 'تأكيد حد المزايدة التلقائية',
     cancel: 'إلغاء',
 
-    // Two-Gate Gating
-    gateModalTitle: 'مطلوب إكمال بوابتي التحقق',
-    gateModalSubtitle: 'في نظامنا المعتمد بنسبة ١٠٠٪ على الدفع عند الاستلام، الإحداثيات الموثقة تحمي كل مزايدة.',
-    gate1Title: 'البوابة ١: التحقق من الهوية الوطنية',
-    gate1Desc: 'ارفع البطاقة الوطنية الموحدة أو الجواز للتحقق الفوري بالذكاء الاصطناعي.',
-    gate2Title: 'البوابة ٢: موقع التوصيل',
+    // Buyer Verification (WhatsApp OTP + Delivery Location)
+    gateModalTitle: 'تحديد موقع التوصيل مطلوب',
+    gateModalSubtitle: 'أكد رقم هاتفك عبر واتساب وحدد موقع التوصيل على الخريطة التفاعلية للبدء بالمزايدة.',
+    gate1Title: 'الخطوة ١: تأكيد الهاتف (واتساب OTP)',
+    gate1Desc: 'تم تأكيد رقم الهاتف عبر رمز التحقق المكون من 6 أرقام في واتساب.',
+    gate2Title: 'الخطوة ٢: موقع التوصيل',
     gate2Desc: 'حدد موقع التوصيل بدقة على الخريطة التفاعلية لضمان وصول كابتن التوصيل بدون تأخير.',
     uploadId: 'التقاط / رفع الهوية',
     locateMe: 'تحديد موقعي الحالي',
@@ -134,7 +134,7 @@ export const TRANSLATIONS = {
     landmarkPlaceholder: 'أقرب نقطة دالة (مثال: خلف فاميلي مول، فرع أسواق الأمل)',
     governorate: 'المحافظة',
     district: 'القضاء / الحي',
-    confirmGates: 'إتمام التحقق وتفعيل المزايدة',
+    confirmGates: 'تأكيد الموقع والبدء بالمزايدة',
 
     // Tabs
     tabHome: 'استكشاف',
@@ -192,12 +192,12 @@ export const TRANSLATIONS = {
     setCeiling: 'تەئکیدکردنی ئاستی مزادی خۆکار',
     cancel: 'پەشیمانبوونەوە',
 
-    // Two-Gate Gating
-    gateModalTitle: 'تەواوکردنی دوو دەروازەی دڵنیایی پێویستە',
-    gateModalSubtitle: 'لە سیستەمی ١٠٠٪ کاش لە کاتی وەرگرتن، ناونیشانی ورد و پشتڕاستکراو پارێزگاری لە مزادەکەت دەکات.',
-    gate1Title: 'دەروازەی ١: دڵنیاکردنەوەی کارتی نیشتمانی',
-    gate1Desc: 'وێنەی کارتی نیشتمانی یان پاسپۆرت بەرزبکەرەوە بۆ پشکنینی خێرای OCR.',
-    gate2Title: 'دەروازەی ٢: شوێنی گەیاندن',
+    // Buyer Verification (WhatsApp OTP + Delivery Location)
+    gateModalTitle: 'دیاریکردنی شوێنی گەیاندن پێویستە',
+    gateModalSubtitle: 'ژمارەی مۆبایلەکەت بە واتسئاپ پشتڕاستبکەرەوە و شوێنی ماڵ لەسەر نەخشە دیاریبکە بۆ دەستپێکردنی مزاد.',
+    gate1Title: 'هەنگاوی ١: پشتڕاستکردنەوەی مۆبایل (واتسئاپ OTP)',
+    gate1Desc: 'ژمارەی مۆبایل پشتڕاستکرایەوە بە کۆدی ٦ ژمارەیی واتسئاپ.',
+    gate2Title: 'هەنگاوی ٢: شوێنی گەیاندن',
     gate2Desc: 'شوێنی گەیاندن بە وردی لەسەر نەخشەی کارلێککار دیاریبکە بۆ گەیشتنی ڕاستەوخۆی کۆریەر.',
     uploadId: 'وێنەگرتن / بەرزکردنەوەی ناسنامە',
     locateMe: 'دیاریکردنی شوێنی ئێستام',
@@ -210,7 +210,7 @@ export const TRANSLATIONS = {
     landmarkPlaceholder: 'نزیکترین شوێنی ناسراو (نموونە: پشت فامیلی مۆڵ، کۆڵانی دووەم)',
     governorate: 'پارێزگا',
     district: 'قەزا / گەڕەک',
-    confirmGates: 'تەواوکردنی دڵنیایی و چالاککردنی مزاد',
+    confirmGates: 'تەئکیدکردنی شوێن و دەستپێکردنی مزاد',
 
     // Tabs
     tabHome: 'گەڕان',
@@ -268,12 +268,12 @@ export const TRANSLATIONS = {
     setCeiling: 'تەئکیدکرنا ئاستێ مزادا ئۆتۆماتیکی',
     cancel: 'پەشیمانبوون',
 
-    // Two-Gate Gating
-    gateModalTitle: 'تەمامکرنا هەردوو دەرگەهێن دلنیاییێ یا فەرزە',
-    gateModalSubtitle: 'د سیستەمێ مە یێ ١٠٠٪ کاش ل بەر دەرگەهی، جهێ دەستنیشانکری مزادا تە دپارێزیت.',
-    gate1Title: 'دەرگەهێ ١: باوەرپێکرنا کارتا نیشتیمانی',
-    gate1Desc: 'وێنەیێ کارتا نیشتیمانی یان پاسپۆرتێ بلند بکە بۆ پشکنینا ئێکسەر یا OCR.',
-    gate2Title: 'دەرگەهێ ٢: جهێ گەهاندنێ',
+    // Buyer Verification (WhatsApp OTP + Delivery Location)
+    gateModalTitle: 'دەستنیشانکرنا جهێ گەهاندنێ یا فەرزە',
+    gateModalSubtitle: 'هژمارا مۆبایلێ ب واتسئاپێ پشتڕاست بکە و جهێ خۆ ل سەر نەخشەی دەستنیشان بکە دا دەست ب مزادێ بکەی.',
+    gate1Title: 'پێنگاڤا ١: پشتڕاستکرنا مۆبایلێ (واتسئاپ OTP)',
+    gate1Desc: 'هژمارا مۆبایلێ هاتە پشتڕاستکرن ب کۆدێ ٦ ژمارەیی یێ واتسئاپێ.',
+    gate2Title: 'پێنگاڤا ٢: جهێ گەهاندنێ',
     gate2Desc: 'جهێ گەهاندنێ ب دروستی ل سەر نەخشەیێ کارلێککار دەستنیشان بکە دا کاپتنێ گەیاندنێ بێ دەمژمێر بگەهیتە تە.',
     uploadId: 'گرتنا وێنەی / بلندکرنا ناسنامێ',
     locateMe: 'دەستنیشانکرنا جهێ من یێ نۆکە',
@@ -286,7 +286,7 @@ export const TRANSLATIONS = {
     landmarkPlaceholder: 'نێزیکترین جهێ بەرنیاس (نموونە: پشت زاخۆ مۆڵ، تایێ دووێ)',
     governorate: 'پارێزگەهـ',
     district: 'قەزا / تاخ',
-    confirmGates: 'تەمامکرنا دڵنیاییێ و دەستپێکرنا مزادێ',
+    confirmGates: 'تەئکیدکرنا جهی و دەستپێکرنا مزادێ',
 
     // Tabs
     tabHome: 'گەڕیان',

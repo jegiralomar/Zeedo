@@ -142,11 +142,11 @@ export default function BuyerProfilePage() {
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setShowKycModal(true)}
-            className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
+            onClick={() => setShowLocationModal(true)}
+            className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>{isVerified ? 'Update KYC' : 'Verify ID'}</span>
+            <MapPin className="w-3.5 h-3.5" />
+            <span>{isVerified ? 'Update Location' : 'Set Location'}</span>
           </button>
 
           <button
@@ -186,63 +186,61 @@ export default function BuyerProfilePage() {
 
         <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-1 col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>KYC Gate Level</span>
-            <Sparkles className="w-4 h-4 text-purple-600" />
+            <span>Bidding Status</span>
+            <Sparkles className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-600 font-mono">
-            {isVerified ? 'Gate 2' : buyer.kycDocument ? 'Gate 1' : 'Gate 0'}
+          <div className="text-xl sm:text-2xl font-extrabold text-emerald-600 font-mono">
+            {isVerified ? 'Verified' : 'Pending Pin'}
           </div>
-          <span className="text-[10px] text-purple-600 font-semibold">
-            {isVerified ? 'Fully Authorized' : 'Verification Required'}
+          <span className="text-[10px] text-emerald-700 font-semibold">
+            {isVerified ? 'Ready to Place Bids' : 'Set Location on Map'}
           </span>
         </div>
       </div>
 
-      {/* Two-Gate Security Verification Details */}
+      {/* Buyer Verification Record */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-5">
         <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-blue-600" />
-              <span>Two-Gate Anti-Sniping Verification Record</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Buyer Verification Record</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Guarantees doorstep courier accuracy and authentic buyer validation in Iraq
+              WhatsApp phone verification & doorstep GPS coordinates for 100% COD delivery in Iraq
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Gate 1 */}
+          {/* Step 1: WhatsApp Phone Verification */}
           <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className={`w-6 h-6 rounded-full text-white font-bold text-xs flex items-center justify-center ${buyer.kycDocument ? 'bg-emerald-600' : 'bg-slate-400'}`}>
+                <span className="w-6 h-6 rounded-full text-white font-bold text-xs flex items-center justify-center bg-emerald-600">
                   1
                 </span>
-                <span className="font-bold text-xs text-slate-900">Gate 1: Iraqi Civil ID</span>
+                <span className="font-bold text-xs text-slate-900">
+                  Step 1: Phone Verification (WhatsApp OTP)
+                </span>
               </div>
-              {buyer.kycDocument ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <Clock className="w-4 h-4 text-slate-400" />
-              )}
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
 
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Document Type:</span>
-                <span className="font-semibold text-slate-900">Bataqa Wataniya</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Unified ID Number:</span>
+                <span className="text-slate-500">Mobile Number:</span>
                 <span className="font-mono font-bold text-slate-900">
-                  {buyer.kycDocument?.docNumber || 'Not Uploaded'}
+                  {buyer.phone || '+964 750 000 0000'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">OCR Engine:</span>
-                <span className="text-emerald-700 font-semibold">Tesseract.js (ara+eng)</span>
+                <span className="text-slate-500">Verification Method:</span>
+                <span className="text-emerald-700 font-semibold">WhatsApp 6-Digit OTP</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Security Status:</span>
+                <span className="text-emerald-700 font-semibold">Verified Phone ✓</span>
               </div>
             </div>
           </div>
@@ -255,7 +253,7 @@ export default function BuyerProfilePage() {
                   2
                 </span>
                 <span className="font-bold text-xs text-slate-900">
-                  {t.gate2Title || 'Gate 2: Delivery Location'}
+                  {t.gate2Title || 'Step 2: Delivery Location'}
                 </span>
               </div>
               <div className="flex items-center gap-2">

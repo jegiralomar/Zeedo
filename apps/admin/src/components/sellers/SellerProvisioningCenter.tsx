@@ -325,7 +325,7 @@ export const SellerProvisioningCenter: React.FC = () => {
               <tr className="bg-[#F8FAF9] border-b border-[#E9EFEF] text-[#6C7E75] uppercase font-mono text-[10px]">
                 <th className="p-4">Buyer Name & Phone</th>
                 <th className="p-4">City & Joined</th>
-                <th className="p-4">Gate 1: KYC Status</th>
+                <th className="p-4">Phone / OTP Status</th>
                 <th className="p-4">Gate 2: Delivery Location</th>
                 <th className="p-4">Bids & Wins</th>
               </tr>

@@ -5,12 +5,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   X,
-  Scan,
   MapPin,
-  Upload,
-  RefreshCw,
   Navigation,
   FileCheck2,
+  Phone,
+  Sparkles,
 } from 'lucide-react';
 import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { TRANSLATIONS, isRTL } from '@/i18n/translations';
@@ -27,121 +26,48 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { language, buyer, completeGate1, completeGate2 } = useBuyerAuthStore();
+  const { language, buyer, completeGate2 } = useBuyerAuthStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
 
-  // Gate 1 state
-  const [docNumber, setDocNumber] = useState(buyer?.kycDocument?.docNumber || '');
-  const [fullName, setFullName] = useState(buyer?.name || '');
-  const [dob, setDob] = useState(buyer?.kycDocument?.dob || '');
-  const [bloodType, setBloodType] = useState('O+');
-  const [gate1Done, setGate1Done] = useState(Boolean(buyer?.kycStatus === 'verified' || buyer?.kycDocument));
-  const [gate1Scanning, setGate1Scanning] = useState(false);
-  const [ocrNotes, setOcrNotes] = useState<string | null>(null);
-
-  // Gate 2 state
-  const [city, setCity] = useState(buyer?.city || 'Erbil');
+  // Delivery Location state
+  const [city, setCity] = useState(buyer?.rooftopPin?.city || buyer?.city || 'Erbil');
   const [district, setDistrict] = useState(buyer?.rooftopPin?.district || '');
   const [landmark, setLandmark] = useState(buyer?.rooftopPin?.landmark || '');
   const [latitude, setLatitude] = useState(buyer?.rooftopPin?.latitude || 36.1911);
   const [longitude, setLongitude] = useState(buyer?.rooftopPin?.longitude || 44.0092);
-  const [gate2Done, setGate2Done] = useState(
+  const [isLocationPinned, setIsLocationPinned] = useState(
     Boolean(buyer?.rooftopPin && buyer.rooftopPin.isVerified)
   );
   const [showLocationModal, setShowLocationModal] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setGate1Scanning(true);
-    setOcrNotes(null);
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64 = reader.result as string;
-        const res = await fetch('/api/ai/ocr-id', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64 }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.nationalIdNumber) setDocNumber(data.nationalIdNumber);
-          if (data.fullNameEnglish) setFullName(data.fullNameEnglish);
-          if (data.dateOfBirth) setDob(data.dateOfBirth);
-          if (data.bloodType) setBloodType(data.bloodType);
-          if (data.governorate) {
-            const govLower = data.governorate.toLowerCase();
-            if (govLower.includes('baghdad')) setCity('Baghdad');
-            else if (govLower.includes('erbil')) setCity('Erbil');
-            else if (govLower.includes('sulaymaniyah')) setCity('Sulaymaniyah');
-            else if (govLower.includes('basra')) setCity('Basra');
-            else if (govLower.includes('duhok')) setCity('Duhok');
-            else if (govLower.includes('zakho')) setCity('Zakho');
-          }
-          setOcrNotes(data.notes || 'Extracted via local Tesseract OCR engine');
-          setGate1Done(true);
-          completeGate1(
-            data.nationalIdNumber || docNumber,
-            data.fullNameEnglish || fullName,
-            data.dateOfBirth || dob
-          );
-        }
-      } catch (err) {
-        console.warn('OCR error, using local fallback:', err);
-        setGate1Done(true);
-        completeGate1(docNumber, fullName, dob);
-      } finally {
-        setGate1Scanning(false);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRunSampleOcr = async () => {
-    setGate1Scanning(true);
-    setOcrNotes(null);
-    try {
-      const res = await fetch('/api/ai/ocr-id', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.nationalIdNumber) setDocNumber(data.nationalIdNumber);
-        if (data.fullNameEnglish) setFullName(data.fullNameEnglish);
-        if (data.dateOfBirth) setDob(data.dateOfBirth);
-        if (data.bloodType) setBloodType(data.bloodType);
-        setOcrNotes(data.notes || 'Verified via Tesseract OCR');
-        setGate1Done(true);
-        completeGate1(data.nationalIdNumber, data.fullNameEnglish, data.dateOfBirth);
-      }
-    } catch {
-      setGate1Done(true);
-      completeGate1(docNumber, fullName, dob);
-    } finally {
-      setGate1Scanning(false);
-    }
-  };
-
-  const handleLocateMe = () => {
-    setShowLocationModal(true);
-  };
-
   const handleConfirmAll = () => {
-    if (gate1Done && gate2Done) {
-      if (onSuccess) onSuccess();
-      onClose();
+    if (!isLocationPinned) {
+      setShowLocationModal(true);
+      return;
     }
+
+    const formattedAddress = [landmark, district, city, 'Iraq']
+      .filter(Boolean)
+      .join(', ');
+
+    completeGate2({
+      latitude,
+      longitude,
+      city,
+      district,
+      landmark,
+      addressText: formattedAddress,
+      isVerified: true,
+    });
+
+    if (onSuccess) onSuccess();
+    onClose();
   };
+
+  const isPhoneVerified = Boolean(buyer?.phone);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
@@ -152,7 +78,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-xs shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
@@ -171,22 +97,12 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5 overflow-y-auto flex-1">
-          {/* GATE 1: Civil ID */}
-          <div
-            className={`border rounded-2xl p-5 transition-all ${
-              gate1Done
-                ? 'border-emerald-300 bg-emerald-50/40'
-                : 'border-slate-200 bg-white hover:border-slate-300'
-            }`}
-          >
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+          {/* STEP 1: Phone Verification (WhatsApp OTP) */}
+          <div className="border border-emerald-300 bg-emerald-50/50 rounded-2xl p-4.5 transition-all">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div
-                  className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center text-white ${
-                    gate1Done ? 'bg-emerald-600' : 'bg-blue-600'
-                  }`}
-                >
+                <div className="w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center text-white bg-emerald-600 shrink-0">
                   1
                 </div>
                 <div>
@@ -194,68 +110,28 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                   <p className="text-xs text-slate-500">{t.gate1Desc}</p>
                 </div>
               </div>
-              {gate1Done && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             </div>
 
-            {!gate1Done ? (
-              <div className="mt-4 space-y-2.5">
-                <div className="flex gap-2">
-                  <label className="flex-1 cursor-pointer py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-xs">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload Bataqa Wataniya Image</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <button
-                    onClick={handleRunSampleOcr}
-                    disabled={gate1Scanning}
-                    className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 border border-slate-200"
-                  >
-                    {gate1Scanning ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Scan className="w-3.5 h-3.5 text-blue-600" />
-                    )}
-                    <span>Fast OCR Test</span>
-                  </button>
+            <div className="mt-3 pt-3 border-t border-emerald-200/60 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Phone className="w-3.5 h-3.5" />
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Powered by local Tesseract.js (Arabic & English dual-language engine). Zero external API calls.
-                </p>
+                <span className="font-mono font-bold text-slate-900">
+                  {buyer?.phone || '+964 750 000 0000'}
+                </span>
               </div>
-            ) : (
-              <div className="mt-3.5 pt-3 border-t border-emerald-200/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div className="bg-white/80 p-2 rounded-lg border border-emerald-100">
-                  <span className="text-[10px] text-slate-400 block font-medium">National ID</span>
-                  <span className="font-mono font-bold text-slate-900">{docNumber}</span>
-                </div>
-                <div className="bg-white/80 p-2 rounded-lg border border-emerald-100">
-                  <span className="text-[10px] text-slate-400 block font-medium">Verified Name</span>
-                  <span className="font-bold text-slate-900 truncate block">{fullName}</span>
-                </div>
-                <div className="bg-white/80 p-2 rounded-lg border border-emerald-100">
-                  <span className="text-[10px] text-slate-400 block font-medium">Date of Birth</span>
-                  <span className="font-mono text-slate-900">{dob}</span>
-                </div>
-                <div className="bg-white/80 p-2 rounded-lg border border-emerald-100">
-                  <span className="text-[10px] text-slate-400 block font-medium">Blood Type</span>
-                  <span className="font-mono font-bold text-emerald-700">{bloodType}</span>
-                </div>
-              </div>
-            )}
-            {ocrNotes && (
-              <p className="mt-2 text-[10px] font-mono text-emerald-800">✓ {ocrNotes}</p>
-            )}
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-200/80 text-emerald-900">
+                WhatsApp Verified ✓
+              </span>
+            </div>
           </div>
 
-          {/* GATE 2: Delivery Location */}
+          {/* STEP 2: Delivery Location (Interactive Map) */}
           <div
-            className={`border rounded-2xl p-5 transition-all ${
-              gate2Done
+            className={`border rounded-2xl p-4.5 transition-all ${
+              isLocationPinned
                 ? 'border-emerald-300 bg-emerald-50/40'
                 : 'border-slate-200 bg-white hover:border-slate-300'
             }`}
@@ -263,8 +139,8 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center text-white ${
-                    gate2Done ? 'bg-emerald-600' : 'bg-emerald-600'
+                  className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center text-white shrink-0 ${
+                    isLocationPinned ? 'bg-emerald-600' : 'bg-emerald-600'
                   }`}
                 >
                   2
@@ -274,7 +150,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                   <p className="text-xs text-slate-500">{t.gate2Desc}</p>
                 </div>
               </div>
-              {gate2Done && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+              {isLocationPinned && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
             </div>
 
             <div className="mt-4 space-y-3">
@@ -291,7 +167,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-extrabold text-slate-900">
-                          {gate2Done
+                          {isLocationPinned
                             ? (t.editLocationOnMap || 'Edit Location on Map')
                             : (t.openInteractiveMap || 'Open Interactive Map')}
                         </span>
@@ -300,7 +176,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        {gate2Done
+                        {isLocationPinned
                           ? `${city}${district ? ' • ' + district : ''} (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
                           : 'Tap to drop and adjust your delivery pin on OpenStreetMap'}
                       </p>
@@ -317,7 +193,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                   >
                     <Navigation className="w-3.5 h-3.5" />
                     <span>
-                      {gate2Done
+                      {isLocationPinned
                         ? (t.changeLocation || 'Change Pin')
                         : (t.setDeliveryLocation || 'Set Location')}
                     </span>
@@ -373,7 +249,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={handleLocateMe}
+                  onClick={() => setShowLocationModal(true)}
                   className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 border border-slate-200"
                 >
                   <Navigation className="w-3.5 h-3.5 text-emerald-600" />
@@ -388,16 +264,17 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/90 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500">
-              {gate1Done && gate2Done ? 'All 2 Gates Satisfied ✓' : 'Both gates required to bid'}
+              {isLocationPinned
+                ? 'WhatsApp & Location Confirmed ✓'
+                : 'Choose your location on map to start bidding'}
             </span>
           </div>
           <button
             onClick={handleConfirmAll}
-            disabled={!gate1Done || !gate2Done}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-2"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-2"
           >
             <FileCheck2 className="w-4 h-4" />
-            <span>{t.confirmGates}</span>
+            <span>{isLocationPinned ? t.confirmGates : (t.setDeliveryLocation || 'Set Location on Map')}</span>
           </button>
         </div>
       </div>
@@ -412,7 +289,7 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
           setLandmark(pin.landmark || '');
           setLatitude(pin.latitude);
           setLongitude(pin.longitude);
-          setGate2Done(true);
+          setIsLocationPinned(true);
         }}
         initialCity={city}
         initialDistrict={district}
@@ -424,3 +301,4 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
   );
 };
 
+export default TwoGateKycModal;

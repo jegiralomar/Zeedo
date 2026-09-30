@@ -9,7 +9,7 @@ export default function KycPage() {
     <>
       <Header
         title="Split-Screen KYC Moderation Card"
-        subtitle="Gate 1 (Government ID OCR) & Gate 2 (Mandatory Rooftop Delivery GPS Pin Drop)"
+        subtitle="Buyer Verification: WhatsApp OTP Authentication & Delivery Location GPS Pin"
       />
       <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
         <SplitScreenKycCard />

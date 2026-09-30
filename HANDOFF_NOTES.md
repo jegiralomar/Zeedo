@@ -127,6 +127,18 @@
   - Two-Gate KYC Verification (`TwoGateKycModal.tsx`): Gate 2 upgraded to "Delivery Location" with interactive map launch banner.
   - Buyer Profile (`marketplace/profile/page.tsx`): Gate 2 upgraded to "Delivery Location" with one-click "Edit on Map" trigger.
 
+### J. Streamlined Buyer Verification (Gate 1 Civil ID Upload Removed ✅)
+- **Eliminated Friction:** Completely removed the Gate 1 requirement (Iraqi Civil ID / Bataqa Wataniya / Passport image upload & OCR scanning).
+- **Streamlined 2-Step Requirement:**
+  1. **Phone Verification via WhatsApp OTP:** Fast 6-digit verification of active Iraqi mobile number.
+  2. **Delivery Location:** Pin exact doorstep on the interactive Leaflet OpenStreetMap modal.
+- **Verification Rule:** A user is 100% verified and authorized to bid once their phone is confirmed via WhatsApp OTP and their location coordinates are pinned on the map (`Boolean(buyer.phone && buyer.rooftopPin)`).
+- **UI Updates:**
+  - `TwoGateKycModal.tsx`: Purged all OCR and file upload inputs; streamlined into Step 1 (WhatsApp Phone Verified ✓) and Step 2 (Interactive Location Map Pin).
+  - `MarketplaceLayoutShell.tsx`: Top header pill updated from "Verify ID" to "Verified" or "Set Location" (opens the interactive map directly).
+  - `profile/page.tsx`: Replaced Gate 1 Civil ID card with Step 1 (Phone Verified via WhatsApp OTP ✓) and Step 2 (Delivery Location).
+  - `useBuyerAuthStore.ts`: Updated `isTwoGateVerified()` to `Boolean(b.phone && b.rooftopPin && b.rooftopPin.isVerified)` and automatically sets `kycStatus: 'verified'` when location is pinned.
+
 ---
 
 ## 2. Active System Architecture
