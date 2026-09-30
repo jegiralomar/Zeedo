@@ -1,5 +1,5 @@
-import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
+import { uploadMedia } from '@/lib/storage';
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'uploads';
+    const folder = (formData.get('folder') as string) || 'products';
 
     if (!file) {
       return NextResponse.json(
@@ -23,27 +23,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const filename = `${folder}/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(filename, file, { access: 'public' });
-      return NextResponse.json({
-        success: true,
-        url: blob.url,
-        pathname: blob.pathname,
-        contentType: blob.contentType,
-        source: 'vercel_blob',
-      });
-    }
+    const result = await uploadMedia(buffer, {
+      filename: file.name,
+      contentType: file.type || 'image/webp',
+      folder,
+    });
 
-    // Graceful fallback when Blob token not set
     return NextResponse.json({
       success: true,
-      url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1000&q=80',
-      filename,
-      size: file.size,
-      source: 'local_simulation',
-      note: 'Add BLOB_READ_WRITE_TOKEN from Vercel dashboard to enable real uploads to zeedo-storage.',
+      url: result.url,
+      provider: result.provider,
+      sizeBytes: result.sizeBytes || file.size,
     });
   } catch (error: any) {
     console.error('Upload handling error:', error);

@@ -60,7 +60,26 @@ export async function uploadMedia(
     }
   }
 
-  // 2. Vercel Blob Fallback
+  // 2. Local Disk Storage (Self-Hosted Node/Docker VPS Mode)
+  try {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const uploadsDir = path.join(process.cwd(), 'public', folder);
+    await fs.mkdir(uploadsDir, { recursive: true });
+    const localFileName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = path.join(uploadsDir, localFileName);
+    await fs.writeFile(filePath, buffer);
+
+    return {
+      url: `/${folder}/${localFileName}`,
+      provider: 'local_storage',
+      sizeBytes: buffer.length,
+    };
+  } catch (fsErr) {
+    // If running in read-only environment, continue to fallback
+  }
+
+  // 3. Vercel Blob Fallback (if token exists)
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     try {
       const { put } = await import('@vercel/blob');

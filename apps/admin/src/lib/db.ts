@@ -1,6 +1,6 @@
-import { neon, NeonQueryFunction } from '@neondatabase/serverless';
+import postgres from 'postgres';
 
-let sqlClient: NeonQueryFunction<false, false> | null = null;
+let sqlClient: any = null;
 
 export function getDb() {
   const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
@@ -8,7 +8,13 @@ export function getDb() {
     return null;
   }
   if (!sqlClient) {
-    sqlClient = neon(databaseUrl);
+    const isSsl = databaseUrl.includes('sslmode=require') || databaseUrl.includes('neon.tech');
+    sqlClient = postgres(databaseUrl, {
+      ssl: isSsl ? 'require' : false,
+      max: 10,
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
   }
   return sqlClient;
 }
