@@ -1,27 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdminStore } from '@/store/useAdminStore';
 import { isRouteAllowed, ROLE_PERMISSIONS } from '@/utils/rbac';
 import {
   LayoutDashboard,
+  Gavel,
   ShieldCheck,
   FileSpreadsheet,
-  Flame,
   Printer,
   Store,
   Megaphone,
-  Sparkles,
   Coins,
-  MapPin,
   Globe2,
   Users,
   ScrollText,
   LogOut,
   LogIn,
   Headphones,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -29,8 +30,25 @@ export const Sidebar: React.FC = () => {
   const router = useRouter();
   const { users, auctions, currentUser, logoutStaff, tickets } = useAdminStore();
 
+  const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const saved = localStorage.getItem('zeedo_admin_sidebar_collapsed');
+    if (saved !== null) {
+      setCollapsed(saved === 'true');
+    }
+  }, []);
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    localStorage.setItem('zeedo_admin_sidebar_collapsed', String(next));
+  };
+
   const userRole = currentUser?.role || 'super_admin';
-  const roleConfig = ROLE_PERMISSIONS[userRole];
+  const roleConfig = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.super_admin;
 
   const pendingKycCount = users.filter((u) => u.kycStatus === 'pending').length;
   const pendingModerationCount = auctions.filter((a) => a.status === 'moderation_pending').length;
@@ -47,14 +65,14 @@ export const Sidebar: React.FC = () => {
         {
           label: 'Overview Dashboard',
           href: '/',
-          icon: <LayoutDashboard className="w-[1.15rem] h-[1.15rem]" />,
+          icon: LayoutDashboard,
         },
         {
-          label: 'Live Auction War Room',
+          label: 'Active Bids',
           href: '/auctions',
-          icon: <Flame className="w-[1.15rem] h-[1.15rem]" />,
+          icon: Gavel,
           badge: liveAuctionsCount > 0 ? `${liveAuctionsCount} Live` : null,
-          badgeColor: 'bg-[#B4F105] text-[#051C12] font-black',
+          badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
         },
       ],
     },
@@ -64,16 +82,16 @@ export const Sidebar: React.FC = () => {
         {
           label: 'Split-Screen KYC',
           href: '/kyc',
-          icon: <ShieldCheck className="w-[1.15rem] h-[1.15rem]" />,
+          icon: ShieldCheck,
           badge: pendingKycCount > 0 ? pendingKycCount : null,
-          badgeColor: 'bg-[#EF4444] text-white font-bold',
+          badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
         },
         {
           label: 'Listing Moderation',
           href: '/moderation',
-          icon: <FileSpreadsheet className="w-[1.15rem] h-[1.15rem]" />,
+          icon: FileSpreadsheet,
           badge: pendingModerationCount > 0 ? pendingModerationCount : null,
-          badgeColor: 'bg-[#B4F105] text-[#051C12] font-bold',
+          badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
         },
       ],
     },
@@ -81,28 +99,28 @@ export const Sidebar: React.FC = () => {
       title: 'OPERATIONS & GROWTH',
       items: [
         {
-          label: 'Logistics & Print Center',
+          label: 'Logistics & Print',
           href: '/logistics',
-          icon: <Printer className="w-[1.15rem] h-[1.15rem]" />,
+          icon: Printer,
           badge: readyLogisticsCount > 0 ? readyLogisticsCount : null,
-          badgeColor: 'bg-[#38bdf8] text-[#051C12] font-bold',
+          badgeColor: 'bg-sky-100 text-sky-800 border-sky-200',
         },
         {
           label: 'Merchants & Sellers',
           href: '/sellers',
-          icon: <Store className="w-[1.15rem] h-[1.15rem]" />,
+          icon: Store,
         },
         {
           label: 'Marketing & CMS',
           href: '/cms',
-          icon: <Megaphone className="w-[1.15rem] h-[1.15rem]" />,
+          icon: Megaphone,
         },
         {
           label: 'Support & Tickets',
           href: '/support',
-          icon: <Headphones className="w-[1.15rem] h-[1.15rem]" />,
+          icon: Headphones,
           badge: openTicketsCount > 0 ? `${openTicketsCount} Open` : null,
-          badgeColor: 'bg-[#EF4444] text-white font-bold',
+          badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
         },
       ],
     },
@@ -112,12 +130,12 @@ export const Sidebar: React.FC = () => {
         {
           label: 'Team & Roles',
           href: '/team',
-          icon: <Users className="w-[1.15rem] h-[1.15rem]" />,
+          icon: Users,
         },
         {
           label: 'Audit Trail Logs',
           href: '/audit',
-          icon: <ScrollText className="w-[1.15rem] h-[1.15rem]" />,
+          icon: ScrollText,
         },
       ],
     },
@@ -132,70 +150,128 @@ export const Sidebar: React.FC = () => {
     .filter((section) => section.items.length > 0);
 
   return (
-    <aside className="w-[280px] bg-[#051C12] border-r border-white/10 flex flex-col justify-between shrink-0 min-h-screen no-print text-white z-40 transition-all duration-300">
+    <aside
+      className={`bg-white border-r border-slate-200/80 flex flex-col justify-between shrink-0 min-h-screen no-print text-slate-800 z-40 transition-all duration-300 relative ${
+        collapsed ? 'w-[76px]' : 'w-[260px]'
+      }`}
+    >
       <div>
-        {/* Spark Brand Identity */}
-        <div className="p-6 pb-4">
-          <Link href={pathPrefix || '/'} className="flex items-center gap-3 group">
-            {/* Spark 6-pointed Asterisk SVG */}
-            <div className="w-10 h-10 rounded-xl bg-[#072F1F] border border-white/10 flex items-center justify-center text-[#B4F105] shadow-lg group-hover:scale-105 transition-transform">
-              <svg className="w-6 h-6 fill-[#B4F105]" viewBox="0 0 100 100">
-                <g transform="translate(50,50)">
-                  <rect x="-6" y="-45" width="12" height="90" rx="6" ry="6" fill="#B4F105" />
-                  <rect x="-6" y="-45" width="12" height="90" rx="6" ry="6" fill="#B4F105" transform="rotate(60)" />
-                  <rect x="-6" y="-45" width="12" height="90" rx="6" ry="6" fill="#B4F105" transform="rotate(120)" />
-                </g>
-              </svg>
+        {/* Brand Header */}
+        <div className={`p-4 border-b border-slate-100 flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+          <Link href={pathPrefix || '/'} className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <span className="text-xl tracking-tighter">Z</span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-white tracking-tight">ZEEDO</span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#B4F105] text-[#051C12]">
-                  SPARK
-                </span>
+            {!collapsed && (
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-base text-slate-900 tracking-tight">ZEEDO</span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    ADMIN
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 font-medium truncate">
+                  Iraq 100% COD Control
+                </p>
               </div>
-              <p className="text-[11px] text-[#879A91] font-medium tracking-wide">
-                Iraq 100% COD Platform
-              </p>
-            </div>
+            )}
           </Link>
+
+          {/* Expand/Collapse Toggle Button */}
+          {!collapsed && (
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              title="Collapse Sidebar"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
+        {/* Collapsed Expand Toggle */}
+        {collapsed && (
+          <div className="flex justify-center py-2 border-b border-slate-100">
+            <button
+              onClick={toggleCollapsed}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              title="Expand Sidebar"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Navigation Sections */}
-        <nav className="p-4 pt-2 space-y-5">
+        <nav className="p-3 space-y-5">
           {menuSections.map((section, sIdx) => (
-            <div key={sIdx} className="space-y-1.5">
-              <div className="px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#879A91] opacity-75">
-                {section.title}
-              </div>
+            <div key={sIdx} className="space-y-1">
+              {!collapsed && (
+                <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {section.title}
+                </div>
+              )}
               <div className="space-y-1">
                 {section.items.map((item) => {
-                  const itemHref = pathPrefix ? `${pathPrefix}${item.href === '/' ? '' : item.href}` || '/admin' : item.href;
-                  const isActive = pathname === itemHref || pathname === item.href;
+                  const itemHref = pathPrefix
+                    ? `${pathPrefix}${item.href === '/' ? '' : item.href}` || '/admin'
+                    : item.href;
+                  const isActive =
+                    pathname === itemHref ||
+                    (item.href === '/' && (pathname === '/' || pathname === '/admin')) ||
+                    (item.href !== '/' && pathname.startsWith(itemHref));
+
+                  const IconComp = item.icon;
+
                   return (
-                    <Link
-                      key={item.href}
-                      href={itemHref}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-[0.92rem] font-medium transition-all relative ${
-                        isActive
-                          ? 'text-white bg-white/5 font-semibold before:content-[""] before:absolute before:-left-4 before:top-2 before:bottom-2 before:w-1 before:bg-[#B4F105] before:rounded-r'
-                          : 'text-[#879A91] hover:text-white hover:bg-white/[0.03]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={isActive ? 'text-[#B4F105]' : 'text-[#879A91]'}>
-                          {item.icon}
-                        </span>
-                        <span>{item.label}</span>
-                      </div>
-                      {item.badge && (
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${item.badgeColor}`}
-                        >
-                          {item.badge}
-                        </span>
+                    <div key={item.href} className="relative group">
+                      <Link
+                        href={itemHref}
+                        className={`flex items-center rounded-xl text-xs font-semibold transition-all relative ${
+                          collapsed
+                            ? 'w-11 h-11 mx-auto justify-center'
+                            : 'px-3 py-2.5 justify-between'
+                        } ${
+                          isActive
+                            ? 'bg-blue-50 text-blue-700 font-bold border-r-2 border-blue-600'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <IconComp
+                            className={`w-4 h-4 shrink-0 ${
+                              isActive ? 'text-blue-600' : 'text-slate-500 group-hover:text-slate-900'
+                            }`}
+                          />
+                          {!collapsed && <span className="truncate">{item.label}</span>}
+                        </div>
+
+                        {!collapsed && item.badge && (
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold border ${item.badgeColor}`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+
+                        {/* Collapsed Notification Dot */}
+                        {collapsed && item.badge && (
+                          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+                        )}
+                      </Link>
+
+                      {/* Tooltip on Hover (When Collapsed) */}
+                      {collapsed && (
+                        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-slate-900 text-white text-[11px] font-medium rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg flex items-center gap-2">
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-white/20 text-white">
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
                       )}
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
@@ -204,68 +280,85 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Spark Sidebar Footer & Profile Card */}
-      <div className="p-4 border-t border-white/10 space-y-3">
-        {/* Platform Indicator */}
-        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] space-y-1.5">
-          <div className="flex items-center justify-between text-[#879A91]">
-            <span className="flex items-center gap-1.5">
-              <Coins className="w-3.5 h-3.5 text-[#B4F105]" />
-              Start Rule
-            </span>
-            <span className="font-mono font-bold text-white">1,000 IQD</span>
+      {/* Footer Profile & Indicators */}
+      <div className="p-3 border-t border-slate-200/80 space-y-2.5 bg-slate-50/50">
+        {/* Economic / Platform Rule Indicators (Expanded Only) */}
+        {!collapsed && (
+          <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 text-[11px] space-y-1.5 shadow-2xs">
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-blue-600" />
+                Start Price
+              </span>
+              <span className="font-mono font-bold text-slate-800">1,000 IQD</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <Globe2 className="w-3.5 h-3.5 text-blue-600" />
+                Dialects
+              </span>
+              <span className="font-mono font-semibold text-slate-700">4 Regional</span>
+            </div>
           </div>
-          <div className="flex items-center justify-between text-[#879A91]">
-            <span className="flex items-center gap-1.5">
-              <Globe2 className="w-3.5 h-3.5 text-[#B4F105]" />
-              Dialects
-            </span>
-            <span className="font-mono text-white">4 Regional</span>
-          </div>
-        </div>
+        )}
 
-        {/* User Profile & Session Card */}
+        {/* Staff User Profile Card */}
         {currentUser ? (
-          <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+          <div className={`rounded-xl bg-white border border-slate-200/80 shadow-2xs ${collapsed ? 'p-2 flex flex-col items-center' : 'p-2.5 space-y-2'}`}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-[#072F1F] text-[#B4F105] flex items-center justify-center font-black text-xs shrink-0 border border-white/10">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                   {currentUser.name.charAt(0)}
                 </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-bold text-white truncate">{currentUser.name}</div>
-                  <div className="text-[10px] text-[#879A91] truncate font-mono">{currentUser.email}</div>
-                </div>
+                {!collapsed && (
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">{currentUser.name}</div>
+                    <div className="text-[10px] text-slate-400 truncate font-mono">{currentUser.email}</div>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1.5 border-t border-white/5">
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${roleConfig.badgeBg} ${roleConfig.badgeText}`}
-              >
-                {roleConfig.roleLabel}
-              </span>
+            {!collapsed && (
+              <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  {roleConfig.roleLabel}
+                </span>
 
+                <button
+                  onClick={() => {
+                    logoutStaff();
+                    router.push(pathPrefix ? `${pathPrefix}/login` : '/login');
+                  }}
+                  className="text-[11px] text-slate-500 hover:text-rose-600 font-medium flex items-center gap-1 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+
+            {collapsed && (
               <button
                 onClick={() => {
                   logoutStaff();
-                  router.push('/login');
+                  router.push(pathPrefix ? `${pathPrefix}/login` : '/login');
                 }}
-                className="text-[11px] text-[#879A91] hover:text-[#EF4444] font-medium flex items-center gap-1 transition-colors"
-                title="Sign Out of Session"
+                className="mt-1 p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Logout</span>
               </button>
-            </div>
+            )}
           </div>
         ) : (
           <Link
-            href="/login"
-            className="w-full btn-spark-lime text-xs justify-center py-2.5"
+            href={pathPrefix ? `${pathPrefix}/login` : '/login'}
+            className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors"
           >
-            <LogIn className="w-4 h-4 text-[#051C12]" />
-            <span>Staff Sign In</span>
+            <LogIn className="w-4 h-4" />
+            {!collapsed && <span>Staff Sign In</span>}
           </Link>
         )}
       </div>

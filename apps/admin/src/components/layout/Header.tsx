@@ -8,7 +8,6 @@ import {
   Radio,
   Truck,
   Search,
-  Bell,
   Cpu,
   DollarSign,
   TrendingUp,
@@ -25,7 +24,6 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
   const {
     antiSnipingAlert,
     clearAntiSnipingAlert,
-    auctions,
     currentUser,
     addToast,
   } = useAdminStore();
@@ -77,21 +75,20 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
     }
   };
 
-
   return (
-    <header className="sticky top-0 z-30 flex flex-col bg-[#F4F6F5]/90 backdrop-blur-md border-b border-[#E9EFEF] no-print">
+    <header className="sticky top-0 z-30 flex flex-col bg-white/90 backdrop-blur-md border-b border-slate-200/80 no-print">
       {/* Top Banner: Anti-Sniping Alert Flash */}
       {antiSnipingAlert && (
-        <div className="bg-[#072F1F] text-white px-5 py-2.5 flex items-center justify-between shadow-lg border-b border-[#B4F105]/30 animate-pulse">
-          <div className="flex items-center gap-2.5 text-xs font-semibold">
-            <ShieldAlert className="w-4 h-4 text-[#B4F105] animate-bounce" />
+        <div className="bg-amber-500 text-white px-5 py-2.5 flex items-center justify-between shadow-md border-b border-amber-600 animate-pulse">
+          <div className="flex items-center gap-2.5 text-xs font-bold">
+            <ShieldAlert className="w-4 h-4 text-white animate-bounce shrink-0" />
             <span>
-              <strong className="text-[#B4F105]">60-SECOND ANTI-SNIPING TRIGGERED:</strong> Bid placed on &ldquo;{antiSnipingAlert.itemTitle}&rdquo; at {antiSnipingAlert.timestamp}. Timer hard-reset to 60s!
+              <strong>60-SECOND ANTI-SNIPING TRIGGERED:</strong> Bid placed on &ldquo;{antiSnipingAlert.itemTitle}&rdquo; at {antiSnipingAlert.timestamp}. Timer extended to 60s soft close!
             </span>
           </div>
           <button
             onClick={clearAntiSnipingAlert}
-            className="text-[11px] bg-white/10 hover:bg-white/20 text-[#B4F105] px-3 py-1 rounded-full font-mono transition-colors"
+            className="text-[11px] bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full font-mono transition-colors font-bold"
           >
             Dismiss
           </button>
@@ -99,80 +96,86 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
       )}
 
       {/* Main Header / Navbar Bar */}
-      <div className="flex items-center justify-between px-8 py-4 gap-4">
+      <div className="flex items-center justify-between px-6 lg:px-8 py-3.5 gap-4">
         {/* Page Title & Breadcrumb */}
         <div>
-          <h1 className="text-xl font-extrabold text-[#0B130F] tracking-tight flex items-center gap-3">
+          <h1 className="text-lg lg:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             {title}
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-[#DCFCE7] text-[#15803d]">
-              100% COD ECOSYSTEM
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+              100% COD
             </span>
           </h1>
-          {subtitle && <p className="text-xs text-[#6C7E75] mt-0.5 font-medium">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-slate-500 mt-0.5 font-medium">{subtitle}</p>}
         </div>
 
-        {/* Center Search Pill (Spark Admin Style) */}
-        <div className="hidden md:flex items-center relative w-72 lg:w-96">
-          <Search className="w-4 h-4 absolute left-3.5 text-[#6C7E75]" />
+        {/* Center Search Bar */}
+        <div className="hidden md:flex items-center relative w-64 lg:w-80">
+          <Search className="w-4 h-4 absolute left-3.5 text-slate-400" />
           <input
             type="text"
             placeholder="Search auctions, users, AWB..."
-            className="w-full pl-9 pr-4 py-2 rounded-full bg-white border border-[#E9EFEF] text-xs text-[#0B130F] placeholder-[#879A91] focus:outline-hidden focus:border-[#072F1F] shadow-xs"
+            className="w-full pl-9 pr-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:bg-white focus:border-blue-500 shadow-2xs transition-colors"
           />
         </div>
 
-        {/* System Health Indicators */}
-        <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-3 text-xs font-mono px-3.5 py-1.5 rounded-full bg-white border border-[#E9EFEF] text-[#0B130F] shadow-xs">
-            <div className="flex items-center gap-1.5 text-[#15803d]">
+        {/* System Health Indicators & Quick Actions */}
+        <div className="flex items-center gap-2.5">
+          {/* Socket & 3PL Status Pill */}
+          <div className="hidden xl:flex items-center gap-2.5 text-xs font-mono px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-slate-700 shadow-2xs">
+            <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22C55E] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#22C55E]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="font-semibold">Fast2SMS: Live</span>
+              <span>Fast2SMS</span>
             </div>
             <span className="text-slate-300">|</span>
-            <div className="flex items-center gap-1.5 text-[#072F1F]">
-              <Radio className="w-3.5 h-3.5 text-[#22C55E]" />
-              <span>Low-Data (12-25B)</span>
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Radio className="w-3.5 h-3.5 text-blue-600" />
+              <span>Low-Data</span>
             </div>
             <span className="text-slate-300">|</span>
-            <div className="flex items-center gap-1.5 text-[#d97706]">
+            <div className="flex items-center gap-1.5 text-amber-700 font-medium">
               <Truck className="w-3.5 h-3.5" />
-              <span>3PL Only</span>
+              <span>3PL COD</span>
             </div>
           </div>
 
           {/* Live Iraqi Parallel Exchange Rate Widget */}
           <button
             onClick={() => setShowRateModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-[#E9EFEF] text-xs font-mono font-bold text-[#072F1F] shadow-xs transition-all hover:border-emerald-300"
-            title="Iraqi Street Parallel Exchange Rate (Click to override)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs font-mono font-bold text-slate-800 shadow-2xs transition-all hover:border-emerald-300"
+            title="Iraqi Parallel Street Exchange Rate (Click to override)"
           >
             <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
             <span>$1 = {marketRate.toLocaleString()} IQD</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </button>
 
-          {/* API Services Button */}
+          {/* AI APIs Button */}
           <button
             onClick={() => setShowApiModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-[#E9EFEF] text-xs font-bold text-[#072F1F] shadow-xs transition-all hover:border-indigo-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-xs font-bold text-slate-700 shadow-2xs transition-all hover:border-blue-300"
             title="View Google Gemini & Meta WhatsApp API Status"
           >
-            <Cpu className="w-3.5 h-3.5 text-indigo-600" />
-            <span>AI APIs</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <Cpu className="w-3.5 h-3.5 text-blue-600" />
+            <span className="hidden sm:inline">AI APIs</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           </button>
 
+          {/* Staff User Avatar Pill */}
           {currentUser && (
-            <div className="flex items-center gap-2 pl-3 border-l border-[#E9EFEF]">
-              <div className="w-7 h-7 rounded-full bg-[#072F1F] text-[#B4F105] flex items-center justify-center font-bold text-xs shrink-0">
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                 {currentUser.name.charAt(0)}
               </div>
-              <div className="hidden sm:block text-left text-xs">
-                <div className="font-extrabold text-[#0B130F] leading-tight truncate max-w-[130px]">{currentUser.name}</div>
-                <div className="text-[10px] text-[#6C7E75] font-mono capitalize">{currentUser.role.replace('_', ' ')}</div>
+              <div className="hidden lg:block text-left text-xs">
+                <div className="font-bold text-slate-900 leading-tight truncate max-w-[120px]">
+                  {currentUser.name}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono capitalize">
+                  {currentUser.role.replace('_', ' ')}
+                </div>
               </div>
             </div>
           )}
@@ -183,10 +186,10 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
 
       {/* Exchange Rate Override Modal */}
       {showRateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-[#E9EFEF] space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E9EFEF]">
-              <div className="flex items-center gap-2 text-sm font-bold text-[#0B130F]">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
                 <span>Iraqi Parallel Market Rate</span>
               </div>
@@ -198,13 +201,13 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
               </button>
             </div>
 
-            <p className="text-xs text-[#6C7E75]">
+            <p className="text-xs text-slate-500">
               Real-time street cash conversion rate applied to all scraped USD e-commerce product links into Iraqi Dinars (IQD).
             </p>
 
             <form onSubmit={handleUpdateRate} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-[#0B130F] block mb-1">
+                <label className="text-xs font-bold text-slate-900 block mb-1">
                   Parallel Cash Exchange Rate (IQD per $1 USD)
                 </label>
                 <div className="relative">
@@ -215,13 +218,13 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
                     max="2500"
                     value={newRateInput}
                     onChange={(e) => setNewRateInput(e.target.value)}
-                    className="w-full pl-12 pr-12 py-2 rounded-xl border border-[#E9EFEF] bg-[#F8FAF9] text-sm font-mono font-bold text-[#0B130F]"
+                    className="w-full pl-12 pr-12 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-hidden"
                   />
                   <span className="absolute right-3 top-2.5 text-xs font-mono font-bold text-emerald-600">IQD</span>
                 </div>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-[#6C7E75] space-y-1">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 space-y-1">
                 <div className="flex justify-between">
                   <span>Official CBI Forex Peg:</span>
                   <span className="font-mono font-bold">1,320 IQD</span>
@@ -236,14 +239,14 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
                 <button
                   type="button"
                   onClick={() => setShowRateModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-[#6C7E75] hover:bg-slate-100"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updatingRate}
-                  className="px-4 py-2 rounded-xl bg-[#072F1F] hover:bg-[#0c4a32] text-white text-xs font-bold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50 transition-colors shadow-xs"
                 >
                   {updatingRate ? 'Saving...' : 'Apply Live Rate'}
                 </button>

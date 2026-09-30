@@ -130,6 +130,8 @@ interface AdminStoreState {
   // Live Auction Actions & Anti-Sniping
   placeBid: (auctionId: string, bidderId?: string, customAmount?: number) => void;
   triggerAntiSniping: (auctionId: string) => void;
+  extendAuctionTimer: (auctionId: string, additionalMinutes: number) => void;
+  togglePauseAuction: (auctionId: string) => void;
   pauseAuction: (auctionId: string) => void;
   forceEndAuction: (auctionId: string) => void;
   voidAuctionBid: (auctionId: string, bidId: string, reason: string) => void;
@@ -1005,6 +1007,53 @@ export const useAdminStore = create<AdminStoreState>()(
           targetId: auctionId,
           description: `Anti-sniping 60s window reset manually triggered for auction ${auctionId}`,
           diff: { after: { secondsLeft: 60, isAntiSnipingActive: true } },
+        });
+      },
+
+      extendAuctionTimer: (auctionId, additionalMinutes) => {
+        const auction = get().auctions.find((a) => a.id === auctionId);
+        if (!auction) return;
+        const now = Date.now();
+        const currentEnd = new Date(auction.auctionEndsAt).getTime();
+        const baseTime = currentEnd > now ? currentEnd : now;
+        const newEndsAt = new Date(baseTime + additionalMinutes * 60 * 1000).toISOString();
+
+        set((state) => ({
+          auctions: state.auctions.map((a) =>
+            a.id === auctionId ? { ...a, auctionEndsAt: newEndsAt, status: 'live' as const } : a
+          ),
+        }));
+        get().addToast('success', `Extended timer for auction ${auctionId} by +${additionalMinutes}m`);
+        get().logAuditEvent({
+          action: 'TIMER_EXTENDED',
+          category: 'auctions',
+          targetId: auctionId,
+          description: `Admin extended auction timer by +${additionalMinutes} minutes. New end: ${new Date(newEndsAt).toLocaleTimeString()}`,
+          diff: { after: { auctionEndsAt: newEndsAt } },
+        });
+      },
+
+      togglePauseAuction: (auctionId) => {
+        const auction = get().auctions.find((a) => a.id === auctionId);
+        if (!auction) return;
+        const isPaused = auction.status === 'cancelled';
+        const newStatus = isPaused ? ('live' as const) : ('cancelled' as const);
+
+        set((state) => ({
+          auctions: state.auctions.map((a) =>
+            a.id === auctionId ? { ...a, status: newStatus } : a
+          ),
+        }));
+        get().addToast(
+          isPaused ? 'success' : 'warning',
+          isPaused ? `Auction ${auctionId} resumed live.` : `Auction ${auctionId} paused by admin.`
+        );
+        get().logAuditEvent({
+          action: isPaused ? 'AUCTION_RESUMED' : 'AUCTION_PAUSED',
+          category: 'auctions',
+          targetId: auctionId,
+          description: `Admin ${isPaused ? 'resumed' : 'paused'} auction ${auctionId}`,
+          diff: { after: { status: newStatus } },
         });
       },
 

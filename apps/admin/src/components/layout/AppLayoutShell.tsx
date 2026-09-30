@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAdminStore } from '@/store/useAdminStore';
 import { isRouteAllowed, ROLE_PERMISSIONS } from '@/utils/rbac';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { ToastContainer } from '@/components/layout/ToastContainer';
 
 export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
@@ -58,7 +59,8 @@ export const AppLayoutShell: React.FC<{ children: React.ReactNode }> = ({ childr
   return (
     <div className="flex w-full min-h-screen">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 bg-[#F4F6F5]">{children}</div>
+      <div className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC]">{children}</div>
+      <ToastContainer />
     </div>
   );
 };

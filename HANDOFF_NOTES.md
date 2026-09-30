@@ -75,6 +75,29 @@
 - **Visual-Only Live Bid Highlight:** When bids increment or quick bid is clicked, the card triggers a subtle emerald border pulse (`ring-2 ring-emerald-500/80 shadow-md shadow-emerald-500/10`) and animated price spark badge (`+1,000 IQD`) without disruptive vibration or audio.
 - **Clean Clutter-Free Feed:** Avoided redundant floating ticker overlay since card prices are already live.
 
+### G. Phase 1: Admin Panel Redesign & Active Bids Command Center (Completed & Verified ✅)
+- **Unified Clean Design System:** Replaced the legacy dark green/lime aesthetic with the buyer app's modern light theme:
+  - Background canvas: Tailwind Slate-50 (`bg-[#F8FAFC]`)
+  - Elevated window cards: `bg-white rounded-2xl border border-slate-200/80 shadow-xs`
+  - Primary accents: Royal Blue (`#2563EB`), Emerald COD/money pills, and clean high-contrast typography.
+- **Compact Icon Rail & Slide-out Drawer:**
+  - Modern vertical rail supporting 2 states: compact icon rail (`w-[76px]`) with hover tooltips and expanded drawer (`w-[260px]`).
+  - Expand/collapse toggle button with user preference persisted in `localStorage.getItem('zeedo_admin_sidebar_collapsed')`.
+  - Live indicator badges for Active Bids, pending KYC, pending moderation, and open tickets.
+- **Active Bids Command Center (`/admin/auctions`):**
+  - Completely replaced the cluttered "War Room" with a dedicated, high-clarity **Active Bids** management dashboard.
+  - **Top KPI Windows:** Live Auctions (with green pulse), Bids Placed Today, Active GMV Volume in IQD, and Soft-Close Watch (<60s).
+  - **Search & Filters:** Search by title, auction ID, seller, or category with category pills and quick filters (`All Active`, `Soft-Close <60s`, `Ending Soon <5m`, `Paused`).
+  - **Dual Layout Modes:** Visual Card Grid (for rapid visual assessment) and Operations Table (for bulk inspection).
+  - **Direct Card Actions:** Fast 1-click `+1 Min` timer extend, Pause/Resume toggle, and Controls modal trigger.
+  - **Comprehensive Auction Control Modal:**
+    - Real-time countdown clock and instant timer extension buttons (`+1m`, `+5m`, `+15m`, custom minutes, and 60s soft-close reset).
+    - Lifecycle operations: Force Conclude & Dispatch to COD courier (automatically triggers AWB generation and assigns winner), Pause/Resume auction, and One-Tap Relist at 1,000 IQD.
+    - Full chronological bidder history table with phone numbers, timestamps, and one-click **Void Bid** feature with moderator reason selection and automatic winning price recalculation.
+    - Test bid simulation button for verifying anti-sniping and low-data socket payloads.
+- **Global Toast & Shell Integration:** Integrated `<ToastContainer />` into `AppLayoutShell.tsx` and added `extendAuctionTimer` and `togglePauseAuction` into `useAdminStore.ts` with audit logging.
+- **Dashboard & Header Polish:** Modernized `DashboardOverview.tsx` and `Header.tsx` to match the new white/blue/emerald window card system.
+
 ---
 
 ## 2. Active System Architecture
