@@ -24,8 +24,7 @@ import { MyBidsScreen } from './src/screens/MyBidsScreen';
 import { WatchlistScreen } from './src/screens/WatchlistScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { AppTheme } from './src/lib/theme';
-
-const API_BASE_URL = 'https://zeedo.auction';
+import { API_BASE_URL } from './src/lib/config';
 
 const SAMPLE_LIVE_DROPS: MobileAuctionItem[] = [
   {
@@ -137,19 +136,24 @@ export default function App() {
   const [language, setLanguage] = useState<'ckb' | 'badini' | 'ar' | 'en'>('ar');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [wsConnected, setWsConnected] = useState(false);
 
   const fetchLiveAuctions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auctions/live`);
+      let res = await fetch(`${API_BASE_URL}/api/auctions/live`);
+      if (!res.ok) {
+        res = await fetch(`${API_BASE_URL}/api/listings?status=live`);
+      }
       if (!res.ok) throw new Error('Live auction feed unavailable');
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const listings: MobileAuctionItem[] = data.map((l: any) => ({
+      const rawList = Array.isArray(data) ? data : (data.listings || []);
+      if (rawList.length > 0) {
+        const listings: MobileAuctionItem[] = rawList.map((l: any) => ({
           id: l.id || `auc-${Math.random()}`,
-          title: l.title || l.name || 'Zeedo Auction Lot',
-          category: l.category || 'General',
-          currentBid: Number(l.currentBid || l.current_bid || l.startingPrice || 1000),
-          startingPrice: Number(l.startingPrice || 1000),
+          title: l.title || l.multilingual?.ar?.title || l.multilingual?.en?.title || l.name || 'Zeedo Auction Lot',
+          category: l.category || 'general',
+          currentBid: Number(l.currentBid || l.currentBidIqd || l.current_bid || l.startingPrice || 1000),
+          startingPrice: Number(l.startingPrice || l.startingPriceIqd || 1000),
           bidIncrement: Number(l.bidIncrement || l.incrementStepIqd || 1000),
           endsAt: l.endsAt || l.auctionEndsAt || l.ends_at,
           photos:
@@ -164,11 +168,7 @@ export default function App() {
           sellerName: l.sellerName || 'عادل عدنان',
           sellerAvatar: l.sellerAvatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
         }));
-        if (listings.length > 0) {
-          setItems(listings);
-        } else {
-          setItems(SAMPLE_LIVE_DROPS);
-        }
+        setItems(listings);
       } else {
         setItems(SAMPLE_LIVE_DROPS);
       }
@@ -209,6 +209,7 @@ export default function App() {
 
     fetchLiveAuctions();
     liveSocket.connect();
+    const unsubConn = liveSocket.onConnectionChange(setWsConnected);
 
     const unsubBids = liveSocket.on('NEW_BID', (data: any) => {
       setItems((prev) =>
@@ -246,6 +247,7 @@ export default function App() {
     });
 
     return () => {
+      unsubConn();
       unsubBids();
       unsubTimerExt();
       unsubEnded();
@@ -285,7 +287,10 @@ export default function App() {
         body: JSON.stringify({
           auctionId: item.id,
           amountIqd: nextAmount,
-          userId: session.user.id,
+          bidderId: session.user.id,
+          bidderName: session.user.name,
+          bidderPhone: session.user.phone,
+          bidderCity: session.user.city || 'Baghdad',
         }),
       });
 
@@ -352,9 +357,17 @@ export default function App() {
           <View style={styles.hamburgerLine} />
         </TouchableOpacity>
 
-        {/* Center: Royal Indigo Gavel Auction Logo */}
-        <View style={styles.gavelBadge}>
-          <Text style={styles.gavelIcon}>⚖️</Text>
+        {/* Center: Royal Indigo Gavel Auction Logo & Real-Time Sync Indicator */}
+        <View style={{ alignItems: 'center' }}>
+          <View style={styles.gavelBadge}>
+            <Text style={styles.gavelIcon}>⚖️</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: wsConnected ? '#10B981' : '#F59E0B' }} />
+            <Text style={{ fontSize: 9, fontWeight: '700', color: wsConnected ? '#10B981' : '#F59E0B' }}>
+              {wsConnected ? 'مباشر متصل' : 'جاري الاتصال'}
+            </Text>
+          </View>
         </View>
 
         {/* Right: User Avatar Photo */}

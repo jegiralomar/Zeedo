@@ -11,6 +11,7 @@ import {
 import { saveMobileSession, MobileBuyerSession } from '../lib/session';
 import { EviraTheme, eviraWindowStyles } from '../lib/theme';
 import { EviraModal } from './EviraModal';
+import { API_BASE_URL } from '../lib/config';
 
 interface WhatsAppAuthModalProps {
   visible: boolean;
@@ -23,7 +24,7 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
   visible,
   onClose,
   onSuccess,
-  apiBaseUrl = 'https://zeedo.auction',
+  apiBaseUrl = API_BASE_URL,
 }) => {
   const [step, setStep] = useState<'phone' | 'otp' | 'name'>('phone');
   const [phone, setPhone] = useState('');

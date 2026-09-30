@@ -1,22 +1,37 @@
-/**
- * Real-Time Bidding WebSocket Client for React Native (Expo)
- * Maintains persistent, low-latency live stream of new bids, anti-sniping timer extensions, and outbid alerts.
- */
+import { WS_BASE_URL } from './config';
 
 type MessageHandler = (data: any) => void;
+type ConnectionHandler = (connected: boolean) => void;
 
 class ZeedoBiddingSocket {
   private ws: WebSocket | null = null;
   private url: string;
   private channelHandlers = new Map<string, Set<MessageHandler>>();
   private eventHandlers = new Map<string, Set<MessageHandler>>();
+  private connectionListeners = new Set<ConnectionHandler>();
   private reconnectTimer: any = null;
   private isConnected = false;
   private currentUserId: string | null = null;
 
   constructor(url?: string) {
-    const envUrl = typeof process !== 'undefined' && (process.env as any)?.EXPO_PUBLIC_WS_URL;
-    this.url = url || envUrl || 'wss://zeedo.auction/ws';
+    this.url = url || WS_BASE_URL;
+  }
+
+  public onConnectionChange(handler: ConnectionHandler): () => void {
+    this.connectionListeners.add(handler);
+    handler(this.isConnected);
+    return () => {
+      this.connectionListeners.delete(handler);
+    };
+  }
+
+  private notifyConnection(connected: boolean) {
+    this.isConnected = connected;
+    for (const listener of this.connectionListeners) {
+      try {
+        listener(connected);
+      } catch {}
+    }
   }
 
   public setUserId(userId: string | null) {
@@ -42,7 +57,7 @@ class ZeedoBiddingSocket {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
-        this.isConnected = true;
+        this.notifyConnection(true);
 
         // 1. Always subscribe to global marketplace feed
         const channelsToSub = ['global', ...Array.from(this.channelHandlers.keys())];
@@ -81,15 +96,17 @@ class ZeedoBiddingSocket {
       };
 
       this.ws.onclose = () => {
-        this.isConnected = false;
+        this.notifyConnection(false);
         this.ws = null;
         this.scheduleReconnect();
       };
 
       this.ws.onerror = () => {
+        this.notifyConnection(false);
         this.ws?.close();
       };
     } catch {
+      this.notifyConnection(false);
       this.scheduleReconnect();
     }
   }
