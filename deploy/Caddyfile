@@ -42,3 +42,18 @@
 
     encode zstd gzip
 }
+
+# 3. Direct IP Access (For testing via raw IP before DNS cutover)
+http:// {
+    handle /ws* {
+        reverse_proxy websocket:8080
+    }
+    handle /health* {
+        reverse_proxy websocket:8080
+    }
+    handle {
+        reverse_proxy web:3000
+    }
+    encode zstd gzip
+}
+

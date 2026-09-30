@@ -233,11 +233,45 @@ const heartbeatInterval = setInterval(() => {
   }
 }, 30000);
 
+// Background 10-second Auction Auto-Conclude Loop
+// Continuously checks and transitions expired auctions (end_time <= NOW()) to 'completed'
+// and broadcasts AUCTION_ENDED, ensuring auctions close in real time without human intervention.
+const WEB_API_URL = process.env.WEB_API_URL || 'http://web:3000';
+const auctionMonitorInterval = setInterval(async () => {
+  try {
+    const res = await fetch(`${WEB_API_URL}/api/listings/control`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-broadcast-secret': BROADCAST_SECRET,
+      },
+      body: JSON.stringify({
+        action: 'auto_conclude_expired',
+        operatorName: 'Zeedo 24/7 VPS Background Worker',
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.concludedCount > 0) {
+        console.log(
+          `[Zeedo Worker] 🏁 Auto-concluded ${data.concludedCount} expired auction(s):`,
+          data.concludedAuctions?.map((a) => `${a.id} -> ${a.packageAwbId}`)
+        );
+      }
+    }
+  } catch {
+    // web service might still be starting or restarting; safely ignore
+  }
+}, 10000);
+
 wss.on('close', () => {
   clearInterval(heartbeatInterval);
+  clearInterval(auctionMonitorInterval);
 });
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[Zeedo WebSocket Gateway] Listening on port ${PORT}`);
   console.log(`[Zeedo WebSocket Gateway] Health check available at http://0.0.0.0:${PORT}/health`);
+  console.log(`[Zeedo Background Worker] 24/7 auto-conclude daemon active against ${WEB_API_URL}`);
 });
+

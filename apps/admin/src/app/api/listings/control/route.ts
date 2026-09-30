@@ -14,9 +14,9 @@ export async function POST(request: Request) {
       operatorName = 'Staff Moderator',
     } = body;
 
-    if (!auctionId || !action) {
+    if (!action) {
       return NextResponse.json(
-        { success: false, error: 'auctionId and action are required' },
+        { success: false, error: 'action is required' },
         { status: 400 }
       );
     }
@@ -30,6 +30,100 @@ export async function POST(request: Request) {
       );
     }
 
+    const now = new Date();
+
+    // 0. Auto-Conclude Expired Auctions (Continuous Background Worker Action)
+    if (action === 'auto_conclude_expired') {
+      const expiredAuctions = await sql`
+        SELECT * FROM auctions
+        WHERE status = 'live'
+          AND end_time IS NOT NULL
+          AND end_time <= ${now.toISOString()}
+      `;
+
+      const results: any[] = [];
+      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+
+      for (const auc of expiredAuctions) {
+        const cleanId = (auc.id || '').replace(/^auc-/, '');
+        const packageAwbId = `AWB-IQ-${dateStr}-${cleanId}`;
+
+        let highestBidderObj: any = null;
+        try {
+          highestBidderObj =
+            typeof auc.highest_bidder === 'string'
+              ? JSON.parse(auc.highest_bidder)
+              : auc.highest_bidder;
+        } catch {
+          highestBidderObj = null;
+        }
+
+        const finalBidIqd = Number(auc.current_bid_iqd || auc.starting_price_iqd || 1000);
+
+        await sql`
+          UPDATE auctions SET
+            status = 'completed',
+            cod_status = 'ready_for_dispatch',
+            package_awb_id = ${packageAwbId}
+          WHERE id = ${auc.id}
+        `;
+
+        const endData = {
+          auctionId: auc.id,
+          status: 'completed',
+          highestBidder: highestBidderObj,
+          currentBidIqd: finalBidIqd,
+          packageAwbId,
+          concludedAt: now.toISOString(),
+          operatorName: operatorName || 'Zeedo Background Auto-Conclude Daemon',
+        };
+
+        // Broadcast to specific auction room and global feed
+        await broadcastLiveEvent({
+          channels: [`auction:${auc.id}`, 'global'],
+          event: 'AUCTION_ENDED',
+          data: endData,
+        }).catch(() => {});
+
+        // If winner exists, dispatch winning notification
+        if (highestBidderObj && highestBidderObj.id) {
+          await broadcastLiveEvent({
+            channel: `user:${highestBidderObj.id}`,
+            event: 'OUTBID_ALERT',
+            data: {
+              auctionId: auc.id,
+              auctionTitle: auc.title || 'Auction Lot',
+              isWinner: true,
+              wonPriceIqd: finalBidIqd,
+              packageAwbId,
+            },
+          }).catch(() => {});
+        }
+
+        results.push({
+          id: auc.id,
+          title: auc.title,
+          packageAwbId,
+          finalBidIqd,
+          winner: highestBidderObj?.name || 'No bids',
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        action: 'auto_conclude_expired',
+        concludedCount: results.length,
+        concludedAuctions: results,
+      });
+    }
+
+    if (!auctionId) {
+      return NextResponse.json(
+        { success: false, error: 'auctionId is required for this action' },
+        { status: 400 }
+      );
+    }
+
     // 1. Fetch auction row
     const rows = await sql`SELECT * FROM auctions WHERE id = ${auctionId} LIMIT 1`;
     if (rows.length === 0) {
@@ -40,7 +134,6 @@ export async function POST(request: Request) {
     }
 
     const auction = rows[0];
-    const now = new Date();
 
     // 2. Action Handlers
 

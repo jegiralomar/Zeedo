@@ -28,6 +28,7 @@ services:
     environment:
       PORT: 8080
       WS_BROADCAST_SECRET: ${WS_BROADCAST_SECRET:-zeedo_internal_live_socket_key_9898}
+      WEB_API_URL: http://web:3000
     ports:
       - "8080:8080"
     healthcheck:
