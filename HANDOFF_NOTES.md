@@ -253,8 +253,8 @@
 - **Buyer WhatsApp Test Code:** `782910` or displayed sandbox code
 - **Merchant ID:** `sel-01` (Zeedo Merchant Hub, Erbil)
 - **Vercel Project:** `zeedo1/admin` (`prj_CjmLqSrWrPki65DICvgMeCeUKWNI`)
-- **Latest Deployment:** `admin-8mk77d3om-zeedo1.vercel.app` (Aliased to `https://zeedo.auction`)
-- **Git Branches:** `master` and `main` synchronized at latest commit.
+- **Latest Deployment:** `admin-rmt7w8xds-zeedo1.vercel.app` (Aliased to `https://zeedo.auction`)
+- **Git Branches:** `master` and `main` synchronized at commit `54f9dfa`.
 
 ---
 
