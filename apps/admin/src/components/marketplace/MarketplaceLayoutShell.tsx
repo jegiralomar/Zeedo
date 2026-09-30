@@ -29,6 +29,7 @@ import { BuyerAuthModal } from './BuyerAuthModal';
 import { LocationPickerModal } from './LocationPickerModal';
 import { IntroWalkthroughModal } from './IntroWalkthroughModal';
 import { MerchantPortalView } from '../merchant/MerchantPortalView';
+import { useLiveAuctionSocket } from '@/hooks/useLiveAuctionSocket';
 
 export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -38,6 +39,9 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
   const { savedAuctionIds, syncLiveAuctionsFromDb } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
+
+  // Connect to ultra-lean real-time WebSocket Bidding Gateway
+  useLiveAuctionSocket({ enabled: true, userId: buyer?.id });
 
   const [mounted, setMounted] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);

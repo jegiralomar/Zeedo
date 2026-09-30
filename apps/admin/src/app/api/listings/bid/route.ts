@@ -5,13 +5,11 @@ import { broadcastLiveEvent } from '@/lib/realtime';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const {
-      auctionId,
-      bidderId,
-      bidderName = 'Authorized Buyer',
-      bidderPhone = '+964 750 000 0000',
-      bidderCity = 'Erbil',
-    } = body;
+    const auctionId = body.auctionId || body.id;
+    const bidderId = body.bidderId || body.userId || `usr-${Date.now()}`;
+    const bidderName = body.bidderName || body.userName || 'Authorized Buyer';
+    const bidderPhone = body.bidderPhone || body.phone || '+964 750 000 0000';
+    const bidderCity = body.bidderCity || body.city || 'Erbil';
 
     if (!auctionId) {
       return NextResponse.json({ success: false, error: 'auctionId is required' }, { status: 400 });
@@ -32,6 +30,16 @@ export async function POST(request: Request) {
     const auction = rows[0];
     if (auction.status !== 'live') {
       return NextResponse.json({ success: false, error: 'Auction is not live' }, { status: 400 });
+    }
+
+    // Track previous highest bidder for outbid alerts
+    let previousHighestBidder: any = null;
+    try {
+      previousHighestBidder = typeof auction.highest_bidder === 'string'
+        ? JSON.parse(auction.highest_bidder)
+        : auction.highest_bidder;
+    } catch {
+      previousHighestBidder = null;
     }
 
     const currentBid = Number(auction.current_bid_iqd || 1000);
@@ -60,7 +68,7 @@ export async function POST(request: Request) {
     const bidId = `bid-${Date.now().toString().slice(-6)}`;
     const newRecord = {
       bidId,
-      bidderId: bidderId || `usr-${Date.now()}`,
+      bidderId,
       bidderName,
       bidderPhone,
       amountIqd: newBid,
@@ -112,12 +120,30 @@ export async function POST(request: Request) {
       newBidRecord: newRecord,
     };
 
-    // Fire and forget broadcast
+    // Broadcast live bid to both specific auction room and global marketplace feed
     broadcastLiveEvent({
-      channel: `auction:${auctionId}`,
+      channels: [`auction:${auctionId}`, 'global'],
       event: 'NEW_BID',
       data: broadcastPayload,
     }).catch(() => {});
+
+    // If there was a previous leader, dispatch personal outbid alert
+    if (
+      previousHighestBidder &&
+      previousHighestBidder.id &&
+      previousHighestBidder.id !== bidderId
+    ) {
+      broadcastLiveEvent({
+        channel: `user:${previousHighestBidder.id}`,
+        event: 'OUTBID_ALERT',
+        data: {
+          auctionId,
+          auctionTitle: auction.title || 'Auction Item',
+          newBidIqd: newBid,
+          outbidAt: now.toISOString(),
+        },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,

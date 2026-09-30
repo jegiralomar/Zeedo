@@ -2,18 +2,21 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useBuyerAuctionStore } from '@/store/useBuyerAuctionStore';
+import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
+import { useAdminStore } from '@/store/useAdminStore';
 
 interface UseLiveAuctionSocketOptions {
   auctionId?: string;
+  userId?: string;
   enabled?: boolean;
 }
 
 /**
  * Real-Time Bidding Socket Hook
- * Connects to the $5/mo Zeedo WebSocket Gateway, subscribes to auction channel,
- * and synchronizes live bids & anti-sniping timer extensions with 0 polling.
+ * Connects to the $5/mo Zeedo WebSocket Gateway, subscribes to auction and global channels,
+ * and synchronizes live bids & anti-sniping timer extensions across Buyer and Admin panels.
  */
-export function useLiveAuctionSocket({ auctionId, enabled = true }: UseLiveAuctionSocketOptions = {}) {
+export function useLiveAuctionSocket({ auctionId, userId, enabled = true }: UseLiveAuctionSocketOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<any>(null);
@@ -21,7 +24,9 @@ export function useLiveAuctionSocket({ auctionId, enabled = true }: UseLiveAucti
   const handleLiveEvent = useCallback((eventPayload: any) => {
     try {
       const { event, data } = eventPayload;
+
       if (event === 'NEW_BID' && data && data.auctionId) {
+        // 1. Update Buyer Marketplace Store
         useBuyerAuctionStore.setState((state) => ({
           auctions: state.auctions.map((a) => {
             if (a.id !== data.auctionId) return a;
@@ -39,6 +44,31 @@ export function useLiveAuctionSocket({ auctionId, enabled = true }: UseLiveAucti
             };
           }),
         }));
+
+        // 2. Update Admin Operations Store
+        useAdminStore.setState((state) => ({
+          auctions: state.auctions.map((a) => {
+            if (a.id !== data.auctionId) return a;
+            return {
+              ...a,
+              currentBidIqd: data.currentBidIqd,
+              totalBids: data.totalBids,
+              auctionEndsAt: data.auctionEndsAt,
+              isAntiSnipingActive: data.isAntiSnipingActive,
+              antiSnipingResetsCount: data.antiSnipingResetsCount,
+              highestBidder: data.highestBidder,
+              bidsHistory: data.newBidRecord
+                ? [data.newBidRecord, ...(a.bidsHistory || [])].slice(0, 50)
+                : a.bidsHistory,
+            };
+          }),
+        }));
+      }
+
+      if (event === 'OUTBID_ALERT' && data) {
+        useBuyerAuctionStore.setState({
+          lastBidAlert: `⚠️ You were outbid on ${data.auctionTitle || 'an item'}! New lead: ${data.newBidIqd?.toLocaleString()} IQD`,
+        });
       }
     } catch (err) {
       console.warn('[Zeedo WS] Error processing socket event:', err);
@@ -70,12 +100,18 @@ export function useLiveAuctionSocket({ auctionId, enabled = true }: UseLiveAucti
           }
           setIsConnected(true);
 
-          // If an auctionId is provided, subscribe immediately
+          const channelsToSub = ['global'];
+
           if (auctionId) {
-            ws.send(JSON.stringify({ action: 'subscribe', channel: `auction:${auctionId}` }));
+            channelsToSub.push(`auction:${auctionId}`);
           }
-          // Also subscribe to global announcements
-          ws.send(JSON.stringify({ action: 'subscribe', channel: 'global' }));
+
+          const effectiveUserId = userId || useBuyerAuthStore.getState().buyer?.id;
+          if (effectiveUserId) {
+            channelsToSub.push(`user:${effectiveUserId}`);
+          }
+
+          ws.send(JSON.stringify({ action: 'subscribe', channels: channelsToSub }));
         };
 
         ws.onmessage = (event) => {

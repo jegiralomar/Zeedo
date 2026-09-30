@@ -60,26 +60,52 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // 1. Hydrate 90-day hardware session from iOS Keychain / Android Keystore
-    getMobileSession().then((saved) => {
-      setSession(saved);
+    // 1. Hydrate and verify 90-day hardware session from iOS Keychain / Android Keystore
+    getMobileSession().then(async (saved) => {
+      if (saved && saved.token) {
+        try {
+          // Verify with server
+          const verifyRes = await fetch(`${API_BASE_URL}/api/auth/session/verify`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${saved.token}`,
+            },
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.isValid) {
+            setSession(saved);
+            liveSocket.setUserId(saved.user.id);
+          } else {
+            // Expired or revoked after 90 days
+            await clearMobileSession();
+            setSession(null);
+            liveSocket.setUserId(null);
+          }
+        } catch {
+          // Offline mode / network hiccup: preserve local session
+          setSession(saved);
+          liveSocket.setUserId(saved.user.id);
+        }
+      }
     });
 
-    // 2. Initial load
+    // 2. Initial live drops load
     fetchLiveAuctions();
 
     // 3. Connect to low-latency WebSocket bidding gateway
     liveSocket.connect();
 
-    // 4. Subscribe to live bid updates
-    const unsubscribe = liveSocket.on('BID_PLACED', (data: any) => {
+    // 4. Subscribe to live bid updates across all auctions
+    const unsubBids = liveSocket.on('NEW_BID', (data: any) => {
       setItems((prev) =>
         prev.map((it) => {
           if (it.id === data.auctionId) {
             return {
               ...it,
-              currentBid: data.amount,
-              totalBids: it.totalBids + 1,
+              currentBid: data.currentBidIqd,
+              totalBids: data.totalBids,
+              endsAt: data.auctionEndsAt || it.endsAt,
             };
           }
           return it;
@@ -87,8 +113,30 @@ export default function App() {
       );
     });
 
+    // 5. Subscribe to personal outbid notifications
+    const unsubOutbid = liveSocket.on('OUTBID_ALERT', (data: any) => {
+      Alert.alert(
+        'Outbid Alert! ⚠️',
+        `Someone just outbid you on "${data.auctionTitle || 'an item'}" at ${data.newBidIqd?.toLocaleString()} IQD! Place another bid to regain the lead!`,
+        [
+          { text: 'Dismiss', style: 'cancel' },
+          {
+            text: 'Re-bid +1,000 IQD',
+            onPress: () => {
+              setItems((currentItems) => {
+                const target = currentItems.find((it) => it.id === data.auctionId);
+                if (target) executeBid(target);
+                return currentItems;
+              });
+            },
+          },
+        ]
+      );
+    });
+
     return () => {
-      unsubscribe();
+      unsubBids();
+      unsubOutbid();
       liveSocket.disconnect();
     };
   }, [fetchLiveAuctions]);
@@ -113,8 +161,10 @@ export default function App() {
         body: JSON.stringify({
           auctionId: item.id,
           amount: nextAmount,
-          userId: session.user.id,
-          userName: session.user.name || session.user.phone,
+          bidderId: session.user.id,
+          bidderName: session.user.name || session.user.phone,
+          bidderPhone: session.user.phone,
+          bidderCity: session.user.city || 'Erbil',
         }),
       });
 
@@ -289,7 +339,18 @@ export default function App() {
       <LocationPickerModal
         visible={locationModalVisible}
         onClose={() => setLocationModalVisible(false)}
-        onLocationSaved={(loc) => {
+        onLocationSaved={async (loc) => {
+          if (session) {
+            const updated = {
+              ...session,
+              user: {
+                ...session.user,
+                city: loc.city,
+              },
+            };
+            setSession(updated);
+            await saveMobileSession(updated);
+          }
           Alert.alert(
             'Location Saved',
             `Delivery destination confirmed for ${loc.city}, ${loc.district}.`

@@ -73,29 +73,44 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const payload = JSON.parse(body);
-        const { channel, event, data } = payload;
+        const { channel, channels, event, data } = payload;
+        const targetChannels = Array.isArray(channels)
+          ? channels
+          : channel
+          ? [channel]
+          : [];
 
-        if (!channel || !event) {
+        if (targetChannels.length === 0 || !event) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'channel and event required' }));
+          res.end(JSON.stringify({ success: false, error: 'channel or channels and event required' }));
           return;
         }
 
-        const subscribers = channelSubscriptions.get(channel);
         let deliveredCount = 0;
+        const sentClients = new Set();
 
-        if (subscribers && subscribers.size > 0) {
-          const messageStr = JSON.stringify({ channel, event, data, timestamp: new Date().toISOString() });
-          for (const client of subscribers) {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(messageStr);
-              deliveredCount++;
+        for (const ch of targetChannels) {
+          const subscribers = channelSubscriptions.get(ch);
+          if (subscribers && subscribers.size > 0) {
+            const messageStr = JSON.stringify({
+              channel: ch,
+              event,
+              data,
+              timestamp: new Date().toISOString(),
+            });
+
+            for (const client of subscribers) {
+              if (client.readyState === WebSocket.OPEN && !sentClients.has(client)) {
+                client.send(messageStr);
+                sentClients.add(client);
+                deliveredCount++;
+              }
             }
           }
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, deliveredTo: deliveredCount }));
+        res.end(JSON.stringify({ success: true, deliveredTo: deliveredCount, channels: targetChannels }));
       } catch (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Invalid JSON payload' }));
@@ -149,26 +164,40 @@ wss.on('connection', (ws, req) => {
     try {
       const msg = JSON.parse(raw.toString());
 
-      // 1. Subscribe to a channel (e.g. "auction:auc-123" or "user:usr-456")
-      if (msg.action === 'subscribe' && msg.channel) {
-        const ch = msg.channel;
-        if (!channelSubscriptions.has(ch)) {
-          channelSubscriptions.set(ch, new Set());
-        }
-        channelSubscriptions.get(ch).add(ws);
-        socketChannels.get(ws)?.add(ch);
+      // 1. Subscribe to channels (e.g. ["global", "auction:auc-123"] or "user:usr-456")
+      if (msg.action === 'subscribe') {
+        const channelsToSub = Array.isArray(msg.channels)
+          ? msg.channels
+          : msg.channel
+          ? [msg.channel]
+          : [];
 
-        ws.send(JSON.stringify({ event: 'SUBSCRIBED', channel: ch }));
+        for (const ch of channelsToSub) {
+          if (!channelSubscriptions.has(ch)) {
+            channelSubscriptions.set(ch, new Set());
+          }
+          channelSubscriptions.get(ch).add(ws);
+          socketChannels.get(ws)?.add(ch);
+        }
+
+        ws.send(JSON.stringify({ event: 'SUBSCRIBED', channels: channelsToSub }));
         return;
       }
 
-      // 2. Unsubscribe from a channel
-      if (msg.action === 'unsubscribe' && msg.channel) {
-        const ch = msg.channel;
-        channelSubscriptions.get(ch)?.delete(ws);
-        socketChannels.get(ws)?.delete(ch);
+      // 2. Unsubscribe from channels
+      if (msg.action === 'unsubscribe') {
+        const channelsToUnsub = Array.isArray(msg.channels)
+          ? msg.channels
+          : msg.channel
+          ? [msg.channel]
+          : [];
 
-        ws.send(JSON.stringify({ event: 'UNSUBSCRIBED', channel: ch }));
+        for (const ch of channelsToUnsub) {
+          channelSubscriptions.get(ch)?.delete(ws);
+          socketChannels.get(ws)?.delete(ch);
+        }
+
+        ws.send(JSON.stringify({ event: 'UNSUBSCRIBED', channels: channelsToUnsub }));
         return;
       }
 

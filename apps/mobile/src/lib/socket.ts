@@ -1,6 +1,6 @@
 /**
  * Real-Time Bidding WebSocket Client for React Native (Expo)
- * Maintains persistent live stream of new bids & timer extensions.
+ * Maintains persistent, low-latency live stream of new bids, anti-sniping timer extensions, and outbid alerts.
  */
 
 type MessageHandler = (data: any) => void;
@@ -8,12 +8,31 @@ type MessageHandler = (data: any) => void;
 class ZeedoBiddingSocket {
   private ws: WebSocket | null = null;
   private url: string;
-  private handlers = new Map<string, Set<MessageHandler>>();
+  private channelHandlers = new Map<string, Set<MessageHandler>>();
+  private eventHandlers = new Map<string, Set<MessageHandler>>();
   private reconnectTimer: any = null;
   private isConnected = false;
+  private currentUserId: string | null = null;
 
-  constructor(url = 'wss://zeedo.auction/ws') {
-    this.url = url;
+  constructor(url?: string) {
+    this.url =
+      url ||
+      process.env.EXPO_PUBLIC_WS_URL ||
+      'wss://zeedo.auction/ws';
+  }
+
+  public setUserId(userId: string | null) {
+    if (this.currentUserId === userId) return;
+
+    if (this.currentUserId && this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ action: 'unsubscribe', channel: `user:${this.currentUserId}` }));
+    }
+
+    this.currentUserId = userId;
+
+    if (this.currentUserId && this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ action: 'subscribe', channel: `user:${this.currentUserId}` }));
+    }
   }
 
   public connect() {
@@ -26,19 +45,36 @@ class ZeedoBiddingSocket {
 
       this.ws.onopen = () => {
         this.isConnected = true;
-        // Resubscribe to active channels
-        for (const channel of this.handlers.keys()) {
-          this.ws?.send(JSON.stringify({ action: 'subscribe', channel }));
+
+        // 1. Always subscribe to global marketplace feed
+        const channelsToSub = ['global', ...Array.from(this.channelHandlers.keys())];
+
+        // 2. Subscribe to user personal channel if logged in
+        if (this.currentUserId) {
+          channelsToSub.push(`user:${this.currentUserId}`);
         }
+
+        this.ws?.send(JSON.stringify({ action: 'subscribe', channels: channelsToSub }));
       };
 
       this.ws.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
           const channel = payload.channel;
-          if (channel && this.handlers.has(channel)) {
-            for (const handler of this.handlers.get(channel)!) {
-              handler(payload);
+          const eventName = payload.event;
+          const data = payload.data || payload;
+
+          // 1. Dispatch to channel handlers
+          if (channel && this.channelHandlers.has(channel)) {
+            for (const handler of this.channelHandlers.get(channel)!) {
+              handler(data);
+            }
+          }
+
+          // 2. Dispatch to event handlers (e.g. 'NEW_BID', 'OUTBID_ALERT')
+          if (eventName && this.eventHandlers.has(eventName)) {
+            for (const handler of this.eventHandlers.get(eventName)!) {
+              handler(data);
             }
           }
         } catch {
@@ -60,27 +96,43 @@ class ZeedoBiddingSocket {
     }
   }
 
-  public subscribe(channel: string, handler: MessageHandler) {
-    if (!this.handlers.has(channel)) {
-      this.handlers.set(channel, new Set());
+  /**
+   * Listen to any event by name (e.g. 'NEW_BID', 'OUTBID_ALERT', 'TIMER_RESET')
+   */
+  public on(event: string, handler: MessageHandler): () => void {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, new Set());
+    }
+    this.eventHandlers.get(event)!.add(handler);
+    return () => this.off(event, handler);
+  }
+
+  public off(event: string, handler: MessageHandler) {
+    if (this.eventHandlers.has(event)) {
+      this.eventHandlers.get(event)!.delete(handler);
+    }
+  }
+
+  /**
+   * Subscribe to a specific channel (e.g. 'auction:auc-123')
+   */
+  public subscribe(channel: string, handler: MessageHandler): () => void {
+    if (!this.channelHandlers.has(channel)) {
+      this.channelHandlers.set(channel, new Set());
       if (this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ action: 'subscribe', channel }));
       }
     }
-    this.handlers.get(channel)!.add(handler);
-  }
+    this.channelHandlers.get(channel)!.add(handler);
 
-  public on(event: string, handler: MessageHandler): () => void {
-    const channel = `event:${event}`;
-    this.subscribe(channel, handler);
     return () => this.unsubscribe(channel, handler);
   }
 
   public unsubscribe(channel: string, handler: MessageHandler) {
-    if (this.handlers.has(channel)) {
-      this.handlers.get(channel)!.delete(handler);
-      if (this.handlers.get(channel)!.size === 0) {
-        this.handlers.delete(channel);
+    if (this.channelHandlers.has(channel)) {
+      this.channelHandlers.get(channel)!.delete(handler);
+      if (this.channelHandlers.get(channel)!.size === 0) {
+        this.channelHandlers.delete(channel);
         if (this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
           this.ws.send(JSON.stringify({ action: 'unsubscribe', channel }));
         }

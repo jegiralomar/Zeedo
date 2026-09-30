@@ -7,7 +7,8 @@ const WS_GATEWAY_URL = process.env.WS_GATEWAY_URL || 'http://127.0.0.1:8080';
 const WS_BROADCAST_SECRET = process.env.WS_BROADCAST_SECRET || 'zeedo_internal_live_socket_key_9898';
 
 export interface LiveBroadcastPayload {
-  channel: string;
+  channel?: string;
+  channels?: string[];
   event: 'NEW_BID' | 'TIMER_RESET' | 'AUCTION_ENDED' | 'OUTBID_ALERT' | 'NEW_DROP';
   data: any;
 }
