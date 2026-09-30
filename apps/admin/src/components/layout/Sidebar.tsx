@@ -171,7 +171,7 @@ export const Sidebar: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 font-medium truncate">
-                  Iraq 100% COD Control
+                  Operations & Management
                 </p>
               </div>
             )}
@@ -282,25 +282,6 @@ export const Sidebar: React.FC = () => {
 
       {/* Footer Profile & Indicators */}
       <div className="p-3 border-t border-slate-200/80 space-y-2.5 bg-slate-50/50">
-        {/* Economic / Platform Rule Indicators (Expanded Only) */}
-        {!collapsed && (
-          <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 text-[11px] space-y-1.5 shadow-2xs">
-            <div className="flex items-center justify-between text-slate-500">
-              <span className="flex items-center gap-1.5">
-                <Coins className="w-3.5 h-3.5 text-blue-600" />
-                Start Price
-              </span>
-              <span className="font-mono font-bold text-slate-800">1,000 IQD</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-500">
-              <span className="flex items-center gap-1.5">
-                <Globe2 className="w-3.5 h-3.5 text-blue-600" />
-                Dialects
-              </span>
-              <span className="font-mono font-semibold text-slate-700">4 Regional</span>
-            </div>
-          </div>
-        )}
 
         {/* Staff User Profile Card */}
         {currentUser ? (

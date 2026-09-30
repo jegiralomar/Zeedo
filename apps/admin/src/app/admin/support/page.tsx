@@ -8,8 +8,8 @@ export default function SupportPage() {
   return (
     <>
       <Header
-        title="Support & Customer Helpdesk"
-        subtitle="Manage live customer inquiries, courier dispatch disputes, and 100% COD open-box inspection tickets"
+        title="Support & Helpdesk"
+        subtitle="Manage customer inquiries, courier dispatch disputes, and delivery inspection tickets"
       />
       <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
         <SupportTicketsHelpdesk />

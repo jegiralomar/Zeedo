@@ -97,16 +97,11 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
               <span className="text-xl tracking-tighter">Z</span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-slate-900 tracking-tight">
-                  ZEEDO
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  100% COD
-                </span>
-              </div>
+              <span className="font-extrabold text-lg text-slate-900 tracking-tight">
+                ZEEDO
+              </span>
               <p className="text-[10px] font-medium text-slate-400">
-                Iraq Live Auctions • مزادات حية
+                Live Auctions • مزادات حية
               </p>
             </div>
           </Link>

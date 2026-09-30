@@ -8,8 +8,8 @@ export default function LogisticsPage() {
   return (
     <>
       <Header
-        title="Post-Auction Logistics & Print Center"
-        subtitle="100% Cash-on-Delivery Handoff • 4x6&quot; AWB Thermal Slips & 3PL Route Manifests"
+        title="Logistics & Print Center"
+        subtitle="4x6&quot; AWB Thermal Slips & 3PL Route Manifests"
       />
       <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
         <PrintCenter />

@@ -98,6 +98,20 @@
 - **Global Toast & Shell Integration:** Integrated `<ToastContainer />` into `AppLayoutShell.tsx` and added `extendAuctionTimer` and `togglePauseAuction` into `useAdminStore.ts` with audit logging.
 - **Dashboard & Header Polish:** Modernized `DashboardOverview.tsx` and `Header.tsx` to match the new white/blue/emerald window card system.
 
+### H. Enterprise Polish: Purge of "Made-for-Dummies" Gimmicks & Badges (Completed & Verified ✅)
+- **Removed Ubiquitous `100% COD` Pill Badges:**
+  - Removed the `100% COD` green pill next to the ZEEDO logo in `MarketplaceLayoutShell.tsx`.
+  - Removed the `100% COD` image overlay badge on all `ListingCard.tsx` items.
+  - Removed `100% COD` header pills in `Header.tsx`, `TwoGateKycModal.tsx`, `my-bids/page.tsx`, and `profile/page.tsx`.
+  - Cleaned logistics thermal slips in `PrintCenter.tsx` from promotional slogans to standard "Express Courier Logistics".
+- **Eliminated Fake/Demo Ticker Fluff:**
+  - Removed the fake status ticker pill ("Fast2SMS: Live | Low-Data (12-25B) | 3PL COD") from the top admin header bar.
+  - Removed the tutorial indicator box ("Start Price: 1,000 IQD | Dialects: 4 Regional") from the bottom of the sidebar.
+  - Removed the "Platform Gating & Rules" 5-item lecture card in `DashboardOverview.tsx` and replaced it with real, actionable recent system audit logs.
+- **Removed Patronizing Button Subtitles in Active Bids:**
+  - Cleaned up control panel action buttons in `ActiveBidsCommandCenter.tsx`, removing toddler-style explanations ("Award to high bidder & gen AWB", "Halt bids for dispute check", "Re-open socket stream", "Spawn fresh 24h auction", "One-click adjustments update live for all buyers").
+  - Result: High-end, clean, enterprise admin tool aesthetic on par with Linear and Stripe.
+
 ---
 
 ## 2. Active System Architecture

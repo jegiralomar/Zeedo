@@ -99,11 +99,8 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
       <div className="flex items-center justify-between px-6 lg:px-8 py-3.5 gap-4">
         {/* Page Title & Breadcrumb */}
         <div>
-          <h1 className="text-lg lg:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+          <h1 className="text-lg lg:text-xl font-extrabold text-slate-900 tracking-tight">
             {title}
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-              100% COD
-            </span>
           </h1>
           {subtitle && <p className="text-xs text-slate-500 mt-0.5 font-medium">{subtitle}</p>}
         </div>
@@ -118,28 +115,8 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
           />
         </div>
 
-        {/* System Health Indicators & Quick Actions */}
+        {/* Action Controls */}
         <div className="flex items-center gap-2.5">
-          {/* Socket & 3PL Status Pill */}
-          <div className="hidden xl:flex items-center gap-2.5 text-xs font-mono px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/80 text-slate-700 shadow-2xs">
-            <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span>Fast2SMS</span>
-            </div>
-            <span className="text-slate-300">|</span>
-            <div className="flex items-center gap-1.5 text-slate-600">
-              <Radio className="w-3.5 h-3.5 text-blue-600" />
-              <span>Low-Data</span>
-            </div>
-            <span className="text-slate-300">|</span>
-            <div className="flex items-center gap-1.5 text-amber-700 font-medium">
-              <Truck className="w-3.5 h-3.5" />
-              <span>3PL COD</span>
-            </div>
-          </div>
 
           {/* Live Iraqi Parallel Exchange Rate Widget */}
           <button

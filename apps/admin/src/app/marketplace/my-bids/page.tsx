@@ -105,7 +105,7 @@ export default function MyBidsPage() {
           <div className="text-2xl font-extrabold text-slate-900 font-mono">
             {buyer.totalWins || 0}
           </div>
-          <span className="text-[10px] text-emerald-600 font-bold block">100% COD</span>
+          <span className="text-[10px] text-slate-400 font-medium block">Auctions won</span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">

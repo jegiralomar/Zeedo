@@ -283,15 +283,9 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
           {/* Top Pill Bar */}
           <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
-            <div className="flex items-center gap-1.5">
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/90 backdrop-blur-md text-slate-800 border border-slate-200/60 shadow-2xs">
-                {item.condition}
-              </span>
-              <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-500/90 text-white backdrop-blur-md shadow-2xs flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" />
-                <span>100% COD</span>
-              </span>
-            </div>
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/90 backdrop-blur-md text-slate-800 border border-slate-200/60 shadow-2xs">
+              {item.condition}
+            </span>
 
             <button
               type="button"

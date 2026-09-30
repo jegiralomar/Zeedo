@@ -205,7 +205,7 @@ export const ActiveBidsCommandCenter: React.FC = () => {
             <span className="text-xl lg:text-2xl font-extrabold text-slate-900 font-mono mt-1 block truncate max-w-[170px]">
               {totalLiveGmvIqd.toLocaleString()} <span className="text-xs text-slate-500 font-sans font-bold">IQD</span>
             </span>
-            <p className="text-[11px] text-slate-400 mt-0.5">100% Doorstep COD</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Active catalog bids</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
             <DollarSign className="w-6 h-6" />
@@ -783,7 +783,6 @@ export const ActiveBidsCommandCenter: React.FC = () => {
                     <Clock className="w-4 h-4 text-blue-600" />
                     Timer Management & Anti-Sniping
                   </h4>
-                  <span className="text-[11px] text-slate-400">One-click adjustments update live for all buyers</span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -855,17 +854,16 @@ export const ActiveBidsCommandCenter: React.FC = () => {
                         setActiveModalAuctionId(null);
                       }
                     }}
-                    className="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all shadow-xs text-center"
+                    className="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs text-center"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Force Conclude & Dispatch</span>
-                    <span className="text-[10px] text-emerald-100 font-normal">Award to high bidder & gen AWB</span>
                   </button>
 
                   {/* Pause / Resume */}
                   <button
                     onClick={() => togglePauseAuction(currentModalAuction.id)}
-                    className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all shadow-xs text-center ${
+                    className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs text-center ${
                       currentModalAuction.status === 'cancelled'
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                         : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
@@ -875,13 +873,11 @@ export const ActiveBidsCommandCenter: React.FC = () => {
                       <>
                         <Play className="w-4 h-4 text-emerald-600" />
                         <span>Resume Live Bidding</span>
-                        <span className="text-[10px] text-slate-500 font-normal">Re-open socket stream</span>
                       </>
                     ) : (
                       <>
                         <Pause className="w-4 h-4 text-amber-600" />
                         <span>Pause Auction</span>
-                        <span className="text-[10px] text-slate-500 font-normal">Halt bids for dispute check</span>
                       </>
                     )}
                   </button>
@@ -894,11 +890,10 @@ export const ActiveBidsCommandCenter: React.FC = () => {
                         setActiveModalAuctionId(null);
                       }
                     }}
-                    className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all shadow-2xs text-center"
+                    className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-2xs text-center"
                   >
                     <RotateCcw className="w-4 h-4 text-slate-600" />
                     <span>Relist at 1,000 IQD</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Spawn fresh 24h auction</span>
                   </button>
                 </div>
               </div>

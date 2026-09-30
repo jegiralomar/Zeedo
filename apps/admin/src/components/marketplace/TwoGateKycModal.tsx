@@ -167,11 +167,8 @@ export const TwoGateKycModal: React.FC<TwoGateKycModalProps> = ({
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <span>{t.gateModalTitle}</span>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  100% COD Protected
-                </span>
+              <h3 className="text-base font-bold text-slate-900">
+                {t.gateModalTitle}
               </h3>
               <p className="text-xs text-slate-500">{t.gateModalSubtitle}</p>
             </div>

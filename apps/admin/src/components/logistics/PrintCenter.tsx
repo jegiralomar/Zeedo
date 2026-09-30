@@ -111,11 +111,8 @@ export const PrintCenter: React.FC = () => {
             <Printer className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-extrabold text-[#0B130F] flex items-center gap-2">
+            <h2 className="text-sm font-extrabold text-[#0B130F]">
               Logistics & Document Print Center
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803d] font-mono font-bold">
-                100% COD Handoff
-              </span>
             </h2>
             <p className="text-xs text-[#6C7E75]">
               Generate scannable AWB thermal labels with rooftop GPS QR codes and batch courier route manifests.
@@ -268,7 +265,7 @@ export const PrintCenter: React.FC = () => {
                       <div>
                         <h2 className="text-xl font-black tracking-wider text-black">ZEEDO BID</h2>
                         <p className="text-[10px] font-mono tracking-widest uppercase font-bold text-slate-700">
-                          Iraq 100% Cash-on-Delivery Logistics
+                          Express Courier Logistics
                         </p>
                       </div>
                       <div className="text-right">

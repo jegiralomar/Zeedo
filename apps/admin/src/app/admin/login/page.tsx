@@ -70,8 +70,8 @@ export default function LoginPage() {
           <h1 className="text-2xl font-black text-[#0B130F] tracking-tight">
             ZEEDO <span className="text-[#072F1F]">ADMIN CONSOLE</span>
           </h1>
-          <p className="text-xs text-[#6C7E75] font-medium">
-            Administrative Operations &bull; 100% Cash on Delivery
+          <p className="text-xs text-slate-500 font-medium">
+            Operations & Moderation Console
           </p>
         </div>
 

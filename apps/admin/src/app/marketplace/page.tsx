@@ -287,7 +287,7 @@ export default function BuyerMarketplacePage() {
             </h3>
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
           </div>
-          <span className="text-xs text-slate-500">100% Cash-on-Delivery Guarantee</span>
+          <span className="text-xs text-slate-400">Verified Authentic</span>
         </div>
 
         {filteredAuctions.length === 0 ? (
@@ -302,7 +302,7 @@ export default function BuyerMarketplacePage() {
               <p className="text-xs text-slate-400">
                 {rtl
                   ? 'کاڵا نوێیەکان لەلایەن فرۆشیارانی باوەڕپێکراو بەردەوام زیاد دەکرێن.'
-                  : 'New authentic merchandise dropping soon. 100% Cash-on-Delivery.'}
+                  : 'New authentic merchandise dropping soon.'}
               </p>
             </div>
           </div>
