@@ -1,44 +1,69 @@
 /**
- * EVIRA E-COMMERCE DESIGN SYSTEM TOKENS & STANDARD WINDOW/MODAL PRESETS
- * Extracted from Evira UI Kit (Figma Community / Sobakhul Munir Siroj)
- * Clean, high-contrast, modern luxury aesthetic
- * Applied across all existing and future windows, modals, sheets, and components
+ * ZEEDO AUCTION MOBILE DESIGN SYSTEM
+ * Matches reference style:
+ * - Canvas: Soft tinted lavender-gray (#F5F6FA)
+ * - Primary Action / Brand: Royal Indigo Purple (#5B50D6)
+ * - Active Accent: Warm Golden Yellow (#FFB800)
+ * - Contrast Accent / FAB: Deep Navy (#1E2235)
+ * - Categories: Soft neo-pastel rounded tiles (#FDF0F5, #EBF5FF, #E6F8FA, #F3E8FF)
+ * - Live Card: White rounded cards, live badge pill ("• يعيش / • LIVE"), seller pill, full-width purple "عطاء الآن" (Bid Now) button
+ * - Bottom Bar: Curved dock with center elevated FAB (+) and active yellow pill for Home
  */
 
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-export const EviraTheme = {
+export const AppTheme = {
   colors: {
     // Canvas & Surfaces
-    background: '#FFFFFF',
-    surface: '#F4F4F6',          // Evira signature soft image & input gray
-    surfaceSubtle: '#F8F9FA',
+    background: '#F5F6FA',       // Signature soft lavender-tinted background
+    canvas: '#F5F6FA',
     card: '#FFFFFF',
-    border: '#EEEEEE',
-    borderLight: '#F3F4F6',
-    borderDark: '#111111',
+    surface: '#FFFFFF',
+    surfaceMuted: '#F0F1F7',
+    surfaceSubtle: '#F8F9FA',
+    border: '#ECEEF5',
+    borderLight: '#F3F4F9',
+
+    // Primary Brand & Actions
+    primary: '#5B50D6',          // Royal Indigo / Purple (gavel logo & CTA buttons)
+    primaryHover: '#4A40C4',
+    primaryLight: '#EEEDFB',     // Filter button background & subtle purple pills
+    primaryDark: '#3C33A3',
+
+    // Warm & Lively Accents
+    accentYellow: '#FFB800',     // Active bottom navigation pill & hero box
+    accentGold: '#D97706',
+    fabNavy: '#1E2235',          // Center floating action button (+) & dark text
+    liveRed: '#EF4444',          // Pulsing red live broadcast dot
+    liveBadgeBg: '#FFFFFF',
+
+    // Category Neo-Pastels
+    pastelPink: '#FDF0F5',
+    pastelPinkIcon: '#D946EF',
+    pastelBlue: '#EBF5FF',
+    pastelBlueIcon: '#0EA5E9',
+    pastelTeal: '#E6F8FA',
+    pastelTealIcon: '#06B6D4',
+    pastelPurple: '#F3E8FF',
+    pastelPurpleIcon: '#7C3AED',
+    pastelAmber: '#FFFBEB',
+    pastelAmberIcon: '#F59E0B',
 
     // Typography
-    textPrimary: '#111111',      // Solid deep black
-    textSecondary: '#6B7280',    // Muted slate gray
-    textTertiary: '#9CA3AF',
+    textPrimary: '#1E2235',      // Deep navy/charcoal
+    textSecondary: '#64748B',    // Muted slate gray
+    textTertiary: '#94A3B8',
     textWhite: '#FFFFFF',
+    textPurple: '#5B50D6',
 
-    // Accents & Actions
-    primary: '#111111',          // Evira signature deep black
-    primaryHover: '#27272A',
-    accentGold: '#D97706',       // Luxury Iraqi dinar highlight
-    liveRed: '#EF4444',          // Live auction timer & pulse
-    liveRedBg: '#FEF2F2',
+    // Status
     success: '#10B981',
     successBg: '#ECFDF5',
     starGold: '#F59E0B',
 
     // Overlays & Backdrop
-    backdrop: 'rgba(0, 0, 0, 0.45)',
-
-    // Shadows
-    shadowColor: '#000000',
+    backdrop: 'rgba(30, 34, 53, 0.45)',
+    shadowColor: '#1E2235',
   },
 
   radii: {
@@ -65,74 +90,67 @@ export const EviraTheme = {
     headline: {
       fontSize: 22,
       fontWeight: '800' as const,
-      color: '#111111',
-      letterSpacing: -0.3,
+      color: '#1E2235',
     },
     title: {
       fontSize: 18,
       fontWeight: '800' as const,
-      color: '#111111',
+      color: '#1E2235',
     },
     subtitle: {
       fontSize: 13,
       fontWeight: '500' as const,
-      color: '#6B7280',
+      color: '#64748B',
       lineHeight: 18,
     },
     sectionLabel: {
-      fontSize: 11,
-      fontWeight: '700' as const,
-      color: '#111111',
-      textTransform: 'uppercase' as const,
-      letterSpacing: 0.6,
+      fontSize: 18,
+      fontWeight: '800' as const,
+      color: '#1E2235',
+      letterSpacing: -0.2,
     },
     body: {
       fontSize: 14,
       fontWeight: '500' as const,
-      color: '#111111',
+      color: '#1E2235',
       lineHeight: 20,
     },
   },
 };
 
+// Backwards-compatibility alias so existing components compile seamlessly
+export const EviraTheme = AppTheme;
+
 /**
- * Standard Evira Window & Bottom-Sheet Styles
- * Use these across all modals/sub-windows to guarantee 100% theme uniformity now and later on.
+ * Standard Window & Modal Bottom Sheet Styles
  */
 export const eviraWindowStyles = StyleSheet.create({
-  // Dimmed overlay backdrop
   backdrop: {
     flex: 1,
-    backgroundColor: EviraTheme.colors.backdrop,
+    backgroundColor: AppTheme.colors.backdrop,
     justifyContent: 'flex-end',
   },
-
-  // Pure white bottom sheet with signature 28px top curves
   sheetContainer: {
-    backgroundColor: EviraTheme.colors.background,
-    borderTopLeftRadius: EviraTheme.radii.xxl,
-    borderTopRightRadius: EviraTheme.radii.xxl,
+    backgroundColor: AppTheme.colors.card,
+    borderTopLeftRadius: AppTheme.radii.xxl,
+    borderTopRightRadius: AppTheme.radii.xxl,
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 34,
-    shadowColor: EviraTheme.colors.shadowColor,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowColor: AppTheme.colors.shadowColor,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 14,
   },
-
-  // Sheet pull handle bar
   dragHandle: {
-    width: 40,
+    width: 44,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#E2E8F0',
     alignSelf: 'center',
     marginBottom: 16,
   },
-
-  // Window header with title and circular close button
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -142,74 +160,71 @@ export const eviraWindowStyles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: EviraTheme.colors.textSecondary,
+    color: AppTheme.colors.textSecondary,
     lineHeight: 18,
     marginBottom: 20,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: EviraTheme.colors.surface,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: AppTheme.colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     fontWeight: '700',
     fontSize: 14,
   },
-
-  // Primary action button (Evira solid black, pill radius)
   primaryButton: {
-    backgroundColor: EviraTheme.colors.primary,
-    borderRadius: EviraTheme.radii.full,
-    paddingVertical: 16,
+    backgroundColor: AppTheme.colors.primary,
+    borderRadius: AppTheme.radii.lg,
+    paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AppTheme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryButtonText: {
-    color: EviraTheme.colors.textWhite,
-    fontWeight: '700',
+    color: AppTheme.colors.textWhite,
+    fontWeight: '800',
     fontSize: 14,
     letterSpacing: 0.3,
   },
-
-  // Secondary / Cancel button
   secondaryButton: {
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.full,
-    paddingVertical: 16,
+    backgroundColor: AppTheme.colors.surfaceMuted,
+    borderRadius: AppTheme.radii.lg,
+    paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     fontWeight: '700',
     fontSize: 14,
   },
-
-  // Standard input container
   inputContainer: {
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: AppTheme.radii.lg,
     borderWidth: 1,
-    borderColor: EviraTheme.colors.border,
+    borderColor: AppTheme.colors.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     fontSize: 15,
     fontWeight: '600',
   },
-
-  // Standard input section label
   inputLabel: {
     fontSize: 11,
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,

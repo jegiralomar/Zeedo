@@ -146,6 +146,12 @@ class ZeedoBiddingSocket {
     }, 3000);
   }
 
+  public sendBid(auctionId: string, amountIqd: number) {
+    if (this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ action: 'bid', auctionId, amountIqd }));
+    }
+  }
+
   public disconnect() {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     if (this.ws) {

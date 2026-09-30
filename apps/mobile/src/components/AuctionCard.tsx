@@ -6,7 +6,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import { EviraTheme } from '../lib/theme';
+import { AppTheme } from '../lib/theme';
 
 export interface MobileAuctionItem {
   id: string;
@@ -19,6 +19,8 @@ export interface MobileAuctionItem {
   photos: string[];
   totalBids: number;
   condition: string;
+  sellerName?: string;
+  sellerAvatar?: string;
 }
 
 interface AuctionCardProps {
@@ -37,6 +39,7 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({
   onPressCard,
   onToggleSave,
   isSaved = false,
+  language = 'ar',
 }) => {
   const [timeLeft, setTimeLeft] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
@@ -48,7 +51,7 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({
       const diff = end - now;
 
       if (diff <= 0) {
-        setTimeLeft('ENDED');
+        setTimeLeft('منتهي');
         setIsUrgent(false);
         return;
       }
@@ -58,7 +61,7 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({
       const mins = Math.floor((totalSec % 3600) / 60);
       const secs = totalSec % 60;
 
-      setIsUrgent(diff <= 120000); // <= 2 mins
+      setIsUrgent(diff <= 120000);
 
       if (hours > 0) {
         setTimeLeft(`${hours}h ${mins}m`);
@@ -77,17 +80,40 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({
       ? item.photos[0]
       : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
 
+  const sellerName = item.sellerName || 'عادل عدنان';
+  const sellerAvatar =
+    item.sellerAvatar ||
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80';
+
+  const bidButtonLabel =
+    language === 'ar'
+      ? 'عطاء الآن'
+      : language === 'ckb'
+      ? 'ئێستا زیاد بکە'
+      : language === 'badini'
+      ? 'نوکە زێدە بکە'
+      : 'Bid Now';
+
+  const liveBadgeLabel =
+    language === 'ar' ? 'يعيش •' : language === 'ckb' ? 'ڕاستەوخۆ •' : '• LIVE';
+
   return (
     <TouchableOpacity
-      activeOpacity={0.88}
+      activeOpacity={0.92}
       onPress={() => onPressCard(item)}
       style={styles.cardContainer}
     >
-      {/* Evira Soft-Gray Image Container */}
+      {/* Product Image Area */}
       <View style={styles.imageBox}>
-        <Image source={{ uri: photoUrl }} style={styles.image} resizeMode="contain" />
+        <Image source={{ uri: photoUrl }} style={styles.image} resizeMode="cover" />
 
-        {/* Floating Heart / Wishlist Icon */}
+        {/* Top-Right Floating Live Badge (white pill with red dot) */}
+        <View style={styles.livePill}>
+          <View style={styles.liveDot} />
+          <Text style={styles.livePillText}>{liveBadgeLabel}</Text>
+        </View>
+
+        {/* Top-Left Wishlist Heart */}
         <TouchableOpacity
           onPress={() => onToggleSave && onToggleSave(item.id)}
           style={[styles.heartButton, isSaved && styles.heartButtonActive]}
@@ -98,50 +124,38 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({
           </Text>
         </TouchableOpacity>
 
-        {/* Floating Live Timer Badge */}
-        <View style={[styles.timerBadge, isUrgent && styles.timerBadgeUrgent]}>
-          <View style={[styles.timerDot, isUrgent && styles.timerDotUrgent]} />
-          <Text style={styles.timerText}>{timeLeft}</Text>
-        </View>
-
-        {/* Strict 1,000 IQD Start Badge */}
-        <View style={styles.startBadge}>
-          <Text style={styles.startBadgeText}>1K IQD Start</Text>
+        {/* Bottom-Left Seller Pill (avatar + name) */}
+        <View style={styles.sellerPill}>
+          <Image source={{ uri: sellerAvatar }} style={styles.sellerAvatar} />
+          <Text style={styles.sellerName} numberOfLines={1}>
+            {sellerName}
+          </Text>
         </View>
       </View>
 
-      {/* Evira Clean Product Details */}
+      {/* Card Content & CTA */}
       <View style={styles.detailsContainer}>
-        {/* Category Pill Tag */}
-        <Text style={styles.categoryText}>{item.category.toUpperCase()}</Text>
-
         {/* Title */}
         <Text style={styles.title} numberOfLines={1}>
           {item.title}
         </Text>
 
-        {/* Rating & Total Bids Row */}
-        <View style={styles.metaRow}>
-          <Text style={styles.starText}>★ 4.8</Text>
-          <Text style={styles.metaDivider}>|</Text>
-          <Text style={styles.bidsText}>{item.totalBids} bids</Text>
+        {/* Current Bid & Timer Info */}
+        <View style={styles.infoRow}>
+          <Text style={styles.priceText}>{item.currentBid.toLocaleString()} IQD</Text>
+          <Text style={[styles.timerText, isUrgent && styles.timerUrgent]}>
+            ⏱ {timeLeft}
+          </Text>
         </View>
 
-        {/* Price & Quick Bid Row */}
-        <View style={styles.priceRow}>
-          <View>
-            <Text style={styles.priceLabel}>Current Bid</Text>
-            <Text style={styles.priceValue}>{item.currentBid.toLocaleString()} IQD</Text>
-          </View>
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => onQuickBid(item)}
-            style={styles.bidButton}
-          >
-            <Text style={styles.bidButtonText}>Bid</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Signature Royal Indigo Full-Width Bid Button ("عطاء الآن") */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => onQuickBid(item)}
+          style={styles.bidButton}
+        >
+          <Text style={styles.bidButtonText}>{bidButtonLabel}</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -149,159 +163,151 @@ export const AuctionCard: React.FC<AuctionCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    flex: 1,
-    maxWidth: '48.5%',
+    width: '48.5%',
+    backgroundColor: AppTheme.colors.card,
+    borderRadius: 20,
     marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: AppTheme.colors.shadowColor,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: AppTheme.colors.border,
   },
   imageBox: {
     width: '100%',
-    height: 165,
-    backgroundColor: EviraTheme.colors.surface,
-    borderRadius: EviraTheme.radii.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 155,
+    backgroundColor: '#EDF2F7',
     position: 'relative',
     overflow: 'hidden',
   },
   image: {
-    width: '88%',
-    height: '88%',
+    width: '100%',
+    height: '100%',
+  },
+  livePill: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppTheme.colors.liveBadgeBg,
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: AppTheme.radii.full,
+    gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: AppTheme.colors.liveRed,
+  },
+  livePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: AppTheme.colors.liveRed,
   },
   heartButton: {
     position: 'absolute',
     top: 10,
-    right: 10,
-    width: 32,
-    height: 32,
-    borderRadius: EviraTheme.radii.full,
-    backgroundColor: EviraTheme.colors.card,
+    left: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
   },
   heartButtonActive: {
     backgroundColor: '#FEE2E2',
   },
   heartIcon: {
-    fontSize: 16,
-    color: EviraTheme.colors.textPrimary,
+    fontSize: 14,
+    color: AppTheme.colors.textPrimary,
   },
   heartIconActive: {
-    color: EviraTheme.colors.liveRed,
+    color: AppTheme.colors.liveRed,
   },
-  timerBadge: {
+  sellerPill: {
     position: 'absolute',
-    bottom: 10,
-    left: 10,
+    bottom: 8,
+    left: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(17, 17, 17, 0.75)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: EviraTheme.radii.full,
-    gap: 4,
-  },
-  timerBadgeUrgent: {
-    backgroundColor: EviraTheme.colors.liveRed,
-  },
-  timerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#34D399',
-  },
-  timerDotUrgent: {
-    backgroundColor: '#FFFFFF',
-  },
-  timerText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  startBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: 'rgba(217, 119, 6, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
     paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 2.5,
+    borderRadius: AppTheme.radii.full,
+    gap: 4,
+    maxWidth: '85%',
   },
-  startBadgeText: {
-    color: EviraTheme.colors.accentGold,
+  sellerAvatar: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  sellerName: {
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '700',
+    color: AppTheme.colors.textPrimary,
   },
   detailsContainer: {
-    paddingTop: 8,
-    paddingHorizontal: 2,
-  },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: EviraTheme.colors.textTertiary,
-    letterSpacing: 0.5,
-    marginBottom: 2,
+    padding: 10,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: EviraTheme.colors.textPrimary,
-    lineHeight: 18,
-    marginBottom: 4,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 6,
-  },
-  starText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: EviraTheme.colors.starGold,
-  },
-  metaDivider: {
-    fontSize: 10,
-    color: EviraTheme.colors.textTertiary,
-  },
-  bidsText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: EviraTheme.colors.textSecondary,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  priceLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: EviraTheme.colors.textTertiary,
-  },
-  priceValue: {
     fontSize: 13,
     fontWeight: '800',
-    color: EviraTheme.colors.textPrimary,
+    color: AppTheme.colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  priceText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: AppTheme.colors.primary,
+  },
+  timerText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: AppTheme.colors.textSecondary,
+  },
+  timerUrgent: {
+    color: AppTheme.colors.liveRed,
+    fontWeight: '800',
   },
   bidButton: {
-    backgroundColor: EviraTheme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: EviraTheme.radii.full,
+    backgroundColor: AppTheme.colors.primary,
+    width: '100%',
+    paddingVertical: 9,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AppTheme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 3,
   },
   bidButtonText: {
-    color: EviraTheme.colors.textWhite,
-    fontSize: 11,
-    fontWeight: '700',
+    color: AppTheme.colors.textWhite,
+    fontSize: 12,
+    fontWeight: '800',
   },
 });
