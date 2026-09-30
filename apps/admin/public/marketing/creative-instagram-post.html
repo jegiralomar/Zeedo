@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Zeedo - Instagram Post (1080x1080)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      width: 1080px;
+      height: 1080px;
+      overflow: hidden;
+      background: #0F111A;
+      font-family: 'Tajawal', 'Plus Jakarta Sans', sans-serif;
+      position: relative;
+      color: #FFFFFF;
+    }
+
+    /* Ambient Background Glows */
+    .bg-mesh {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(91, 80, 214, 0.45) 0%, transparent 60%),
+                  radial-gradient(circle at 20% 80%, rgba(255, 184, 0, 0.18) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(30, 34, 53, 0.8) 0%, #0C0E17 100%);
+      z-index: 1;
+    }
+
+    /* 3D Visual Layer */
+    .hero-img-container {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 1080px;
+      height: 1080px;
+      z-index: 2;
+      opacity: 0.88;
+      mix-blend-mode: screen;
+    }
+    .hero-img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center right;
+      filter: saturate(1.1) contrast(1.05);
+    }
+    .hero-overlay-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, #0C0E17 0%, rgba(12, 14, 23, 0.92) 42%, rgba(12, 14, 23, 0.2) 75%, transparent 100%),
+                  linear-gradient(0deg, #0C0E17 0%, rgba(12, 14, 23, 0.85) 15%, transparent 40%);
+      z-index: 3;
+    }
+
+    /* Content Layout */
+    .canvas {
+      position: relative;
+      z-index: 4;
+      width: 100%;
+      height: 100%;
+      padding: 72px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Header */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .brand-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #5B50D6 0%, #3D3499 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 28px rgba(91, 80, 214, 0.45);
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+    }
+    .brand-icon svg {
+      width: 36px;
+      height: 36px;
+      fill: #FFB800;
+    }
+    .brand-text h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+    .brand-text span {
+      font-size: 15px;
+      font-weight: 700;
+      color: #FFB800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(239, 68, 68, 0.16);
+      border: 1.5px solid rgba(239, 68, 68, 0.5);
+      padding: 10px 22px;
+      border-radius: 999px;
+      backdrop-filter: blur(12px);
+    }
+    .live-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #EF4444;
+      box-shadow: 0 0 14px #EF4444;
+    }
+    .live-text {
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    /* Hero Text */
+    .hero-content {
+      max-width: 640px;
+      margin-top: 20px;
+    }
+    .subline-tag {
+      display: inline-block;
+      background: rgba(91, 80, 214, 0.25);
+      border: 1px solid rgba(142, 133, 247, 0.4);
+      color: #B4AEFA;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.22;
+      color: #FFFFFF;
+      margin-bottom: 24px;
+    }
+    .hero-title span.highlight {
+      color: #FFB800;
+      text-shadow: 0 0 30px rgba(255, 184, 0, 0.35);
+    }
+    .hero-desc {
+      font-size: 24px;
+      line-height: 1.55;
+      color: #C3C7DF;
+      font-weight: 500;
+      margin-bottom: 36px;
+    }
+
+    /* Pillars */
+    .features-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 22px;
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+    }
+    .feature-icon-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(91, 80, 214, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .feature-title {
+      font-size: 21px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    /* Bottom Bar & CTA */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 36px;
+    }
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(135deg, #5B50D6 0%, #473DC6 100%);
+      color: #FFFFFF;
+      padding: 20px 42px;
+      border-radius: 18px;
+      font-size: 24px;
+      font-weight: 800;
+      box-shadow: 0 16px 36px rgba(91, 80, 214, 0.5);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+    .cta-btn svg {
+      width: 28px;
+      height: 28px;
+      fill: #FFB800;
+    }
+    .store-badges {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .store-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .store-pill span.sub {
+      font-size: 12px;
+      color: #A0A5C0;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+  
+  <div class="hero-img-container">
+    <img src="/marketing/zeedo_campaign_square.jpg" alt="Zeedo 3D Auction Smartphone">
+  </div>
+  
+  <div class="hero-overlay-gradient"></div>
+
+  <div class="canvas">
+    <!-- Top Header -->
+    <div class="header-row">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>ZEEDO</h1>
+          <span>مزادات حية • LIVE AUCTIONS</span>
+        </div>
+      </div>
+
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <div class="live-text">• يعيش الآن</div>
+      </div>
+    </div>
+
+    <!-- Main Message -->
+    <div class="hero-content">
+      <div class="subline-tag">⚡ أكبر منصة مزادات فيديو فورية في العراق</div>
+      <h2 class="hero-title">زايد، نافس، واربح <span class="highlight">بأفضل سعر</span> على المباشر</h2>
+      <p class="hero-desc">شاهد المنتجات بالفيديو عالي الدقة، ضع عطاءك بالدينار العراقي خلال ثوانٍ، واستلم طلبك عند باب بيتك.</p>
+
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-icon-badge">🚚</div>
+          <div class="feature-title">الدفع عند الاستلام لكافة محافظات العراق (18 محافظة)</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon-badge">🛡️</div>
+          <div class="feature-title">فحص أصالة وجودة 100% قبل شحن أي طلبية</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon-badge">⚖️</div>
+          <div class="feature-title">مزايدات موثقة وشفافة بدون وسطاء</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="bottom-bar">
+      <div class="cta-btn">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+        </svg>
+        <span>حمّل تطبيق زيدو الآن</span>
+      </div>
+
+      <div class="store-badges">
+        <div class="store-pill">
+          <div>🍏</div>
+          <div>
+            <span class="sub">متوفر على</span>
+            App Store
+          </div>
+        </div>
+        <div class="store-pill">
+          <div>🤖</div>
+          <div>
+            <span class="sub">متوفر على</span>
+            Google Play
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zeedo Marketing Creatives & Social Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F5F6FA;
+      --card-bg: #FFFFFF;
+      --indigo: #5B50D6;
+      --indigo-dark: #453ABF;
+      --indigo-light: #EEEDFB;
+      --navy: #1E2235;
+      --gold: #FFB800;
+      --gold-light: #FFF8E6;
+      --red: #EF4444;
+      --green: #10B981;
+      --text-main: #1E2235;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --radius: 20px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Tajawal', 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation */
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--indigo);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 22px;
+      box-shadow: 0 6px 16px rgba(91, 80, 214, 0.35);
+    }
+    .brand-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--navy);
+      letter-spacing: 1px;
+    }
+    .brand-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: var(--indigo-light);
+      color: var(--indigo);
+      border: 1px solid rgba(91, 80, 214, 0.15);
+    }
+    .btn-secondary:hover {
+      background: #E2E0FA;
+    }
+    .btn-primary {
+      background: var(--indigo);
+      color: #FFFFFF;
+      border: none;
+      box-shadow: 0 4px 14px rgba(91, 80, 214, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--indigo-dark);
+      transform: translateY(-1px);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 40px 32px 80px 32px;
+      width: 100%;
+    }
+
+    /* Hero intro */
+    .hero-banner {
+      background: linear-gradient(135deg, var(--navy) 0%, #151928 100%);
+      color: #FFFFFF;
+      border-radius: 24px;
+      padding: 36px 44px;
+      margin-bottom: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(30, 34, 53, 0.15);
+    }
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      left: -10%;
+      top: -40%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(91, 80, 214, 0.4) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .hero-text h1 {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .hero-text p {
+      color: #CBD5E1;
+      font-size: 16px;
+      max-width: 600px;
+    }
+    .stats-pills {
+      display: flex;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+    }
+    .pill {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      border-radius: 16px;
+      text-align: center;
+    }
+    .pill-val {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .pill-lbl {
+      font-size: 12px;
+      color: #94A3B8;
+    }
+
+    /* Filter / Tab Bar */
+    .tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-bg);
+      padding: 8px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 32px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--indigo);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(91, 80, 214, 0.3);
+    }
+
+    /* Creative Display Section */
+    .creative-stage {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 1100px) {
+      .creative-stage {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .preview-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .preview-top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .preview-info h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+    .preview-info span {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .preview-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+    .control-btn.active {
+      background: var(--indigo);
+      color: #FFFFFF;
+      border-color: var(--indigo);
+    }
+
+    /* Interactive Frame */
+    .frame-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 0;
+      overflow: hidden;
+      min-height: 540px;
+      background: #0B0D17;
+      border-radius: 16px;
+    }
+
+    .frame-viewport {
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+      transform-origin: center center;
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+    .frame-viewport iframe {
+      border: none;
+      display: block;
+      pointer-events: auto;
+    }
+
+    /* Side details pane */
+    .details-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .side-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+    }
+    .side-card h4 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .copy-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 14px;
+      color: var(--navy);
+      white-space: pre-wrap;
+      line-height: 1.7;
+      margin-bottom: 14px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .spec-table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .spec-table td:first-child {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .spec-table td:last-child {
+      text-align: left;
+      font-weight: 700;
+      color: var(--navy);
+      direction: ltr;
+    }
+
+    /* All Creatives Grid */
+    .grid-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 28px;
+    }
+    .creative-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .creative-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.08);
+    }
+    .card-thumb {
+      height: 260px;
+      overflow: hidden;
+      background: #0B0D17;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-thumb iframe {
+      border: none;
+      transform-origin: center center;
+      pointer-events: none;
+    }
+    .card-body {
+      padding: 20px;
+    }
+    .card-body h4 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .card-body p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .card-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--indigo);
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--navy);
+      color: #FFFFFF;
+      padding: 12px 28px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo-icon">⚖️</div>
+      <div>
+        <div class="brand-title">ZEEDO MARKETING SUITE</div>
+        <div class="brand-sub">حزمة التصاميم الإعلانية والتسويقية الرسمية • 2026</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <a href="/brand-identity.html" class="action-btn btn-secondary">
+        🎨 دليل الهوية والشعار
+      </a>
+      <a href="/marketplace" class="action-btn btn-secondary">
+        🛍️ سوق المزايدات
+      </a>
+      <button class="action-btn btn-primary" onclick="downloadCurrentAsset()">
+        📥 تحميل الأصول عالية الدقة
+      </button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main>
+    <!-- Intro Banner -->
+    <div class="hero-banner">
+      <div class="hero-text">
+        <h1>حملة إطلاق مزادات زيدو لايف في العراق</h1>
+        <p>تصاميم إعلانية جاهزة للنشر على إنستغرام، فيسبوك، تيك توك وتويتر/X. مطابقة تماماً لمعايير التصميم 2026 وألوان الهوية الرسمية (Royal Indigo #5B50D6 & Gold #FFB800).</p>
+      </div>
+
+      <div class="stats-pills">
+        <div class="pill">
+          <div class="pill-val">4</div>
+          <div class="pill-lbl">مقاسات رسمية</div>
+        </div>
+        <div class="pill">
+          <div class="pill-val">8K</div>
+          <div class="pill-lbl">أبعاد ثلاثية 3D</div>
+        </div>
+        <div class="pill">
+          <div class="pill-val">100%</div>
+          <div class="pill-lbl">RTL عربي / كوردي</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="switchFormat('post')">
+        <span>📸</span>
+        <span>إنستغرام مربع (1:1) • 1080×1080</span>
+      </button>
+      <button class="tab-btn" onclick="switchFormat('story')">
+        <span>📱</span>
+        <span>ستوري / ريلز (9:16) • 1080×1920</span>
+      </button>
+      <button class="tab-btn" onclick="switchFormat('banner')">
+        <span>💻</span>
+        <span>فيسبوك ولينكد إن (1.91:1) • 1200×630</span>
+      </button>
+      <button class="tab-btn" onclick="switchFormat('twitter')">
+        <span>🐦</span>
+        <span>ترويسة تويتر/X (3:1) • 1500×500</span>
+      </button>
+      <button class="tab-btn" onclick="switchFormat('all')">
+        <span>🗂️</span>
+        <span>عرض كافة التصاميم معاً</span>
+      </button>
+    </div>
+
+    <!-- Single Creative Stage -->
+    <div id="singleStage" class="creative-stage">
+      <!-- Live Preview -->
+      <div class="preview-box">
+        <div class="preview-top-bar">
+          <div class="preview-info">
+            <h3 id="currentTitle">إنستغرام بوست مربع (Instagram Feed Post)</h3>
+            <span id="currentDim">1080 × 1080 px • Aspect Ratio 1:1</span>
+          </div>
+
+          <div class="preview-controls">
+            <button class="control-btn" onclick="openRawHtml()">🔗 فتح صفحة HTML المستقلة</button>
+            <button class="control-btn active" id="btnScaleFit" onclick="fitScale()">تكبير للملء</button>
+          </div>
+        </div>
+
+        <div class="frame-container">
+          <div id="viewport" class="frame-viewport">
+            <iframe id="previewIframe" src="/marketing/creative-instagram-post.html" width="1080" height="1080"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Details & Copywriting Pane -->
+      <div class="details-pane">
+        <!-- Caption Copy Card -->
+        <div class="side-card">
+          <h4>
+            <span>نص المنشور الجاهز (Caption Copy)</span>
+            <button class="action-btn btn-secondary" style="padding: 4px 12px; font-size: 12px;" onclick="copyCaption()">نسخ النص</button>
+          </h4>
+          <div class="copy-box" id="captionText">🔥 عهد جديد للمزادات في العراق! 🇮🇶
+
+مع تطبيق "زيدو - Zeedo"، لا تفوتك الإثارة!
+زايد ونافس على أرقى الساعات، السيارات، والأجهزة الإلكترونية بالبث المباشر وأمام عينك.
+
+✨ ميزات زيدو الحصرية:
+✅ بث فيديو فوري وبدون تأخير
+✅ المزايدة بسهولة بالدينار العراقي IQD
+✅ فحص جودة وأصالة مضمون 100%
+✅ الدفع عند الاستلام في كافة محافظات العراق (18 محافظة) 🚚
+
+📲 حمّل التطبيق الآن وابدأ بالمزايدة: zeedo.iq
+
+#مزادات_العراق #زيدو #مزاد_لايف #بغداد #اربيل #البصرة #تطبيق_زيدو #تجارة_الكترونية #عراق</div>
+        </div>
+
+        <!-- Specifications Card -->
+        <div class="side-card">
+          <h4>المواصفات الفنية والمقاسات</h4>
+          <table class="spec-table">
+            <tr>
+              <td>المنصة المستهدفة</td>
+              <td id="specPlatform">Instagram, Facebook, Threads</td>
+            </tr>
+            <tr>
+              <td>المقاس بالبكسل</td>
+              <td id="specDim">1080 × 1080 px</td>
+            </tr>
+            <tr>
+              <td>نسبة العرض للارتفاع</td>
+              <td id="specRatio">1:1 Square</td>
+            </tr>
+            <tr>
+              <td>الملف المصدري</td>
+              <td id="specFile">creative-instagram-post.html</td>
+            </tr>
+            <tr>
+              <td>الخطوط الرسمية</td>
+              <td>Tajawal + Plus Jakarta Sans</td>
+            </tr>
+            <tr>
+              <td>نظام الألوان</td>
+              <td>#5B50D6 (Indigo) / #FFB800 (Gold)</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Quick Download Card -->
+        <div class="side-card">
+          <h4>تحميل الأصول الرسومية الأصلية (3D Assets)</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a href="/marketing/zeedo_campaign_square.jpg" download class="action-btn btn-secondary" style="justify-content: space-between;">
+              <span>📱 خلفية الهاتف والمقتنيات (1:1)</span>
+              <span>JPG 8K 📥</span>
+            </a>
+            <a href="/marketing/zeedo_story_vertical.jpg" download class="action-btn btn-secondary" style="justify-content: space-between;">
+              <span>🔨 مطرقة المزاد والمنصة (9:16)</span>
+              <span>JPG 8K 📥</span>
+            </a>
+            <a href="/marketing/zeedo_banner_landscape.jpg" download class="action-btn btn-secondary" style="justify-content: space-between;">
+              <span>🌟 البانر البانورامي ومسار الدنانير (16:9)</span>
+              <span>JPG 8K 📥</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi Grid View (Initially Hidden) -->
+    <div id="gridView" class="grid-view" style="display: none;">
+      <!-- Post Card -->
+      <div class="creative-card">
+        <div class="card-thumb">
+          <iframe src="/marketing/creative-instagram-post.html" width="1080" height="1080" style="transform: scale(0.24);"></iframe>
+        </div>
+        <div class="card-body">
+          <h4>إنستغرام بوست مربع (Feed Post)</h4>
+          <p>تصميم متوازن بنسبة 1:1 مع عرض الهاتف ثلاثي الأبعاد وأيقونات الثقة.</p>
+          <div class="card-meta-row">
+            <span>1080 × 1080 px (1:1)</span>
+            <a href="/marketing/creative-instagram-post.html" target="_blank" style="color: var(--indigo); text-decoration: none;">فتح بالحجم الكامل ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Story Card -->
+      <div class="creative-card">
+        <div class="card-thumb">
+          <iframe src="/marketing/creative-story-reel.html" width="1080" height="1920" style="transform: scale(0.135);"></iframe>
+        </div>
+        <div class="card-body">
+          <h4>ستوري وريلز وتيك توك (Story / Reel)</h4>
+          <p>تخطيط عمودي 9:16 مع محاكاة تفاعلية للمزايدة الحية ومطرقة المزاد.</p>
+          <div class="card-meta-row">
+            <span>1080 × 1920 px (9:16)</span>
+            <a href="/marketing/creative-story-reel.html" target="_blank" style="color: var(--indigo); text-decoration: none;">فتح بالحجم الكامل ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Banner Card -->
+      <div class="creative-card">
+        <div class="card-thumb">
+          <iframe src="/marketing/creative-facebook-linkedin-banner.html" width="1200" height="630" style="transform: scale(0.28);"></iframe>
+        </div>
+        <div class="card-body">
+          <h4>فيسبوك ولينكد إن (Feed Banner)</h4>
+          <p>بانر إعلاني عريض بنسبة 1.91:1 متوافق مع إعلانات ميتا الممولة.</p>
+          <div class="card-meta-row">
+            <span>1200 × 630 px (1.91:1)</span>
+            <a href="/marketing/creative-facebook-linkedin-banner.html" target="_blank" style="color: var(--indigo); text-decoration: none;">فتح بالحجم الكامل ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Twitter Card -->
+      <div class="creative-card">
+        <div class="card-thumb">
+          <iframe src="/marketing/creative-twitter-header.html" width="1500" height="500" style="transform: scale(0.24);"></iframe>
+        </div>
+        <div class="card-body">
+          <h4>ترويسة تويتر/X (Profile Header)</h4>
+          <p>بانر ترويسة 3:1 مع مساحة آمنة لصورة الحساب الشخصي وأبرز إحصائيات المنصة.</p>
+          <div class="card-meta-row">
+            <span>1500 × 500 px (3:1)</span>
+            <a href="/marketing/creative-twitter-header.html" target="_blank" style="color: var(--indigo); text-decoration: none;">فتح بالحجم الكامل ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <span>✅</span>
+    <span id="toastMsg">تم النسخ بنجاح!</span>
+  </div>
+
+  <script>
+    const formats = {
+      post: {
+        title: "إنستغرام بوست مربع (Instagram Feed Post)",
+        dim: "1080 × 1080 px • Aspect Ratio 1:1",
+        src: "/marketing/creative-instagram-post.html",
+        width: 1080,
+        height: 1080,
+        scale: 0.48,
+        platform: "Instagram, Facebook, Threads",
+        file: "creative-instagram-post.html",
+        ratio: "1:1 Square",
+        caption: `🔥 عهد جديد للمزادات في العراق! 🇮🇶
+
+مع تطبيق "زيدو - Zeedo"، لا تفوتك الإثارة!
+زايد ونافس على أرقى الساعات، السيارات، والأجهزة الإلكترونية بالبث المباشر وأمام عينك.
+
+✨ ميزات زيدو الحصرية:
+✅ بث فيديو فوري وبدون تأخير
+✅ المزايدة بسهولة بالدينار العراقي IQD
+✅ فحص جودة وأصالة مضمون 100%
+✅ الدفع عند الاستلام في كافة محافظات العراق (18 محافظة) 🚚
+
+📲 حمّل التطبيق الآن وابدأ بالمزايدة: zeedo.iq
+
+#مزادات_العراق #زيدو #مزاد_لايف #بغداد #اربيل #البصرة #تطبيق_زيدو #تجارة_الكترونية #عراق`
+      },
+      story: {
+        title: "ستوري وروليز وتيك توك (Story / Reel)",
+        dim: "1080 × 1920 px • Aspect Ratio 9:16",
+        src: "/marketing/creative-story-reel.html",
+        width: 1080,
+        height: 1920,
+        scale: 0.32,
+        platform: "Instagram Story, TikTok, Snapchat, FB Reels",
+        file: "creative-story-reel.html",
+        ratio: "9:16 Vertical",
+        caption: `🔥 مزاد الليلة المباشر على تطبيق زيدو!
+ساعة ذهبية نادرة + أجهزة أبل بسعر يبدأ من 25,000 دينار فقط ⏱️
+
+اسحب للأعلى أو اضغط الرابط وادخل للمزاد الحين!
+الدفع عند الاستلام متاح في كل محافظات العراق 📦
+
+#زيدو #مزاد_مباشر #لايف_العراق #العراق`
+      },
+      banner: {
+        title: "فيسبوك ولينكد إن (Landscape Banner)",
+        dim: "1200 × 630 px • Aspect Ratio 1.91:1",
+        src: "/marketing/creative-facebook-linkedin-banner.html",
+        width: 1200,
+        height: 630,
+        scale: 0.52,
+        platform: "Facebook Ads, LinkedIn, Blog Posts",
+        file: "creative-facebook-linkedin-banner.html",
+        ratio: "1.91:1 Landscape",
+        caption: `أكبر وأول منصة للمزادات الحية بالفيديو في العراق 🇮🇶
+تسوق بذكاء واربح بأسعار خيالية عبر تطبيق "زيدو".
+فحص دقيق، توثيق قانوني، وتوصيل حتى باب المنزل.
+
+زر موقعنا الرسمي: https://zeedo.iq`
+      },
+      twitter: {
+        title: "ترويسة تويتر/X (Profile Header)",
+        dim: "1500 × 500 px • Aspect Ratio 3:1",
+        src: "/marketing/creative-twitter-header.html",
+        width: 1500,
+        height: 500,
+        scale: 0.44,
+        platform: "Twitter / X Profile Header",
+        file: "creative-twitter-header.html",
+        ratio: "3:1 Ultrawide",
+        caption: `الترويسة الرسمية لحساب زيدو على تويتر/X (@ZeedoAuctions).
+توضح الشعار الرسمي، الهاشتاغ، ورقم هاتف الدعم ورابط المنصة.`
+      }
+    };
+
+    let currentKey = 'post';
+
+    function switchFormat(key) {
+      // Toggle tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeIdx = ['post', 'story', 'banner', 'twitter', 'all'].indexOf(key);
+      if (activeIdx >= 0) {
+        document.querySelectorAll('.tab-btn')[activeIdx].classList.add('active');
+      }
+
+      const singleStage = document.getElementById('singleStage');
+      const gridView = document.getElementById('gridView');
+
+      if (key === 'all') {
+        singleStage.style.display = 'none';
+        gridView.style.display = 'grid';
+        return;
+      }
+
+      singleStage.style.display = 'grid';
+      gridView.style.display = 'none';
+
+      currentKey = key;
+      const data = formats[key];
+
+      document.getElementById('currentTitle').textContent = data.title;
+      document.getElementById('currentDim').textContent = data.dim;
+      document.getElementById('specPlatform').textContent = data.platform;
+      document.getElementById('specDim').textContent = `${data.width} × ${data.height} px`;
+      document.getElementById('specRatio').textContent = data.ratio;
+      document.getElementById('specFile').textContent = data.file;
+      document.getElementById('captionText').textContent = data.caption;
+
+      const iframe = document.getElementById('previewIframe');
+      iframe.src = data.src;
+      iframe.width = data.width;
+      iframe.height = data.height;
+
+      fitScale();
+    }
+
+    function fitScale() {
+      const data = formats[currentKey];
+      const viewport = document.getElementById('viewport');
+      viewport.style.transform = `scale(${data.scale})`;
+      viewport.style.width = `${data.width}px`;
+      viewport.style.height = `${data.height}px`;
+    }
+
+    function openRawHtml() {
+      const data = formats[currentKey];
+      window.open(data.src, '_blank');
+    }
+
+    function downloadCurrentAsset() {
+      openRawHtml();
+    }
+
+    function copyCaption() {
+      const text = document.getElementById('captionText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('تم نسخ نص المنشور بنجاح! 📋');
+      }).catch(() => {
+        showToast('يرجى نسخ النص يدوياً');
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      fitScale();
+    });
+  </script>
+</body>
+</html>

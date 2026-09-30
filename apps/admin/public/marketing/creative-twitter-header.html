@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Zeedo - Twitter/X Header (1500x500)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      width: 1500px;
+      height: 500px;
+      overflow: hidden;
+      background: #0B0D17;
+      font-family: 'Tajawal', 'Plus Jakarta Sans', sans-serif;
+      position: relative;
+      color: #FFFFFF;
+    }
+
+    /* Ambient Background */
+    .bg-mesh {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 70% 30%, rgba(91, 80, 214, 0.5) 0%, transparent 60%),
+                  radial-gradient(circle at 20% 70%, rgba(255, 184, 0, 0.15) 0%, transparent 50%),
+                  #0B0D17;
+      z-index: 1;
+    }
+
+    /* Right visual of gavel */
+    .header-visual {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1500px;
+      height: 500px;
+      z-index: 2;
+      opacity: 0.85;
+    }
+    .header-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center right;
+    }
+    .vignette-mask {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(11, 13, 23, 0.4) 40%, rgba(11, 13, 23, 0.95) 75%, #0B0D17 100%),
+                  linear-gradient(0deg, #0B0D17 0%, rgba(11, 13, 23, 0.4) 15%, transparent 35%);
+      z-index: 3;
+    }
+
+    /* Canvas (Leaving safe space for profile avatar) */
+    .header-canvas {
+      position: relative;
+      z-index: 4;
+      width: 1500px;
+      height: 500px;
+      padding: 48px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      max-width: 900px;
+    }
+
+    .top-meta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .brand-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #5B50D6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 20px rgba(91, 80, 214, 0.5);
+    }
+    .brand-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+    .brand-tag {
+      font-size: 14px;
+      font-weight: 800;
+      color: #FFB800;
+      letter-spacing: 2px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .headline-box {
+      margin-top: 10px;
+    }
+    .kicker {
+      display: inline-block;
+      background: rgba(91, 80, 214, 0.25);
+      border: 1px solid rgba(142, 133, 247, 0.4);
+      color: #C7C2FF;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+    .headline-h1 {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+    }
+    .headline-h1 span.gold {
+      color: #FFB800;
+      text-shadow: 0 0 20px rgba(255, 184, 0, 0.4);
+    }
+    .subtext {
+      font-size: 19px;
+      color: #B5BAD4;
+      line-height: 1.5;
+    }
+
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 18px;
+    }
+    .stat-unit {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-number {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      color: #FFFFFF;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #8C92B2;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <div class="header-visual">
+    <img src="/marketing/zeedo_banner_landscape.jpg" alt="Zeedo Header Visual">
+  </div>
+
+  <div class="vignette-mask"></div>
+
+  <div class="header-canvas">
+    <div class="top-meta">
+      <div class="brand-icon-box">⚖️</div>
+      <div>
+        <div class="brand-title">ZEEDO</div>
+        <span class="brand-tag">LIVE AUCTIONS • العراق</span>
+      </div>
+    </div>
+
+    <div class="headline-box">
+      <div class="kicker">🔥 المنصة الأولى للمزادات التفاعلية</div>
+      <h1 class="headline-h1">
+        عالم المزادات الحية في العراق<br>
+        <span class="gold">عطاءات حقيقية، أمان كامل، ودفع عند الباب</span>
+      </h1>
+      <p class="subtext">
+        ساعات فاخرة • سيارات ومحركات • إلكترونيات وأجهزة ذكية • مقتنيات نادرة
+      </p>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-unit">
+        <span class="stat-number">+50,000</span>
+        <span class="stat-label">مزايد نشط</span>
+      </div>
+      <div class="stat-unit">
+        <span class="stat-number">18 محافظة</span>
+        <span class="stat-label">تغطية شاملة لباب البيت</span>
+      </div>
+      <div class="stat-unit">
+        <span class="stat-number">100%</span>
+        <span class="stat-label">فحص وضمان أصالة</span>
+      </div>
+      <div class="stat-unit">
+        <span class="stat-number">zeedo.iq</span>
+        <span class="stat-label">الموقع والتطبيق الرسمي</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
