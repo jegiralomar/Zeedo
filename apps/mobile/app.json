@@ -24,10 +24,7 @@
     },
     "extra": {
       "apiUrl": "https://zeedo.auction/api",
-      "wsUrl": "wss://zeedo.auction/ws",
-      "eas": {
-        "projectId": "zeedo-auction-mobile"
-      }
+      "wsUrl": "wss://zeedo.auction/ws"
     },
     "plugins": [
       "expo-asset"
