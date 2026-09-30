@@ -227,6 +227,25 @@
      - Native `WhatsAppAuthModal` with +964 verification and persistent 90-day device token hydration.
      - Native `LocationPickerModal` with Iraqi governorate chips and doorstep delivery confirmation.
 
+### O. Full Native Mobile Application Architecture (apps/mobile Completed & Verified ✅)
+- **4-Tab Bottom Navigation Bar:**
+  1. **Live Drops (Home Feed):** Real-time auction cards, pull-to-refresh sync, and 1-tap quick bid.
+  2. **My Bids Screen (`MyBidsScreen.tsx`):** 3-segment filter bar:
+     - `Active Bids`: Categorized into Winning (🟢 current high bidder) vs Outbid (🔴) with 1-tap "Re-bid +1,000 IQD".
+     - `Won Items`: Completed lots with Cash-on-Delivery doorstep inspection progress tracker ("Order Confirmed" &rarr; "Courier Dispatched" &rarr; "Doorstep Inspection").
+     - `History`: Archived past activity.
+  3. **Watchlist Screen (`WatchlistScreen.tsx`):** Saved auctions with countdown timers, quick bids, and 1-tap remove bookmark.
+  4. **Profile Screen (`ProfileScreen.tsx`):** 90-day hardware session badge, delivery doorstep location card with map pin trigger, 4 Iraqi dialects (`ckb`, `badini`, `ar`, `en`), marketplace guarantees, and device sign-out.
+- **Full-Screen Live Auction Room Modal (`LiveAuctionRoomModal.tsx`):**
+  - Swipeable multi-photo gallery.
+  - Flashing anti-sniping soft-close badge (`≤60s` reset countdown).
+  - Quick-jump bid buttons (`+1,000`, `+2,000`, `+5,000 IQD`).
+  - Tactile `SlideToBidSlider` with minimal tactile feedback via `expo-haptics` upon bid placement.
+  - Auto-Bid Ceiling dialog: auto counter-bids in +1,000 IQD increments up to buyer's max budget.
+- **Service Decoupling & Independence:**
+  - Removed `@vercel/blob` lock-in by implementing local container disk storage in `storage.ts` with Cloudflare R2 zero-egress priority adapter.
+  - Migrated database driver from `@neondatabase/serverless` to universal pure `postgres` (porsager/postgres), enabling zero-code-change execution against both containerized PostgreSQL 16 on VPS NVMe storage and remote databases.
+
 ---
 
 ## 2. Active System Architecture
@@ -254,7 +273,7 @@
 - **Merchant ID:** `sel-01` (Zeedo Merchant Hub, Erbil)
 - **Vercel Project:** `zeedo1/admin` (`prj_CjmLqSrWrPki65DICvgMeCeUKWNI`)
 - **Latest Deployment:** `admin-h0t7ba4ki-zeedo1.vercel.app` (Aliased to `https://zeedo.auction`)
-- **Git Branches:** `master` and `main` synchronized at commit `1eba111`.
+- **Git Branches:** `master` and `main` synchronized at commit `3d5c2d5`.
 
 ---
 
