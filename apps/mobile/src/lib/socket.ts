@@ -70,6 +70,12 @@ class ZeedoBiddingSocket {
     this.handlers.get(channel)!.add(handler);
   }
 
+  public on(event: string, handler: MessageHandler): () => void {
+    const channel = `event:${event}`;
+    this.subscribe(channel, handler);
+    return () => this.unsubscribe(channel, handler);
+  }
+
   public unsubscribe(channel: string, handler: MessageHandler) {
     if (this.handlers.has(channel)) {
       this.handlers.get(channel)!.delete(handler);

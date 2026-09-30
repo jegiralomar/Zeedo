@@ -11,7 +11,9 @@ export interface MobileBuyerSession {
     name?: string;
     city?: string;
     role?: string;
+    verified?: boolean;
   };
+  expiresAt?: string;
 }
 
 /**
