@@ -27,13 +27,14 @@ import { LanguageModal } from './LanguageModal';
 import { TwoGateKycModal } from './TwoGateKycModal';
 import { BuyerAuthModal } from './BuyerAuthModal';
 import { LocationPickerModal } from './LocationPickerModal';
+import { IntroWalkthroughModal } from './IntroWalkthroughModal';
 import { MerchantPortalView } from '../merchant/MerchantPortalView';
 
 export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const pathname = usePathname();
-  const { language, buyer, isAuthenticated, logout, isTwoGateVerified } = useBuyerAuthStore();
+  const { language, buyer, isAuthenticated, logout, isTwoGateVerified, setPendingAction } = useBuyerAuthStore();
   const { savedAuctionIds, syncLiveAuctionsFromDb } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
@@ -121,6 +122,13 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={(e) => {
+                    if (item.href !== '/marketplace' && (!isAuthenticated || !isTwoGateVerified())) {
+                      e.preventDefault();
+                      setPendingAction({ type: 'navigate', path: item.href });
+                      setShowAuthModal(true);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 relative ${
                     isActive
                       ? 'bg-blue-50 text-blue-700 font-extrabold'
@@ -245,6 +253,13 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(e) => {
+                  if (item.href !== '/marketplace' && (!isAuthenticated || !isTwoGateVerified())) {
+                    e.preventDefault();
+                    setPendingAction({ type: 'navigate', path: item.href });
+                    setShowAuthModal(true);
+                  }
+                }}
                 className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-colors relative ${
                   isActive ? 'text-blue-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
                 }`}
@@ -265,6 +280,7 @@ export const MarketplaceLayoutShell: React.FC<{ children: React.ReactNode }> = (
       </div>
 
       {/* Shared Modals */}
+      <IntroWalkthroughModal />
       <LanguageModal
         isOpen={showLanguageModal}
         onClose={() => setShowLanguageModal(false)}

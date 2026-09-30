@@ -2,15 +2,25 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { BuyerProfile, LanguageCode, RooftopPin } from '../types/marketplace';
 
+export interface PendingAction {
+  type: 'bid' | 'bookmark' | 'navigate';
+  targetId?: string;
+  path?: string;
+  extra?: any;
+}
+
 interface BuyerAuthStoreState {
   isAuthenticated: boolean;
   language: LanguageCode;
   buyer: BuyerProfile | null;
+  pendingAction: PendingAction | null;
 
+  setPendingAction: (action: PendingAction | null) => void;
   setLanguage: (lang: LanguageCode) => void;
   signUp: (name: string, phone: string, city: string, password?: string) => boolean;
   login: (phone: string, password?: string) => boolean;
   loginWithWhatsAppOtp: (phone: string, fullName?: string, city?: string) => void;
+  completeFullRegistration: (name: string, phone: string, city: string, pin: RooftopPin) => void;
   setSellerSession: (seller: any) => void;
   logout: () => void;
 
@@ -28,8 +38,56 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
       isAuthenticated: false,
       language: 'ckb', // Default to Kurdish Sorani (Erbil & Sulaymaniyah hub)
       buyer: null,
+      pendingAction: null,
 
+      setPendingAction: (action) => set({ pendingAction: action }),
       setLanguage: (language) => set({ language }),
+
+      completeFullRegistration: (name, phone, city, pin) => {
+        const cleanPhone = phone.trim();
+        const cleanName = name.trim() || 'Verified Buyer';
+        const cleanCity = pin.city || city.trim() || 'Erbil';
+
+        const newBuyer: BuyerProfile = {
+          id: `usr-${Date.now()}`,
+          name: cleanName,
+          phone: cleanPhone,
+          city: cleanCity,
+          role: 'buyer',
+          kycStatus: 'verified',
+          rooftopPin: {
+            latitude: pin.latitude,
+            longitude: pin.longitude,
+            city: pin.city || cleanCity,
+            district: pin.district,
+            landmark: pin.landmark,
+            addressText: pin.addressText,
+            isVerified: true,
+          },
+          totalBids: 0,
+          totalWins: 0,
+          joinedAt: new Date().toISOString(),
+        };
+
+        set({
+          isAuthenticated: true,
+          buyer: newBuyer,
+        });
+
+        if (typeof window !== 'undefined') {
+          fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: newBuyer.id,
+              name: cleanName,
+              phone: cleanPhone,
+              city: cleanCity,
+              role: 'buyer',
+            }),
+          }).catch(() => {});
+        }
+      },
 
       signUp: (name, phone, city) => {
         const cleanPhone = phone.trim();

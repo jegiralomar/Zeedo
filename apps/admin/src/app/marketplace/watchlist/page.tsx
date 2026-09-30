@@ -8,7 +8,7 @@ import { useBuyerAuthStore } from '@/store/useBuyerAuthStore';
 import { TRANSLATIONS } from '@/i18n/translations';
 import { ListingCard } from '@/components/marketplace/ListingCard';
 import { LiveAuctionRoomModal } from '@/components/marketplace/LiveAuctionRoomModal';
-import { TwoGateKycModal } from '@/components/marketplace/TwoGateKycModal';
+import { BuyerAuthModal } from '@/components/marketplace/BuyerAuthModal';
 import { MobileAuctionItem } from '@/types/marketplace';
 
 export default function WatchlistPage() {
@@ -17,7 +17,7 @@ export default function WatchlistPage() {
   const t = TRANSLATIONS[language];
 
   const [selectedAuction, setSelectedAuction] = useState<MobileAuctionItem | null>(null);
-  const [showKycModal, setShowKycModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const bookmarked = auctions.filter((a) => savedAuctionIds.includes(a.id));
 
@@ -60,7 +60,7 @@ export default function WatchlistPage() {
               key={item.id}
               item={item}
               onOpenLiveRoom={(target) => setSelectedAuction(target)}
-              onRequestKyc={() => setShowKycModal(true)}
+              onRequestKyc={() => setShowAuthModal(true)}
             />
           ))}
         </div>
@@ -71,12 +71,12 @@ export default function WatchlistPage() {
         item={selectedAuction}
         isOpen={Boolean(selectedAuction)}
         onClose={() => setSelectedAuction(null)}
-        onRequestKyc={() => setShowKycModal(true)}
+        onRequestKyc={() => setShowAuthModal(true)}
       />
 
-      <TwoGateKycModal
-        isOpen={showKycModal}
-        onClose={() => setShowKycModal(false)}
+      <BuyerAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </div>
   );

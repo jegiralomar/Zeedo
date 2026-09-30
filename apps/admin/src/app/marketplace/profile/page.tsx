@@ -22,6 +22,7 @@ import { TRANSLATIONS, isRTL } from '@/i18n/translations';
 import { TwoGateKycModal } from '@/components/marketplace/TwoGateKycModal';
 import { BuyerAuthModal } from '@/components/marketplace/BuyerAuthModal';
 import { LocationPickerModal } from '@/components/marketplace/LocationPickerModal';
+import { IntroWalkthroughModal } from '@/components/marketplace/IntroWalkthroughModal';
 
 export default function BuyerProfilePage() {
   const { buyer, language, isAuthenticated, logout, isTwoGateVerified } = useBuyerAuthStore();
@@ -31,6 +32,7 @@ export default function BuyerProfilePage() {
   const [showKycModal, setShowKycModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   const isVerified = isTwoGateVerified();
@@ -74,6 +76,14 @@ export default function BuyerProfilePage() {
           >
             <UserPlus className="w-4 h-4 text-blue-600" />
             <span>{rtl ? 'دروستکردنی هەژمار' : 'Create Free Account'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowIntroModal(true)}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+          >
+            <Sparkles className="w-4 h-4 text-blue-600" />
+            <span>{t.replayTour || 'App Tour'}</span>
           </button>
         </div>
 
@@ -141,6 +151,15 @@ export default function BuyerProfilePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowIntroModal(true)}
+            className="py-2.5 px-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5"
+            title={t.replayTour || 'Replay App Tour'}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <span>{t.replayTour || 'App Tour'}</span>
+          </button>
+
           <button
             onClick={() => setShowLocationModal(true)}
             className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
@@ -311,6 +330,12 @@ export default function BuyerProfilePage() {
       <LocationPickerModal
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
+      />
+
+      <IntroWalkthroughModal
+        isOpen={showIntroModal}
+        forceOpen={true}
+        onClose={() => setShowIntroModal(false)}
       />
     </div>
   );

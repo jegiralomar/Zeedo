@@ -38,7 +38,7 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   onClose,
   onRequestKyc,
 }) => {
-  const { language, buyer } = useBuyerAuthStore();
+  const { language, buyer, isAuthenticated, isTwoGateVerified, setPendingAction } = useBuyerAuthStore();
   const { placeSlideBid, setAutoBidCeiling, myAutoBids } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
@@ -95,7 +95,8 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   const currentStep = item.incrementStepIqd || 1000;
 
   const handlePlaceBid = (customIncrement?: number) => {
-    if (!buyer) {
+    if (!isAuthenticated || !buyer || !isTwoGateVerified()) {
+      setPendingAction({ type: 'bid', targetId: item.id });
       onRequestKyc();
       return;
     }
@@ -116,6 +117,11 @@ export const LiveAuctionRoomModal: React.FC<LiveAuctionRoomModalProps> = ({
   };
 
   const handleSaveAutoBid = () => {
+    if (!isAuthenticated || !buyer || !isTwoGateVerified()) {
+      setPendingAction({ type: 'bid', targetId: item.id });
+      onRequestKyc();
+      return;
+    }
     const val = parseInt(autoBidAmount.replace(/\D/g, ''), 10);
     if (val && val > item.currentBidIqd) {
       setAutoBidCeiling(item.id, val);

@@ -31,7 +31,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   onRequestKyc,
   variant = 'detailed',
 }) => {
-  const { language, buyer } = useBuyerAuthStore();
+  const { language, buyer, isAuthenticated, isTwoGateVerified, setPendingAction } = useBuyerAuthStore();
   const { savedAuctionIds, toggleSaveAuction, placeSlideBid } = useBuyerAuctionStore();
   const t = TRANSLATIONS[language];
   const rtl = isRTL(language);
@@ -95,7 +95,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
   const handleQuickBid = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!buyer) {
+    if (!isAuthenticated || !buyer || !isTwoGateVerified()) {
+      setPendingAction({ type: 'bid', targetId: item.id });
       onRequestKyc();
       return;
     }
@@ -117,6 +118,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
   const handleToggleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isAuthenticated || !buyer || !isTwoGateVerified()) {
+      setPendingAction({ type: 'bookmark', targetId: item.id });
+      onRequestKyc();
+      return;
+    }
     toggleSaveAuction(item.id);
   };
 

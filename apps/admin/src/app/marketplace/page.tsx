@@ -27,7 +27,6 @@ import { TRANSLATIONS, isRTL } from '@/i18n/translations';
 import { MobileAuctionItem } from '@/types/marketplace';
 import { ListingCard } from '@/components/marketplace/ListingCard';
 import { LiveAuctionRoomModal } from '@/components/marketplace/LiveAuctionRoomModal';
-import { TwoGateKycModal } from '@/components/marketplace/TwoGateKycModal';
 import { BuyerAuthModal } from '@/components/marketplace/BuyerAuthModal';
 import { useAdminStore } from '@/store/useAdminStore';
 
@@ -339,11 +338,6 @@ export default function BuyerMarketplacePage() {
         isOpen={Boolean(selectedAuction)}
         onClose={() => setSelectedAuction(null)}
         onRequestKyc={() => setShowAuthModal(true)}
-      />
-
-      <TwoGateKycModal
-        isOpen={showKycModal}
-        onClose={() => setShowKycModal(false)}
       />
 
       <BuyerAuthModal
