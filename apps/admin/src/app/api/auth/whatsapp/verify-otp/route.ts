@@ -19,6 +19,19 @@ export async function POST(req: NextRequest) {
     }
 
     const result = verifyWhatsAppOtp(phoneNumber, code);
+    if (result.isValid) {
+      const { createSessionToken } = await import('@/lib/session');
+      const sessionToken = createSessionToken({
+        id: `usr-${phoneNumber.replace(/\D/g, '')}`,
+        phone: phoneNumber,
+        role: 'buyer',
+      });
+      return jsonResponse({
+        ...result,
+        sessionToken,
+        expiresInDays: 90,
+      });
+    }
     return jsonResponse(result);
   } catch (error) {
     console.error('Error verifying WhatsApp OTP:', error);

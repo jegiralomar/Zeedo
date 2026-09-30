@@ -154,6 +154,18 @@ export const useBuyerAuctionStore = create<BuyerAuctionStoreState>()(
           };
         });
 
+        if (success && typeof window !== 'undefined') {
+          fetch('/api/listings/bid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auctionId,
+              bidderName,
+              bidderPhone,
+            }),
+          }).catch((err) => console.warn('Live bid broadcast error:', err));
+        }
+
         return success;
       },
 
