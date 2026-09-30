@@ -28,6 +28,9 @@
       "eas": {
         "projectId": "zeedo-auction-mobile"
       }
-    }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

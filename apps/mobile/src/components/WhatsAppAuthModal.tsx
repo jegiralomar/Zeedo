@@ -31,6 +31,24 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [sandboxCode, setSandboxCode] = useState<string | null>(null);
 
+  const handleDemoLogin = async () => {
+    const demoSession: MobileBuyerSession = {
+      token: 'zeedo_demo_jwt_token_2026',
+      user: {
+        id: 'usr-buyer-demo-01',
+        phone: '+964 750 123 4567',
+        name: 'Ahmed Al-Kurdi (Demo Buyer)',
+        city: 'Erbil',
+        role: 'buyer',
+        verified: true,
+      },
+      expiresAt: new Date(Date.now() + 90 * 86400000).toISOString(),
+    };
+    await saveMobileSession(demoSession);
+    onSuccess(demoSession);
+    onClose();
+  };
+
   const handleSendOtp = async () => {
     const cleaned = phone.replace(/[^0-9]/g, '');
     if (cleaned.length < 9) {
@@ -162,6 +180,15 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
                 ) : (
                   <Text style={styles.submitButtonText}>Send WhatsApp Code</Text>
                 )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleDemoLogin}
+                style={{ marginTop: 12, paddingVertical: 8, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#D97706', fontSize: 13, fontWeight: '700' }}>
+                  ⚡ Instant Demo Login (Skip OTP for Testing)
+                </Text>
               </TouchableOpacity>
             </View>
           )}

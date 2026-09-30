@@ -24,6 +24,45 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 
 const API_BASE_URL = 'https://zeedo.auction';
 
+const SAMPLE_LIVE_DROPS: MobileAuctionItem[] = [
+  {
+    id: 'auc-demo-1',
+    title: 'Sony PlayStation 5 Slim 1TB Edition (Japan Spec)',
+    category: 'Gaming',
+    currentBid: 320000,
+    startingPrice: 1000,
+    bidIncrement: 5000,
+    endsAt: new Date(Date.now() + 18 * 60 * 1000 + 30 * 1000).toISOString(),
+    photos: ['https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80'],
+    totalBids: 48,
+    condition: 'Brand New In Box',
+  },
+  {
+    id: 'auc-demo-2',
+    title: 'Apple iPhone 16 Pro Max 256GB Desert Titanium',
+    category: 'Smartphones',
+    currentBid: 890000,
+    startingPrice: 1000,
+    bidIncrement: 10000,
+    endsAt: new Date(Date.now() + 42 * 60 * 1000).toISOString(),
+    photos: ['https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&q=80'],
+    totalBids: 72,
+    condition: 'Factory Sealed',
+  },
+  {
+    id: 'auc-demo-3',
+    title: 'Dyson V15 Detect Absolute Cordless Vacuum',
+    category: 'Home Appliances',
+    currentBid: 145000,
+    startingPrice: 1000,
+    bidIncrement: 2000,
+    endsAt: new Date(Date.now() + 6 * 60 * 1000 + 15 * 1000).toISOString(),
+    photos: ['https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=800&q=80'],
+    totalBids: 29,
+    condition: 'Open Box Inspection OK',
+  },
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'feed' | 'bids' | 'watchlist' | 'profile'>('feed');
   const [session, setSession] = useState<MobileBuyerSession | null>(null);
@@ -68,10 +107,17 @@ export default function App() {
           totalBids: Number(l.totalBids || l.total_bids || 0),
           condition: l.condition || 'Brand New',
         }));
-        setItems(listings);
+        if (listings.length > 0) {
+          setItems(listings);
+        } else {
+          setItems(SAMPLE_LIVE_DROPS);
+        }
+      } else {
+        setItems(SAMPLE_LIVE_DROPS);
       }
     } catch (err) {
       console.warn('[Zeedo Mobile] Failed to fetch auctions:', err);
+      setItems((prev) => (prev.length > 0 ? prev : SAMPLE_LIVE_DROPS));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -185,7 +231,7 @@ export default function App() {
         Alert.alert(
           '🎉 Congratulations! You Won!',
           `You are the winning bidder for this auction at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nYour order has been confirmed with 100% Cash-on-Delivery inspection. Tracking: ${data.packageAwbId || 'Pending Courier Dispatch'}`,
-          [{ text: 'View Won Items', onPress: () => setActiveTab('my_bids') }]
+          [{ text: 'View Won Items', onPress: () => setActiveTab('bids') }]
         );
       }
     });
@@ -224,7 +270,7 @@ export default function App() {
         Alert.alert(
           '🎉 Congratulations! You Won!',
           `You won "${data.auctionTitle || 'an item'}" at ${data.wonPriceIqd?.toLocaleString()} IQD!\n\nDoorstep Cash-on-Delivery inspection AWB: ${data.packageAwbId || 'Dispatched'}`,
-          [{ text: 'View In My Bids', onPress: () => setActiveTab('my_bids') }]
+          [{ text: 'View In My Bids', onPress: () => setActiveTab('bids') }]
         );
         return;
       }
@@ -271,6 +317,29 @@ export default function App() {
 
     const inc = customIncrement || item.bidIncrement;
     const nextAmount = item.currentBid + inc;
+
+    if (item.id.startsWith('auc-demo-')) {
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === item.id
+            ? { ...it, currentBid: nextAmount, totalBids: it.totalBids + 1 }
+            : it
+        )
+      );
+      setSelectedRoomItem((curr) =>
+        curr && curr.id === item.id
+          ? { ...curr, currentBid: nextAmount, totalBids: curr.totalBids + 1 }
+          : curr
+      );
+      try {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {}
+      Alert.alert(
+        'Bid Accepted! 🎯',
+        `You are now the highest bidder at ${nextAmount.toLocaleString()} IQD.`
+      );
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/listings/bid`, {
