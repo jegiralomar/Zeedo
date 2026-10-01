@@ -232,21 +232,38 @@ export const HomeScreen: React.FC = () => {
       {/* Empty State */}
       {filteredAuctions.length === 0 && (
         <View style={styles.emptyState}>
-          <Sparkles size={36} color="#CBD5E1" />
+          <View style={styles.emptyIconCircle}>
+            <Gavel size={36} color="#94A3B8" />
+          </View>
           <Text style={styles.emptyStateTitle}>
-            {isRtl ? 'لا توجد مزادات مطابقة' : 'No auctions found'}
+            {auctions.length === 0
+              ? (isRtl ? 'لا توجد مزادات نشطة حالياً' : 'No Live Auctions Active')
+              : (isRtl ? 'لا توجد مزادات في هذه الفئة' : 'No auctions found in this category')}
           </Text>
           <Text style={styles.emptyStateSub}>
-            {isRtl
-              ? 'جرّب البحث عن كلمة أخرى أو تصفح كل الفئات'
-              : 'Try searching for something else or explore all categories'}
+            {auctions.length === 0
+              ? (isRtl
+                ? 'يتم إطلاق صفقات ومزادات جديدة دورياً لكافة محافظات العراق. اسحب الشاشة للأسفل للتحديث أو اضغط الزر أدناه.'
+                : 'New live auctions are listed regularly across Iraq. Pull down or tap below to refresh.')
+              : (isRtl
+                ? 'جرّب البحث عن كلمة أخرى أو تصفح كل الفئات المتاحة'
+                : 'Try searching for something else or explore all categories')}
           </Text>
           <TouchableOpacity
             style={styles.resetButton}
-            onPress={() => setSelectedCategory('all')}
+            onPress={() => {
+              if (auctions.length === 0) {
+                fetchAuctions();
+              } else {
+                setSelectedCategory('all');
+              }
+            }}
+            activeOpacity={0.85}
           >
             <Text style={styles.resetButtonText}>
-              {isRtl ? 'عرض كل المزادات' : 'View all auctions'}
+              {auctions.length === 0
+                ? (isRtl ? 'تحديث المزادات الحية 🔄' : 'Refresh Live Auctions 🔄')
+                : (isRtl ? 'عرض كل المزادات' : 'View all auctions')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -515,6 +532,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 48,
     paddingHorizontal: 24,
+  },
+  emptyIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   emptyStateTitle: {
     fontSize: 16,

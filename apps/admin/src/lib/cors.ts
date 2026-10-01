@@ -21,7 +21,15 @@ function resolveOrigin(requestOrOrigin?: Request | string): string {
   const origin = typeof requestOrOrigin === 'string'
     ? requestOrOrigin
     : requestOrOrigin.headers.get('origin') || '';
-  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  if (
+    ALLOWED_ORIGINS.includes(origin) ||
+    origin.startsWith('http://localhost:') ||
+    origin.startsWith('http://127.0.0.1:') ||
+    origin.startsWith('exp://')
+  ) {
+    return origin;
+  }
+  return ALLOWED_ORIGINS[0];
 }
 
 export function corsHeaders(requestOrOrigin?: Request | string) {

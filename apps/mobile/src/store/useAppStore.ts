@@ -189,8 +189,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           set({ auctions: mapped });
         }
       }
-    } catch (err) {
-      console.warn('Could not fetch live auctions from production API:', err);
+    } catch {
+      // Quietly handle network latency/offline mode in production
     } finally {
       set({ isLoadingAuctions: false });
     }
