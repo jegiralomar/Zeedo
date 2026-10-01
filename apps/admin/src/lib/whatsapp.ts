@@ -94,7 +94,37 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
     attempts: 0,
   });
 
-  // If Meta WhatsApp credentials exist and live mode is active, send via official Meta Graph API
+  // 1. First Priority: Self-Hosted Baileys WhatsApp Gateway (100% Free, VPS Microservice)
+  const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001';
+  try {
+    const gatewayResponse = await fetch(`${gatewayUrl}/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: normalizedPhone,
+        code,
+      }),
+      signal: AbortSignal.timeout(4000), // 4s timeout
+    });
+
+    if (gatewayResponse.ok) {
+      const gatewayResult = await gatewayResponse.json();
+      if (gatewayResult.isSuccess) {
+        return {
+          isSuccess: true,
+          normalizedPhone,
+          isSandbox: false,
+          messageId: gatewayResult.messageId,
+          expiresAt,
+          message: `Official WhatsApp verification code sent via Zeedo Gateway to ${normalizedPhone}`,
+        };
+      }
+    }
+  } catch (err) {
+    // Gateway offline or not linked, continue to Meta or sandbox fallback
+  }
+
+  // 2. Second Priority: Meta WhatsApp Cloud API (If credentials provided)
   if (isLive) {
     try {
       const recipientPhone = normalizedPhone.replace('+', '');

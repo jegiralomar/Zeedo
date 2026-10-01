@@ -29,6 +29,10 @@
         reverse_proxy websocket:8080
     }
 
+    handle_path /whatsapp* {
+        reverse_proxy whatsapp-gateway:3001
+    }
+
     handle /broadcast* {
         reverse_proxy websocket:8080
     }

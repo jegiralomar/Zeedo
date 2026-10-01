@@ -65,6 +65,7 @@ services:
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME}
       R2_PUBLIC_DOMAIN: ${R2_PUBLIC_DOMAIN}
+      WHATSAPP_GATEWAY_URL: http://whatsapp-gateway:3001
     depends_on:
       db:
         condition: service_healthy
@@ -96,10 +97,27 @@ services:
     networks:
       - zeedo_network
 
+  # 5. Self-Hosted Baileys WhatsApp Gateway (100% Free OTP Dispatch)
+  whatsapp-gateway:
+    image: ghcr.io/jegiralomar/zeedo-whatsapp:latest
+    build:
+      context: ./services/whatsapp
+      dockerfile: Dockerfile
+    container_name: zeedo_whatsapp
+    restart: always
+    environment:
+      PORT: 3001
+      NODE_ENV: production
+    volumes:
+      - zeedo_whatsapp_auth:/app/auth_info
+    networks:
+      - zeedo_network
+
 volumes:
   zeedo_pg_data:
   zeedo_caddy_data:
   zeedo_caddy_config:
+  zeedo_whatsapp_auth:
 
 networks:
   zeedo_network:
