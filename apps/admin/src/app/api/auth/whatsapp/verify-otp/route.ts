@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { verifyWhatsAppOtp } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
 
-export async function OPTIONS() {
-  return handleCorsOptions();
+export async function OPTIONS(req: NextRequest) {
+  return handleCorsOptions(req);
 }
 
 export async function POST(req: NextRequest) {
@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     if (!phoneNumber || !code) {
       return jsonResponse(
         { isValid: false, message: 'Both phone number and OTP code are required' },
-        { status: 400 }
+        { status: 400 },
+        req
       );
     }
 
@@ -30,14 +31,15 @@ export async function POST(req: NextRequest) {
         ...result,
         sessionToken,
         expiresInDays: 90,
-      });
+      }, undefined, req);
     }
-    return jsonResponse(result);
+    return jsonResponse(result, undefined, req);
   } catch (error) {
     console.error('Error verifying WhatsApp OTP:', error);
     return jsonResponse(
       { isValid: false, message: 'Internal server error verifying OTP' },
-      { status: 500 }
+      { status: 500 },
+      req
     );
   }
 }

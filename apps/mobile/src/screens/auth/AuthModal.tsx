@@ -67,7 +67,7 @@ export const AuthModal: React.FC = () => {
         );
       }
     } catch (err: any) {
-      // In local dev without live connection fallback:
+      console.warn('WhatsApp OTP dispatch error:', err);
       setErrorMessage(
         isRtl
           ? 'تعذر الاتصال بخادم واتساب، يرجى التحقق من اتصال الإنترنت'
@@ -125,6 +125,7 @@ export const AuthModal: React.FC = () => {
         );
       }
     } catch (err: any) {
+      console.warn('WhatsApp OTP verification error:', err);
       setErrorMessage(
         isRtl
           ? 'حدث خطأ أثناء التحقق، يرجى المحاولة ثانية'

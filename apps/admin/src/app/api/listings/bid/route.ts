@@ -1,9 +1,14 @@
-import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { broadcastLiveEvent } from '@/lib/realtime';
 import { sendOutbidAlert } from '@/lib/whatsappAlerts';
+import { handleCorsOptions, jsonResponse } from '@/lib/cors';
+
+export async function OPTIONS(request: Request) {
+  return handleCorsOptions(request);
+}
 
 export async function POST(request: Request) {
+  const respond = (data: any, init?: ResponseInit) => jsonResponse(data, init, request);
   try {
     const body = await request.json();
     const auctionId = body.auctionId || body.id;
@@ -13,24 +18,24 @@ export async function POST(request: Request) {
     const bidderCity = body.bidderCity || body.city || 'Erbil';
 
     if (!auctionId) {
-      return NextResponse.json({ success: false, error: 'auctionId is required' }, { status: 400 });
+      return respond({ success: false, error: 'auctionId is required' }, { status: 400 });
     }
 
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
-      return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 503 });
+      return respond({ success: false, error: 'Database unavailable' }, { status: 503 });
     }
 
     // 1. Fetch live auction
     const rows = await sql`SELECT * FROM auctions WHERE id = ${auctionId} LIMIT 1`;
     if (rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Auction not found' }, { status: 404 });
+      return respond({ success: false, error: 'Auction not found' }, { status: 404 });
     }
 
     const auction = rows[0];
     if (auction.status !== 'live') {
-      return NextResponse.json({ success: false, error: 'Auction is not live' }, { status: 400 });
+      return respond({ success: false, error: 'Auction is not live' }, { status: 400 });
     }
 
     // Anti-Shill Bidding Protection: Merchants are strictly prohibited from bidding on their own listings
@@ -40,7 +45,7 @@ export async function POST(request: Request) {
       auction.seller_id === bidderId ||
       (cleanSellerPhone && cleanBidderPhone && cleanSellerPhone === cleanBidderPhone)
     ) {
-      return NextResponse.json(
+      return respond(
         { success: false, error: 'Anti-Shill Protection: Merchants are strictly prohibited from bidding on their own listings.' },
         { status: 403 }
       );
@@ -170,7 +175,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({
+    return respond({
       success: true,
       bid: newRecord,
       auction: {
@@ -183,6 +188,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Bidding POST error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return respond({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -61,11 +61,11 @@ export async function safeParseJson<T = Record<string, unknown>>(req: Request): 
   }
 }
 
-export function jsonResponse(data: unknown, init?: ResponseInit) {
+export function jsonResponse(data: unknown, init?: ResponseInit, requestOrOrigin?: Request | string) {
   return NextResponse.json(data, {
     ...init,
     headers: {
-      ...corsHeaders(),
+      ...corsHeaders(requestOrOrigin),
       ...(init?.headers || {}),
     },
   });
