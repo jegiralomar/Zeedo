@@ -1681,7 +1681,7 @@ export const useAdminStore = create<AdminStoreState>()(
       },
     }),
     {
-      name: 'zeedo_admin_store_prod_v2',
+      name: 'zeedo_admin_store_prod_v3',
       storage: createJSONStorage(() => localStorage),
     }
   )

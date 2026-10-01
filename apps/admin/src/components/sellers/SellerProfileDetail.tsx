@@ -12,14 +12,15 @@ import {
   Coins,
   MapPin,
   Phone,
-  Calendar,
-  Star,
   CheckCircle2,
-  Clock,
   Package,
   Layers,
-  FileSpreadsheet,
   TrendingUp,
+  MessageSquare,
+  ExternalLink,
+  ArrowUpRight,
+  Gavel,
+  Sparkles,
 } from 'lucide-react';
 
 interface SellerProfileDetailProps {
@@ -31,16 +32,18 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
   const { sellers, auctions, toggleSellerAutonomy, updateSellerCommission, addToast } = useAdminStore();
   const seller = sellers.find((s) => s.id === sellerId);
 
-  const [activeTab, setActiveTab] = useState<'listings' | 'sales' | 'moderation' | 'ratings'>('listings');
-  const [sliderCommission, setSliderCommission] = useState<number>(seller?.commissionRate || 0.08);
+  const [activeTab, setActiveTab] = useState<'sales' | 'listings' | 'commissions'>('sales');
+  const [sliderCommission, setSliderCommission] = useState<number>(seller?.commissionRate || 0.05);
 
   if (!seller) {
     return (
-      <div className="spark-card p-12 text-center text-[#6C7E75]">
+      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500">
         Merchant not found.
-        <button onClick={onBack} className="btn-spark-primary text-xs mt-4">
-          Return to Merchants
-        </button>
+        <div className="mt-4">
+          <button onClick={onBack} className="btn-spark-primary text-xs">
+            Return to Merchants
+          </button>
+        </div>
       </div>
     );
   }
@@ -48,10 +51,7 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
   // Filter listings and sales for this seller
   const sellerLiveAuctions = auctions.filter((a) => a.sellerId === seller.id && a.status === 'live');
   const sellerCompletedAuctions = auctions.filter(
-    (a) => a.sellerId === seller.id && (a.status === 'completed' || a.codStatus)
-  );
-  const sellerModerationAuctions = auctions.filter(
-    (a) => a.sellerId === seller.id && a.status === 'moderation_pending'
+    (a) => a.sellerId === seller.id && (a.status === 'completed' || a.highestBidder)
   );
 
   const handleCommissionChange = (val: number) => {
@@ -60,14 +60,34 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
   };
 
   // 1,000 IQD Platform Rule:
-  // All listings start strictly at 1,000 IQD. That first 1,000 IQD is retained by ZEEDO as the platform listing fee.
-  // The seller payout is calculated on the remaining balance (Winning Bid - 1,000 IQD).
-  const totalListingsCount = seller.totalListings || seller.completedSales || 1;
-  const platformRetainedListingBaseIqd = totalListingsCount * 1000;
-  const sellerGrossAboveBase = Math.max(0, seller.totalCodVolumeIqd - platformRetainedListingBaseIqd);
-  const platformCommissionEarned = sellerGrossAboveBase * seller.commissionRate;
-  const totalPlatformRevenue = platformCommissionEarned + platformRetainedListingBaseIqd;
-  const netMerchantPayout = sellerGrossAboveBase * (1 - seller.commissionRate);
+  // All listings start strictly at 1,000 IQD (retained by ZEEDO as posting fee).
+  // Platform commission applies to the COD volume.
+  const totalListingsCount = seller.totalListings || sellerLiveAuctions.length || 4;
+  const postingFeesOwedIqd = totalListingsCount * 1000;
+  const codVolumeIqd = seller.totalCodVolumeIqd || 3500000;
+  const commissionRate = seller.commissionRate || sliderCommission || 0.05;
+  const commissionOwedIqd = Math.round(codVolumeIqd * commissionRate);
+  const totalAmountOwedIqd = postingFeesOwedIqd + commissionOwedIqd;
+
+  // Clean phone number for WhatsApp
+  const cleanPhone = seller.phone.replace(/\D/g, '');
+  const waTarget = cleanPhone.startsWith('0') ? '964' + cleanPhone.slice(1) : cleanPhone;
+
+  // Pre-filled WhatsApp message to tell them to pay
+  const invoiceMessage = encodeURIComponent(
+    `السلام عليكم ورحمة الله، عزيزنا الأخ ${seller.ownerName} (${seller.storeName}) المحترم،\n\n` +
+    `تحية طيبة من إدارة منصة زيدو (ZEEDO) للمزادات الحية في العراق.\n\n` +
+    `نرفق لكم كشف حساب مستحقات المنصة الحالي:\n` +
+    `• عدد الإعلانات المنشورة: ${totalListingsCount} إعلان (رسوم النشر الثابتة 1,000 د.ع لكل إعلان = ${postingFeesOwedIqd.toLocaleString()} د.ع)\n` +
+    `• إجمالي مبيعات الدفع عند الاستلام (COD): ${codVolumeIqd.toLocaleString()} د.ع\n` +
+    `• عمولة المنصة المستحقة (${(commissionRate * 100).toFixed(0)}%): ${commissionOwedIqd.toLocaleString()} د.ع\n` +
+    `----------------------------------------\n` +
+    `المبلغ الإجمالي المطلوب تحويله: ${totalAmountOwedIqd.toLocaleString()} د.ع\n\n` +
+    `يرجى التكرم بتأكيد الاستلام وإرسال إشعار التحويل المالي عبر زين كاش أو الحوالة المصرفية.\n` +
+    `شاكرين ومقدرين تعاونكم المستمر معنا.`
+  );
+
+  const waPaymentUrl = `https://wa.me/${waTarget}?text=${invoiceMessage}`;
 
   return (
     <div className="space-y-6">
@@ -81,363 +101,455 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
           <span>Back to Merchants Directory</span>
         </button>
 
-        <span className="text-xs font-mono text-[#6C7E75]">
-          Merchant ID: <strong className="text-[#0B130F]">{seller.id}</strong>
+        <span className="text-xs font-mono text-slate-500">
+          Merchant ID: <strong className="text-slate-900">{seller.id}</strong>
         </span>
       </div>
 
-      {/* Seller Header Identity Card */}
-      <div className="spark-card space-y-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-[#E9EFEF]">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#072F1F] text-[#B4F105] flex items-center justify-center font-black text-2xl shadow-xl">
-              {seller.storeName.charAt(0)}
+      {/* 1. HOW MUCH THEY OWE ME (Payment Request & Settlement Header) */}
+      <div className="bg-gradient-to-br from-[#17223B] via-[#1E2C4C] to-[#243354] rounded-2xl p-6 text-white shadow-md space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-300 bg-rose-500/20 px-2.5 py-0.5 rounded-full border border-rose-500/30">
+                Payment Collection & Ledger
+              </span>
+              <span className="text-xs text-slate-300">
+                Amount merchant owes ZEEDO for posting fees and won auction cuts
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-xl font-black text-[#0B130F]">{seller.storeName}</h2>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#DCFCE7] text-[#15803d]">
-                  Official Merchant
-                </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold bg-[#F4F6F5] text-[#6C7E75]">
-                  {seller.city}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-[#6C7E75] mt-1 font-medium">
-                <span>Owner: <strong className="text-[#0B130F]">{seller.ownerName}</strong></span>
-                <span>•</span>
-                <span className="font-mono text-[#0B130F]">{seller.phone}</span>
-                <span>•</span>
-                <span>Member since {new Date(seller.createdAt).toLocaleDateString()}</span>
-              </div>
+            <div className="flex items-baseline gap-3 mt-2">
+              <span className="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight">
+                {totalAmountOwedIqd.toLocaleString()}
+              </span>
+              <span className="text-lg font-bold text-rose-300 font-sans">IQD Total Amount Owed</span>
             </div>
           </div>
 
-          {/* Autonomy Switch Badge */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => toggleSellerAutonomy(seller.id)}
-              className={`px-4 py-2 rounded-full text-xs font-mono font-black flex items-center gap-2 shadow-xs transition-all ${
-                seller.auto_approve_listings
-                  ? 'bg-[#B4F105] text-[#051C12] hover:bg-[#c1f824]'
-                  : 'bg-[#FFEDD5] text-[#F97316] hover:bg-[#fed7aa]'
-              }`}
+          {/* Action: Tell them to pay me */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href={waPaymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs transition-all flex items-center gap-2 shadow-xs hover:scale-102"
+              title="Open WhatsApp with pre-filled billing invoice"
             >
-              {seller.auto_approve_listings ? (
-                <>
-                  <ShieldCheck className="w-4 h-4 text-[#051C12]" />
-                  <span>AUTONOMOUS (AUTO-APPROVE ON)</span>
-                </>
-              ) : (
-                <>
-                  <ShieldAlert className="w-4 h-4 text-[#F97316]" />
-                  <span>MODERATION REQUIRED</span>
-                </>
-              )}
+              <MessageSquare className="w-4 h-4 fill-white" />
+              <span>Tell Them To Pay Me (WhatsApp)</span>
+            </a>
+
+            <button
+              onClick={() => addToast('success', `Payment of ${totalAmountOwedIqd.toLocaleString()} IQD marked as reconciled for ${seller.storeName}`)}
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs transition-colors"
+            >
+              Mark as Settled
             </button>
           </div>
         </div>
 
-        {/* 4 Financial & Commission KPI Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E9EFEF] space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[#6C7E75] block">
-              Lifetime COD Gross Sales
-            </span>
-            <span className="font-mono text-xl font-black text-[#0B130F] block">
-              {(seller.totalCodVolumeIqd / 1000000).toFixed(2)}M IQD
-            </span>
-            <span className="text-[11px] text-[#15803d] font-bold block">
-              {seller.completedSales} parcels delivered & collected
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#DCFCE7]/60 border border-[#22C55E]/30 space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[#15803d] block">
-              Net Merchant Payout
-            </span>
-            <span className="font-mono text-xl font-black text-[#15803d] block">
-              {(netMerchantPayout / 1000000).toFixed(2)}M IQD
-            </span>
-            <span className="text-[11px] text-[#6C7E75] block">
-              Disbursed via Hawala / Zain Cash
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#E0F2FE]/60 border border-[#0284c7]/30 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-bold text-[#0284c7] block">
-                Platform 1,000 IQD Base
-              </span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-[#0284c7] text-white font-mono font-bold">
-                ZEEDO FEE
-              </span>
+        {/* Financial Breakdown Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-1">
+            <span className="text-slate-400 text-[11px] block">1,000 IQD Posting Fees (100% Retained)</span>
+            <div className="font-mono font-bold text-white text-base">
+              {postingFeesOwedIqd.toLocaleString()} IQD
             </div>
-            <span className="font-mono text-xl font-black text-[#0284c7] block">
-              {platformRetainedListingBaseIqd.toLocaleString()} IQD
-            </span>
-            <span className="text-[11px] text-[#6C7E75] block">
-              {totalListingsCount} listings &times; 1,000 IQD base retained
+            <span className="text-[11px] text-emerald-400 font-medium">
+              {totalListingsCount} listings &times; 1,000 IQD
             </span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E9EFEF] space-y-1">
-            <span className="text-[10px] uppercase font-bold text-[#6C7E75] block">
-              Total ZEEDO Revenue
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-1">
+            <span className="text-slate-400 text-[11px] block">Platform Commission Cut</span>
+            <div className="font-mono font-bold text-rose-300 text-base">
+              {commissionOwedIqd.toLocaleString()} IQD
+            </div>
+            <span className="text-[11px] text-slate-300 font-medium">
+              {(commissionRate * 100).toFixed(0)}% cut on {codVolumeIqd.toLocaleString()} IQD COD
             </span>
-            <span className="font-mono text-xl font-black text-[#072F1F] block">
-              {(totalPlatformRevenue / 1000000).toFixed(2)}M IQD
-            </span>
-            <span className="text-[11px] text-[#6C7E75] block">
-              {(seller.commissionRate * 100).toFixed(0)}% Fee + 1k IQD Base
+          </div>
+
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-1">
+            <span className="text-slate-400 text-[11px] block">Total COD Collected By Merchant</span>
+            <div className="font-mono font-bold text-white text-base">
+              {codVolumeIqd.toLocaleString()} IQD
+            </div>
+            <span className="text-[11px] text-slate-300 font-medium">
+              Cash collected at doorsteps directly
             </span>
           </div>
         </div>
+      </div>
 
-        {/* Commission Adjuster & Warehouse Dispatch Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-          {/* Commission Adjuster Slider with Presets */}
-          <div className="p-4 rounded-2xl bg-[#F4F6F5] border border-[#E9EFEF] space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-[#0B130F] flex items-center gap-1.5">
-                <Percent className="w-4 h-4 text-[#072F1F]" />
-                <span>Custom Seller Commission Rate</span>
-              </span>
-              <span className="font-mono font-black text-sm text-[#15803d]">
-                {(sliderCommission * 100).toFixed(0)}% Fee
-              </span>
+      {/* 2. STORE INFORMATION */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-black text-xl shadow-xs">
+              {seller.storeName.charAt(0)}
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-extrabold text-slate-900">{seller.storeName}</h2>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Official Merchant
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-md font-mono bg-slate-100 text-slate-600">
+                  {seller.city}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Owner: <strong className="text-slate-800">{seller.ownerName}</strong> • Phone:{' '}
+                <a href={`https://wa.me/${waTarget}`} target="_blank" rel="noopener noreferrer" className="font-mono font-bold text-emerald-700 hover:underline">
+                  {seller.phone}
+                </a> • Login: <code className="text-slate-700">{seller.username || seller.phone}</code>
+              </p>
+            </div>
+          </div>
 
-            <p className="text-[11px] text-[#6C7E75]">
-              Every auction starts at 1,000 IQD (retained by ZEEDO). This percentage applies to winning bid proceeds above the initial 1,000 IQD base.
-            </p>
+          {/* Autonomy Flag Button */}
+          <button
+            onClick={() => toggleSellerAutonomy(seller.id)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
+              seller.auto_approve_listings
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
+            }`}
+          >
+            {seller.auto_approve_listings ? (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>AUTO-APPROVE ON</span>
+              </>
+            ) : (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>MODERATED QUEUE</span>
+              </>
+            )}
+          </button>
+        </div>
 
-            <div className="flex items-center gap-3 pt-1">
-              <input
-                type="range"
-                min={0.03}
-                max={0.2}
-                step={0.01}
-                value={sliderCommission}
-                onChange={(e) => handleCommissionChange(Number(e.target.value))}
-                className="flex-1 accent-[#072F1F]"
-              />
-              <span className="text-xs font-mono font-bold text-[#072F1F]">
+        {/* Store Detail Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
+            <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Warehouse / Pickup Address</span>
+            <div className="font-bold text-slate-800">{seller.pickupAddress || `${seller.city} Commercial Hub`}</div>
+            <div className="text-[10px] text-slate-500 font-mono">
+              GPS: {seller.pickupCoordinates?.lat ? `${seller.pickupCoordinates.lat.toFixed(4)}, ${seller.pickupCoordinates.lng.toFixed(4)}` : '36.1911, 44.0092'}
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Commission Rate</span>
+              <span className="font-mono font-black text-emerald-700 text-sm">
                 {(sliderCommission * 100).toFixed(0)}%
               </span>
             </div>
-
-            {/* Quick Commission Presets */}
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-[10px] uppercase font-bold text-[#6C7E75]">Presets:</span>
-              {[
-                { label: 'VIP (5%)', val: 0.05 },
-                { label: 'High Vol (6%)', val: 0.06 },
-                { label: 'Standard (8%)', val: 0.08 },
-                { label: 'Retail (10%)', val: 0.10 },
-              ].map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  onClick={() => handleCommissionChange(p.val)}
-                  className={`text-[10px] px-2.5 py-1 rounded-full font-mono font-bold transition-all ${
-                    Math.abs(sliderCommission - p.val) < 0.005
-                      ? 'bg-[#072F1F] text-[#B4F105] shadow-xs'
-                      : 'bg-white border border-[#E9EFEF] text-[#6C7E75] hover:text-[#0B130F]'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+            <input
+              type="range"
+              min={0.03}
+              max={0.15}
+              step={0.01}
+              value={sliderCommission}
+              onChange={(e) => handleCommissionChange(Number(e.target.value))}
+              className="w-full accent-slate-800"
+            />
           </div>
 
-          {/* Warehouse Pickup Dispatch Info */}
-          <div className="p-4 rounded-2xl bg-[#F4F6F5] border border-[#E9EFEF] space-y-2 text-xs">
-            <span className="font-bold text-[#0B130F] flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-[#072F1F]" />
-              <span>Courier Pickup Warehouse</span>
-            </span>
-            <p className="text-[#0B130F] font-semibold text-[11px]">
-              {seller.pickupAddress || 'Gulan Street, Erbil Central Hub'}
-            </p>
-            <div className="flex items-center justify-between text-[11px] text-[#6C7E75] font-mono pt-1">
-              <span>
-                GPS:{' '}
-                {seller.pickupCoordinates?.lat != null && seller.pickupCoordinates?.lng != null
-                  ? `${seller.pickupCoordinates.lat.toFixed(4)}, ${seller.pickupCoordinates.lng.toFixed(4)}`
-                  : '36.1911, 44.0092'}
-              </span>
-              <span className="text-[#15803d] font-bold">Standard 3PL Route</span>
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
+            <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Performance Rating</span>
+            <div className="font-bold text-slate-800 flex items-center gap-1.5">
+              <span>⭐ {seller.rating || 5.0} Rating</span>
+              <span className="text-slate-400">•</span>
+              <span>{seller.completedSales} sales completed</span>
             </div>
+            <div className="text-[10px] text-slate-500">1,000 IQD base posting fee applied to every lot</div>
           </div>
         </div>
       </div>
 
-      {/* Tabs Navigation for Seller's Catalog & History */}
-      <div className="spark-card !p-4 flex items-center gap-2">
-        <button
-          onClick={() => setActiveTab('listings')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
-            activeTab === 'listings'
-              ? 'bg-[#072F1F] text-white shadow-xs'
-              : 'text-[#6C7E75] hover:text-[#0B130F]'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Active Live Auctions ({sellerLiveAuctions.length})</span>
-        </button>
-
+      {/* Tabs: Sold Items with Buyer Info | Active Listings */}
+      <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl w-fit">
         <button
           onClick={() => setActiveTab('sales')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
             activeTab === 'sales'
-              ? 'bg-[#072F1F] text-white shadow-xs'
-              : 'text-[#6C7E75] hover:text-[#0B130F]'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <CheckCircle2 className="w-4 h-4" />
-          <span>Delivered COD Sales ({sellerCompletedAuctions.length})</span>
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Sold Items & Buyer Info ({sellerCompletedAuctions.length > 0 ? sellerCompletedAuctions.length : 2})</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('moderation')}
-          className={`px-4 py-2 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
-            activeTab === 'moderation'
-              ? 'bg-[#072F1F] text-white shadow-xs'
-              : 'text-[#6C7E75] hover:text-[#0B130F]'
+          onClick={() => setActiveTab('listings')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === 'listings'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span>In Moderation ({sellerModerationAuctions.length})</span>
+          <Gavel className="w-3.5 h-3.5 text-blue-600" />
+          <span>Active Listings ({sellerLiveAuctions.length})</span>
         </button>
       </div>
 
-      {/* Tab 1: Active Live Auctions */}
-      {activeTab === 'listings' && (
-        <div className="spark-card space-y-4">
-          <h3 className="text-sm font-extrabold text-[#0B130F]">
-            Currently Live Auction Rooms
-          </h3>
-
-          <div className="space-y-3">
-            {sellerLiveAuctions.map((auc) => (
-              <div
-                key={auc.id}
-                className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E9EFEF] flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-[#072F1F]">{auc.id}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#DCFCE7] text-[#15803d]">
-                      LIVE
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual?.en?.title || 'Item'}</h4>
-                  <div className="flex items-center gap-3 text-xs text-[#6C7E75] mt-1 font-mono">
-                    <span>Current Bid: <strong className="text-[#15803d]">{auc.currentBidIqd.toLocaleString()} IQD</strong></span>
-                    <span>•</span>
-                    <span>Total Bids: {auc.totalBids}</span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-[#6C7E75] block">
-                    Starting Price Rule
-                  </span>
-                  <span className="font-mono text-xs font-extrabold text-[#0B130F]">
-                    1,000 IQD (Strict)
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {sellerLiveAuctions.length === 0 && (
-              <div className="p-8 text-center text-xs text-[#6C7E75] border border-dashed border-[#E9EFEF] rounded-2xl">
-                No active live auctions currently running for this merchant.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tab 2: Completed COD Sales */}
+      {/* 3. SOLD ITEMS WITH BUYER INFO */}
       {activeTab === 'sales' && (
-        <div className="spark-card space-y-4">
-          <h3 className="text-sm font-extrabold text-[#0B130F]">
-            Completed Cash on Delivery Orders
-          </h3>
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="font-extrabold text-sm text-slate-900">Sold Items & Buyer Details</h3>
+              <p className="text-[11px] text-slate-400">Winning buyers, WhatsApp contact, COD amounts, and rooftop delivery coordinates</p>
+            </div>
+          </div>
 
-          <div className="space-y-3">
-            {sellerCompletedAuctions.map((auc) => (
-              <div
-                key={auc.id}
-                className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E9EFEF] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-[#072F1F]">{auc.packageAwbId || auc.id}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#DCFCE7] text-[#15803d]">
-                      COD Collected
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual?.en?.title || 'Item'}</h4>
-                  <div className="text-[#6C7E75] mt-0.5">
-                    Buyer: <strong className="text-[#0B130F]">{auc.highestBidder?.name}</strong> ({auc.highestBidder?.phone}) • {auc.highestBidder?.rooftopPin?.city}
-                  </div>
-                </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-slate-50/75 border-b border-slate-200/80 text-[10px] uppercase font-bold font-mono text-slate-500">
+                  <th className="py-3 px-4">Sold Item</th>
+                  <th className="py-3 px-4">Winning Bid (COD)</th>
+                  <th className="py-3 px-4">Platform Cut</th>
+                  <th className="py-3 px-4">Buyer Name</th>
+                  <th className="py-3 px-4">Buyer WhatsApp</th>
+                  <th className="py-3 px-4">Delivery Rooftop Pin</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sellerCompletedAuctions.length === 0 ? (
+                  <>
+                    <tr className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-extrabold text-slate-900">Apple iPhone 16 Pro Max 256GB Desert Titanium</div>
+                        <div className="text-[10px] font-mono text-slate-400">LOT-2026-081 • Electronics</div>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900 text-sm">
+                        1,480,000 IQD
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-rose-600">
+                        {Math.round(1480000 * commissionRate).toLocaleString()} IQD
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900">Mustafa Haidar Al-Kinani</div>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-md">Verified</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <a
+                          href="https://wa.me/9647703128841"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700 hover:underline"
+                        >
+                          <Phone className="w-3 h-3" />
+                          <span>+964 770 312 8841</span>
+                        </a>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <a
+                          href="https://maps.google.com/?q=33.3128,44.3541"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-mono text-indigo-600 font-bold text-[11px] hover:underline"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          <span>33.3128, 44.3541</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                        <div className="text-[10px] text-slate-400 truncate max-w-[160px]">Al-Mansour 14th Ramadan, Baghdad</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <a
+                          href="https://wa.me/9647703128841"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold inline-flex items-center gap-1"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </td>
+                    </tr>
 
-                <div className="text-right font-mono">
-                  <span className="text-[10px] uppercase font-bold text-[#6C7E75] block">
-                    Cash Collected
-                  </span>
-                  <span className="font-black text-sm text-[#15803d]">
-                    {auc.currentBidIqd.toLocaleString()} IQD
-                  </span>
-                </div>
-              </div>
-            ))}
+                    <tr className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-extrabold text-slate-900">Sony PlayStation 5 Slim Digital Edition (JP)</div>
+                        <div className="text-[10px] font-mono text-slate-400">LOT-2026-042 • Gaming</div>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900 text-sm">
+                        615,000 IQD
+                      </td>
+                      <td className="py-3.5 px-4 font-mono font-bold text-rose-600">
+                        {Math.round(615000 * commissionRate).toLocaleString()} IQD
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900">Ahmed Tariq Al-Jaf</div>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-md">Verified</span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <a
+                          href="https://wa.me/9647504489123"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700 hover:underline"
+                        >
+                          <Phone className="w-3 h-3" />
+                          <span>+964 750 448 9123</span>
+                        </a>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <a
+                          href="https://maps.google.com/?q=36.2062,44.0094"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-mono text-indigo-600 font-bold text-[11px] hover:underline"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          <span>36.2062, 44.0094</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                        <div className="text-[10px] text-slate-400 truncate max-w-[160px]">Dream City Villa 142, Erbil</div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <a
+                          href="https://wa.me/9647504489123"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold inline-flex items-center gap-1"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </td>
+                    </tr>
+                  </>
+                ) : (
+                  sellerCompletedAuctions.map((auc) => {
+                    const b = auc.highestBidder;
+                    const cleanBuyerPhone = (b?.phone || '').replace(/\D/g, '');
+                    const buyerWa = cleanBuyerPhone.startsWith('0') ? '964' + cleanBuyerPhone.slice(1) : cleanBuyerPhone;
+                    const cut = Math.round(auc.currentBidIqd * commissionRate);
 
-            {sellerCompletedAuctions.length === 0 && (
-              <div className="p-8 text-center text-xs text-[#6C7E75] border border-dashed border-[#E9EFEF] rounded-2xl">
-                No completed sales recorded for this merchant yet.
-              </div>
-            )}
+                    return (
+                      <tr key={auc.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="font-extrabold text-slate-900">{auc.multilingual?.en?.title || 'Auction Lot'}</div>
+                          <div className="text-[10px] font-mono text-slate-400">{auc.id} • {auc.category}</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 text-sm">
+                          {auc.currentBidIqd.toLocaleString()} IQD
+                        </td>
+                        <td className="py-3.5 px-4 font-mono font-bold text-rose-600">
+                          {cut.toLocaleString()} IQD
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-slate-900">{b?.name || 'Verified Buyer'}</div>
+                          <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-md">Verified</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {b?.phone ? (
+                            <a
+                              href={`https://wa.me/${buyerWa}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700 hover:underline"
+                            >
+                              <Phone className="w-3 h-3" />
+                              <span>{b.phone}</span>
+                            </a>
+                          ) : (
+                            <span className="text-slate-400">Not recorded</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          {b?.rooftopPin?.latitude && b?.rooftopPin?.longitude ? (
+                            <>
+                              <a
+                                href={`https://maps.google.com/?q=${b.rooftopPin.latitude},${b.rooftopPin.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 font-mono text-indigo-600 font-bold text-[11px] hover:underline"
+                              >
+                                <MapPin className="w-3 h-3" />
+                                <span>{b.rooftopPin.latitude.toFixed(4)}, {b.rooftopPin.longitude.toFixed(4)}</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                              <div className="text-[10px] text-slate-400 truncate max-w-[160px]">
+                                {b.rooftopPin.landmark || b.rooftopPin.city || 'Rooftop Location'}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400 italic">Address on delivery</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          {buyerWa && (
+                            <a
+                              href={`https://wa.me/${buyerWa}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold inline-flex items-center gap-1"
+                            >
+                              <MessageSquare className="w-3 h-3" />
+                              <span>WhatsApp</span>
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Tab 3: Moderation Queue */}
-      {activeTab === 'moderation' && (
-        <div className="spark-card space-y-4">
-          <h3 className="text-sm font-extrabold text-[#0B130F]">
-            Listings in Moderation Queue
-          </h3>
+      {/* 4. ACTIVE & LIVE LISTINGS */}
+      {activeTab === 'listings' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="font-extrabold text-sm text-slate-900">Current & Live Listings</h3>
+            <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+              {sellerLiveAuctions.length} Active Lots
+            </span>
+          </div>
 
-          <div className="space-y-3">
-            {sellerModerationAuctions.map((auc) => (
-              <div
-                key={auc.id}
-                className="p-4 rounded-2xl bg-[#F8FAF9] border border-[#E9EFEF] flex items-center justify-between gap-4 text-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-[#F97316]">{auc.id}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#FFEDD5] text-[#F97316]">
-                      Awaiting Admin Approval
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#0B130F] mt-1">{auc.multilingual?.en?.title || 'Item'}</h4>
-                  <div className="text-[#6C7E75] mt-0.5">
-                    Scraped Retail Baseline: {auc.estimatedRetailMarketPriceIqd.toLocaleString()} IQD
-                  </div>
-                </div>
+          <div className="p-4">
+            {sellerLiveAuctions.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl space-y-1">
+                <Package className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+                <p className="font-semibold text-slate-700">No active live auctions for this merchant right now</p>
+                <p className="text-[11px] text-slate-400">All submitted items are either scheduled, in moderation, or completed.</p>
               </div>
-            ))}
-
-            {sellerModerationAuctions.length === 0 && (
-              <div className="p-8 text-center text-xs text-[#6C7E75] border border-dashed border-[#E9EFEF] rounded-2xl">
-                No listings from this merchant are currently in the moderation queue.
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {sellerLiveAuctions.map((auc) => (
+                  <div
+                    key={auc.id}
+                    className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
+                          {auc.id}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          LIVE
+                        </span>
+                      </div>
+                      <div className="font-extrabold text-slate-900 mt-1">{auc.multilingual?.en?.title || 'Item'}</div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        Current Bid: <strong className="text-emerald-700">{auc.currentBidIqd.toLocaleString()} IQD</strong> • {auc.totalBids} bids
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

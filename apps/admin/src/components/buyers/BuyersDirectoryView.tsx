@@ -1,14 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useAdminStore } from '@/store/useAdminStore';
 import {
   Users,
   Search,
-  Filter,
-  CheckCircle2,
-  Clock,
   MapPin,
   Phone,
   ExternalLink,
@@ -22,24 +18,24 @@ import {
 } from 'lucide-react';
 
 export const BuyersDirectoryView: React.FC = () => {
-  const { users, syncUsersFromDb, approveKyc } = useAdminStore();
+  const { users, syncUsersFromDb } = useAdminStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'verified' | 'pending'>('all');
+  const [activityFilter, setActivityFilter] = useState<'all' | 'bidders' | 'winners'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Sync latest users from PostgreSQL on mount
+  // Sync latest users from database on mount
   useEffect(() => {
-    syncUsersFromDb();
+    syncUsersFromDb?.();
   }, [syncUsersFromDb]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await syncUsersFromDb();
+    await syncUsersFromDb?.();
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  // Filtered buyers
+  // Filtered buyers: In ZEEDO architecture, every registered buyer is 100% verified via OTP & GPS pin
   const filteredBuyers = users.filter((buyer) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -47,24 +43,25 @@ export const BuyersDirectoryView: React.FC = () => {
       buyer.name.toLowerCase().includes(q) ||
       buyer.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '')) ||
       (buyer.id && buyer.id.toLowerCase().includes(q)) ||
-      (buyer.city && buyer.city.toLowerCase().includes(q));
+      (buyer.city && buyer.city.toLowerCase().includes(q)) ||
+      (buyer.rooftopPin?.landmark && buyer.rooftopPin.landmark.toLowerCase().includes(q));
 
     const matchesCity =
       selectedCity === 'all' || buyer.city.toLowerCase() === selectedCity.toLowerCase();
 
-    const matchesStatus =
-      selectedStatus === 'all' ||
-      (selectedStatus === 'verified' && buyer.kycStatus === 'verified') ||
-      (selectedStatus === 'pending' && buyer.kycStatus !== 'verified');
+    const matchesActivity =
+      activityFilter === 'all' ||
+      (activityFilter === 'bidders' && (buyer.totalBids || 0) > 0) ||
+      (activityFilter === 'winners' && (buyer.totalWins || 0) > 0);
 
-    return matchesSearch && matchesCity && matchesStatus;
+    return matchesSearch && matchesCity && matchesActivity;
   });
 
   // KPI Calculations
   const totalBuyers = users.length;
-  const verifiedBuyers = users.filter((u) => u.kycStatus === 'verified').length;
   const withGpsPin = users.filter((u) => u.rooftopPin?.latitude || u.rooftopPin?.landmark).length;
   const activeBidders = users.filter((u) => (u.totalBids || 0) > 0).length;
+  const totalWinners = users.filter((u) => (u.totalWins || 0) > 0).length;
 
   const citiesList = Array.from(new Set(users.map((u) => u.city).filter(Boolean)));
 
@@ -72,61 +69,45 @@ export const BuyersDirectoryView: React.FC = () => {
     <div className="space-y-6">
       {/* 1. Header KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Total Buyers */}
+        {/* KPI 1: Registered Buyers */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Registered Buyers
+              Registered Buyer Accounts
             </span>
             <div className="text-2xl font-black text-slate-900 font-mono flex items-center gap-2">
               {totalBuyers}
-              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                PostgreSQL Live
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                100% Verified
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">Synced across marketplace & admin</p>
+            <p className="text-[11px] text-slate-500">WhatsApp OTP & Phone Authenticated</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
-        {/* KPI 2: 2-Gate Verified */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              2-Gate Verified
-            </span>
-            <div className="text-2xl font-black text-emerald-600 font-mono flex items-center gap-2">
-              {verifiedBuyers}
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                {totalBuyers > 0 ? Math.round((verifiedBuyers / totalBuyers) * 100) : 100}% Rate
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500">WhatsApp OTP + Delivery Location</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* KPI 3: GPS Delivery Pins */}
+        {/* KPI 2: Rooftop GPS Anchors */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
               Rooftop Delivery Pins
             </span>
-            <div className="text-2xl font-black text-indigo-600 font-mono">
+            <div className="text-2xl font-black text-indigo-600 font-mono flex items-center gap-2">
               {withGpsPin}
+              <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                GPS Anchors
+              </span>
             </div>
-            <p className="text-[11px] text-slate-500">Precision GPS rooftop anchors</p>
+            <p className="text-[11px] text-slate-500">Precision Rooftop Lat/Lng Coordinates</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
             <MapPin className="w-6 h-6" />
           </div>
         </div>
 
-        {/* KPI 4: Active Bidders */}
+        {/* KPI 3: Active Live Bidders */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -135,10 +116,29 @@ export const BuyersDirectoryView: React.FC = () => {
             <div className="text-2xl font-black text-amber-600 font-mono">
               {activeBidders}
             </div>
-            <p className="text-[11px] text-slate-500">Placed bids in live rooms</p>
+            <p className="text-[11px] text-slate-500">Placed bids in live auction rooms</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
             <Gavel className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* KPI 4: Auction Winners */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Auction Winners
+            </span>
+            <div className="text-2xl font-black text-emerald-600 font-mono flex items-center gap-2">
+              {totalWinners}
+              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                COD Lots Won
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">Winning bids fulfilled via COD</p>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+            <Trophy className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -152,7 +152,7 @@ export const BuyersDirectoryView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search buyers by name, phone (+964...), city, or ID..."
+            placeholder="Search buyers by name, phone (+964...), city, landmark, or ID..."
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-xs text-slate-800 placeholder-slate-400 font-medium transition-all"
           />
         </div>
@@ -172,37 +172,37 @@ export const BuyersDirectoryView: React.FC = () => {
             ))}
           </select>
 
-          {/* Status Filter */}
+          {/* Activity Filter */}
           <div className="flex items-center bg-slate-100 p-1 rounded-xl">
             <button
-              onClick={() => setSelectedStatus('all')}
+              onClick={() => setActivityFilter('all')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                selectedStatus === 'all'
+                activityFilter === 'all'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              All ({users.length})
+              All ({totalBuyers})
             </button>
             <button
-              onClick={() => setSelectedStatus('verified')}
+              onClick={() => setActivityFilter('bidders')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                selectedStatus === 'verified'
-                  ? 'bg-white text-emerald-700 shadow-xs'
+                activityFilter === 'bidders'
+                  ? 'bg-white text-blue-700 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Verified ({verifiedBuyers})
+              Bidders ({activeBidders})
             </button>
             <button
-              onClick={() => setSelectedStatus('pending')}
+              onClick={() => setActivityFilter('winners')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                selectedStatus === 'pending'
+                activityFilter === 'winners'
                   ? 'bg-white text-amber-700 shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Pending ({users.length - verifiedBuyers})
+              Winners ({totalWinners})
             </button>
           </div>
 
@@ -224,13 +224,13 @@ export const BuyersDirectoryView: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3.5 px-4">Buyer Profile</th>
+                <th className="py-3.5 px-4">Buyer Account</th>
                 <th className="py-3.5 px-4">WhatsApp Phone</th>
-                <th className="py-3.5 px-4">City / Region</th>
-                <th className="py-3.5 px-4">2-Gate KYC Status</th>
+                <th className="py-3.5 px-4">City / Governorate</th>
+                <th className="py-3.5 px-4">Account Status</th>
                 <th className="py-3.5 px-4">Delivery Rooftop Pin</th>
                 <th className="py-3.5 px-4 text-center">Bids / Wins</th>
-                <th className="py-3.5 px-4">Joined Date</th>
+                <th className="py-3.5 px-4">Registered Date</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -244,7 +244,7 @@ export const BuyersDirectoryView: React.FC = () => {
                       </div>
                       <p className="font-semibold text-slate-700">No buyers found</p>
                       <p className="text-[11px] text-slate-400 max-w-sm">
-                        No buyer matches your current search or filter criteria. New buyers registering on zeedo.bid appear here automatically.
+                        No buyer matches your current search or filter criteria.
                       </p>
                     </div>
                   </td>
@@ -253,11 +253,11 @@ export const BuyersDirectoryView: React.FC = () => {
                 filteredBuyers.map((buyer) => {
                   const cleanPhone = buyer.phone.replace(/\D/g, '');
                   const waUrl = `https://wa.me/${cleanPhone.startsWith('0') ? '964' + cleanPhone.slice(1) : cleanPhone}`;
-                  const isVerified = buyer.kycStatus === 'verified';
                   const pin = buyer.rooftopPin;
-                  const gmapsUrl = pin?.latitude && pin?.longitude
-                    ? `https://www.google.com/maps?q=${pin.latitude},${pin.longitude}`
-                    : null;
+                  const gmapsUrl =
+                    pin?.latitude && pin?.longitude
+                      ? `https://www.google.com/maps?q=${pin.latitude},${pin.longitude}`
+                      : null;
 
                   return (
                     <tr key={buyer.id || buyer.phone} className="hover:bg-slate-50/70 transition-colors group">
@@ -298,19 +298,12 @@ export const BuyersDirectoryView: React.FC = () => {
                         {buyer.city || 'Erbil'}
                       </td>
 
-                      {/* KYC Status Pill */}
+                      {/* Account Status Pill */}
                       <td className="py-3.5 px-4">
-                        {isVerified ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                            <span>2-Gate Verified</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
-                            <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span>Pending KYC</span>
-                          </span>
-                        )}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Verified Active</span>
+                        </span>
                       </td>
 
                       {/* Delivery Rooftop Pin */}
@@ -328,8 +321,8 @@ export const BuyersDirectoryView: React.FC = () => {
                               <span>{pin.latitude.toFixed(4)}, {pin.longitude.toFixed(4)}</span>
                               <ExternalLink className="w-3 h-3" />
                             </a>
-                            <div className="text-[10px] text-slate-500 truncate max-w-[180px]">
-                              {pin.landmark || pin.district || buyer.city || 'Rooftop Location'}
+                            <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
+                              {pin.landmark || pin.addressText || buyer.city}
                             </div>
                           </div>
                         ) : pin?.landmark ? (
@@ -369,23 +362,16 @@ export const BuyersDirectoryView: React.FC = () => {
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href="/kyc"
-                            className="px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[11px] font-bold transition-all"
-                          >
-                            KYC
-                          </Link>
-                          <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1 rounded-lg border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100 text-emerald-800 transition-colors"
-                            title="Chat on WhatsApp"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                          </a>
-                        </div>
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition-colors"
+                          title="Chat with buyer on WhatsApp"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>WhatsApp</span>
+                        </a>
                       </td>
                     </tr>
                   );

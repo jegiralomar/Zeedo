@@ -81,43 +81,24 @@ export const Sidebar: React.FC = () => {
           badge: pendingModerationCount > 0 ? pendingModerationCount : null,
           badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
         },
-        {
-          label: 'Merchant Fulfillment',
-          href: '/logistics',
-          icon: Truck,
-          badge: readyLogisticsCount > 0 ? readyLogisticsCount : null,
-          badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
-        },
       ],
     },
     {
-      title: 'FINANCE & REVENUE',
+      title: 'ACCOUNTS & USERS',
       items: [
         {
-          label: 'Commissions & Fees',
-          href: '/finance',
-          icon: Coins,
-          badge: '1K IQD',
-          badgeColor: 'bg-[#FFF1F3] text-[#F83758] border-[#FFE4E8]',
+          label: 'Buyer Accounts',
+          href: '/buyers',
+          icon: Users,
+          badge: users.length > 0 ? `${users.length}` : null,
+          badgeColor: 'bg-slate-100 text-slate-700 border-slate-200',
         },
-      ],
-    },
-    {
-      title: 'USERS & TRUST',
-      items: [
         {
           label: 'Merchant Accounts',
           href: '/sellers',
           icon: Store,
           badge: sellers.length > 0 ? `${sellers.length}` : null,
           badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-        },
-        {
-          label: 'Buyers Directory',
-          href: '/buyers',
-          icon: Users,
-          badge: users.length > 0 ? `${users.length}` : null,
-          badgeColor: 'bg-slate-100 text-slate-700 border-slate-200',
         },
         {
           label: 'Support & Disputes',

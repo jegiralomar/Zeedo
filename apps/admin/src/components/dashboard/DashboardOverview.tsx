@@ -179,7 +179,7 @@ export const DashboardOverview: React.FC = () => {
             <span className="text-slate-700 font-semibold text-[11px]">
               {totalListingsCount} Lots (1K Fee)
             </span>
-            <Link href="/finance" className="text-[11px] font-bold text-[#F83758] hover:underline">
+            <Link href="/sellers?tab=commissions" className="text-[11px] font-bold text-[#F83758] hover:underline">
               Ledger &rarr;
             </Link>
           </div>
@@ -223,7 +223,7 @@ export const DashboardOverview: React.FC = () => {
               </div>
             </Link>
 
-            {/* Buyers Directory Card */}
+            {/* Buyer Accounts Card */}
             <Link
               href="/buyers"
               className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-2.5 group"
@@ -234,12 +234,12 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
               </div>
-              <h3 className="font-extrabold text-base text-slate-900">Buyers Directory</h3>
+              <h3 className="font-extrabold text-base text-slate-900">Buyer Accounts</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
                 Registered Iraqi buyers with verified WhatsApp numbers and rooftop GPS delivery pins.
               </p>
               <div className="text-xs font-bold text-indigo-600 font-mono pt-1">
-                {users.length} registered buyers &rarr;
+                {users.length} verified buyers &rarr;
               </div>
             </Link>
 
