@@ -24,31 +24,20 @@ export function LandingHeader({ lang, onLangChange, t }: LandingHeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          {/* Dual-swirl Stylized Logo Icon */}
-          <div className="relative w-10 h-10 flex items-center justify-center">
-            <svg viewBox="0 0 100 100" className="w-10 h-10 transform group-hover:scale-105 transition-transform duration-300">
-              <defs>
-                <linearGradient id="swirlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#4392F9" />
-                  <stop offset="100%" stopColor="#F83758" />
-                </linearGradient>
-              </defs>
-              <circle cx="50" cy="50" r="46" fill="url(#swirlGrad)" />
-              <path
-                d="M32 50 C32 38, 42 32, 50 32 C58 32, 68 40, 68 50 C68 62, 58 68, 50 68 C42 68, 32 60, 32 50 Z"
-                fill="#FFFFFF"
-              />
-              <circle cx="42" cy="50" r="8" fill="#F83758" />
-              <circle cx="58" cy="50" r="8" fill="#4392F9" />
-            </svg>
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300">
+            <img 
+              src="/brand/zeedo-icon.png" 
+              alt="ZEEDO" 
+              className="w-10 h-10 object-contain drop-shadow-sm" 
+            />
           </div>
           <div className="flex flex-col">
             <span className="text-2xl font-black tracking-tight text-[#17223B] font-['Montserrat']">
               ZEEDO<span className="text-[#F83758]">.</span>
             </span>
-            <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 -mt-1 font-['Montserrat']">
-              LIVE AUCTIONS
+            <span className="text-[10px] font-extrabold tracking-wider uppercase text-slate-400 -mt-1 font-['Montserrat']">
+              BID. WIN. OWN.
             </span>
           </div>
         </Link>

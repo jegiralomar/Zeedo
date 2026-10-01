@@ -33,13 +33,22 @@ export function LandingFooter({ lang, t }: LandingFooterProps) {
           
           {/* Brand Info (2 cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#4392F9] to-[#F83758] flex items-center justify-center font-bold text-white shadow-md">
-                Z
+            <Link href="/" className="flex items-center gap-3">
+              <div className="relative w-9 h-9 flex items-center justify-center">
+                <img 
+                  src="/brand/zeedo-icon.png" 
+                  alt="ZEEDO" 
+                  className="w-9 h-9 object-contain drop-shadow-sm" 
+                />
               </div>
-              <span className="text-2xl font-black tracking-tight text-white font-['Montserrat']">
-                ZEEDO<span className="text-[#F83758]">.</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="text-2xl font-black tracking-tight text-white font-['Montserrat']">
+                  ZEEDO<span className="text-[#F83758]">.</span>
+                </span>
+                <span className="text-[10px] font-extrabold tracking-wider uppercase text-slate-400 -mt-1 font-['Montserrat']">
+                  BID. WIN. OWN.
+                </span>
+              </div>
             </Link>
 
             <p className="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed max-w-sm">

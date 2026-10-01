@@ -11,9 +11,20 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'ZEEDO — Iraq Premier Live Auction Ecosystem',
+  title: 'ZEEDO — Bid. Win. Own. | Iraq Premier Live Auctions',
   description:
-    '100% Cash-on-Delivery Live Auctions across Iraq and Kurdistan. Verified items, doorstep inspection, and real-time live bidding.',
+    '100% Cash-on-Delivery Live Auctions across Iraq. Bid on authentic electronics, luxury items, and deals with doorstep inspection. زايد. اربح. امتلك.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({

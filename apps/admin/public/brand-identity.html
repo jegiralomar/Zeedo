@@ -3,238 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZEEDO • Brand Identity & Logo System</title>
+  <title>ZEEDO • Official Brand Identity & Design System</title>
+  <link rel="icon" href="/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Tajawal:wght@500;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand-indigo: #5B50D6;
-      --brand-indigo-hover: #4A40C4;
-      --brand-indigo-light: #EEEDFB;
-      --brand-navy: #1E2235;
-      --brand-yellow: #FFB800;
-      --canvas-bg: #F5F6FA;
-      --card-bg: #FFFFFF;
-      --border-color: #ECEEF5;
-      --text-muted: #64748B;
+      --primary: #F83758;
+      --secondary: #4392F9;
+      --accent: #F8991D;
+      --dark: #17223B;
+      --canvas: #F9FAFB;
+      --card: #FFFFFF;
+      --border: #ECEFF3;
+      --muted: #64748B;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--canvas-bg);
-      color: var(--brand-navy);
+      background-color: var(--canvas);
+      color: var(--dark);
       line-height: 1.6;
-      padding: 40px 20px 80px;
+      padding: 40px 20px 100px;
     }
 
     .container {
-      max-width: 1040px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
     /* Header */
-    .brand-header {
+    .brand-hero {
       text-align: center;
-      margin-bottom: 48px;
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .badge-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--brand-indigo-light);
-      color: var(--brand-indigo);
-      font-weight: 800;
-      font-size: 12px;
-      padding: 6px 14px;
-      border-radius: 9999px;
-      margin-bottom: 14px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .brand-header h1 {
-      font-size: 38px;
-      font-weight: 900;
-      letter-spacing: -0.8px;
-      margin-bottom: 10px;
-      color: var(--brand-navy);
-    }
-
-    .brand-header p {
-      font-size: 16px;
-      color: var(--text-muted);
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    /* Section Grid */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 28px;
-      margin-bottom: 40px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 28px;
-      border: 1px solid var(--border-color);
-      padding: 32px;
-      box-shadow: 0 4px 20px rgba(30, 34, 53, 0.04);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      box-shadow: 0 12px 30px rgba(91, 80, 214, 0.08);
-      transform: translateY(-2px);
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .card-subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-    }
-
-    /* Visual Previews */
-    .icon-preview-box {
-      background: #F8F9FD;
-      border-radius: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px;
-      margin-bottom: 20px;
-      border: 1px dashed #E2E8F0;
-    }
-
-    .app-icon-img {
-      width: 180px;
-      height: 180px;
-      border-radius: 40px;
-      box-shadow: 0 16px 40px rgba(91, 80, 214, 0.25);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .app-icon-img:hover {
-      transform: scale(1.05) rotate(-2deg);
-    }
-
-    .logo-preview-box {
-      background: #FFFFFF;
-      border-radius: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      margin-bottom: 20px;
-      border: 1px dashed #E2E8F0;
-    }
-
-    .logo-img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 12px;
-    }
-
-    /* Color Swatches */
-    .palette-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .swatch {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 18px;
-      padding: 14px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-
-    .swatch-color {
-      width: 100%;
-      height: 64px;
-      border-radius: 12px;
-      margin-bottom: 10px;
-    }
-
-    .swatch-name {
-      font-size: 12px;
-      font-weight: 800;
-      margin-bottom: 2px;
-    }
-
-    .swatch-hex {
-      font-size: 11px;
-      font-family: monospace;
-      color: var(--text-muted);
-    }
-
-    /* Action Buttons */
-    .btn-row {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 12px;
-    }
-
-    .btn {
+    .badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 12px 20px;
-      border-radius: 14px;
+      background: #FFF1F3;
+      color: var(--primary);
       font-weight: 800;
       font-size: 13px;
-      text-decoration: none;
-      transition: all 0.2s ease;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+      border: 1px solid #FFE4E8;
+    }
+
+    .brand-hero h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      color: var(--dark);
+    }
+
+    .tagline-box {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .tagline-ar {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--secondary);
+      direction: rtl;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 20px -2px rgba(23, 34, 59, 0.04);
+    }
+
+    .card h2 {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card h2 .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    /* Logo Showcase Grid */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .showcase-tile {
+      border-radius: 16px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .tile-light { background: #FFFFFF; }
+    .tile-dark { background: var(--dark); color: #FFFFFF; }
+
+    .tile-label {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.6;
+    }
+
+    .showcase-tile img {
+      max-height: 90px;
+      max-width: 80%;
+      object-fit: contain;
+      margin-bottom: 16px;
+    }
+
+    .showcase-tile .asset-name {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    /* Color Swatches */
+    .swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .swatch-card {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #FFFFFF;
+    }
+
+    .swatch-color {
+      height: 100px;
+      width: 100%;
+    }
+
+    .swatch-info {
+      padding: 14px;
+    }
+
+    .swatch-name {
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .swatch-hex {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--muted);
       cursor: pointer;
     }
 
-    .btn-primary {
-      background: var(--brand-indigo);
-      color: #FFFFFF;
-      box-shadow: 0 4px 12px rgba(91, 80, 214, 0.25);
+    /* Typography section */
+    .type-spec {
+      padding: 20px;
+      border-radius: 12px;
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
     }
 
-    .btn-primary:hover {
-      background: var(--brand-indigo-hover);
-      transform: translateY(-1px);
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--dark);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      transition: all 0.2s;
     }
 
-    .btn-secondary {
-      background: var(--brand-indigo-light);
-      color: var(--brand-indigo);
-    }
-
-    .btn-secondary:hover {
-      background: #E0DEFA;
-    }
-
-    /* Responsive */
-    @media (max-width: 640px) {
-      .brand-header h1 {
-        font-size: 28px;
-      }
-      .card {
-        padding: 20px;
-      }
+    .btn-download:hover {
+      background: var(--primary);
     }
   </style>
 </head>
@@ -242,102 +222,131 @@
 
   <div class="container">
     <!-- Header -->
-    <header class="brand-header">
-      <div class="badge-pill">⚖️ Official Brand System</div>
-      <h1>ZEEDO Brand Identity & Assets</h1>
-      <p>Luxury live auction identity featuring the Royal Indigo (#5B50D6) and Golden Gavel (#FFB800) visual language across iOS, Android, and Web.</p>
+    <header class="brand-hero">
+      <div class="badge">Official Brand Guidelines</div>
+      <h1>ZEEDO Brand Identity</h1>
+      <div class="tagline-box">Bid. Win. Own.</div>
+      <div class="tagline-ar">زايد. اربح. امتلك.</div>
+      <p style="margin-top: 14px; color: var(--muted); max-width: 620px; margin-left: auto; margin-right: auto;">
+        Iraq's Premier Live Auction Mobile Ecosystem. 100% Cash-on-Delivery, verified authentic merchandise, and transparent real-time bidding.
+      </p>
     </header>
 
-    <!-- Top Grid: App Icon & Horizontal Logo Lockup -->
-    <div class="grid-2">
-      <!-- Card 1: 3D App Icon -->
-      <div class="card">
-        <h2 class="card-title">📱 App Icon Mark</h2>
-        <p class="card-subtitle">512×512 iOS and Android store launcher asset</p>
+    <!-- Logo Showcase -->
+    <section class="card">
+      <h2><span class="dot"></span> Official Logo Lockups & Assets</h2>
+      <div class="showcase-grid">
         
-        <div class="icon-preview-box">
-          <img src="/zeedo_app_icon.jpg" alt="Zeedo 3D App Icon" class="app-icon-img">
+        <!-- App Icon -->
+        <div class="showcase-tile tile-light">
+          <span class="tile-label">Mobile App Icon</span>
+          <img src="/brand/zeedo-app-icon.png" alt="ZEEDO App Icon" style="max-height: 120px;" />
+          <div class="asset-name">zeedo-app-icon.png (512x512)</div>
+          <div style="margin-top: 12px;">
+            <a href="/brand/zeedo-app-icon.png" download class="btn-download">Download PNG</a>
+          </div>
         </div>
 
-        <div class="btn-row">
-          <a href="/zeedo_app_icon.jpg" download="zeedo_app_icon.jpg" class="btn btn-primary">
-            Download App Icon (HD)
-          </a>
+        <!-- Standalone Symbol -->
+        <div class="showcase-tile tile-light">
+          <span class="tile-label">Icon Mark (Transparent)</span>
+          <img src="/brand/zeedo-icon.png" alt="ZEEDO Icon Mark" style="max-height: 120px;" />
+          <div class="asset-name">zeedo-icon.svg & .png</div>
+          <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <a href="/brand/zeedo-icon.svg" download class="btn-download">SVG</a>
+            <a href="/brand/zeedo-icon.png" download class="btn-download">PNG</a>
+          </div>
         </div>
+
+        <!-- Horizontal Logo (Light Background) -->
+        <div class="showcase-tile tile-light">
+          <span class="tile-label">Horizontal Lockup (Light)</span>
+          <img src="/brand/zeedo-logo-horizontal.png" alt="ZEEDO Horizontal Logo" />
+          <div class="asset-name">zeedo-logo-horizontal.svg & .png</div>
+          <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <a href="/brand/zeedo-logo-horizontal.svg" download class="btn-download">SVG</a>
+            <a href="/brand/zeedo-logo-horizontal.png" download class="btn-download">PNG</a>
+          </div>
+        </div>
+
+        <!-- Horizontal Logo (Dark Background) -->
+        <div class="showcase-tile tile-dark">
+          <span class="tile-label" style="color: #94A3B8;">Horizontal Lockup (Dark)</span>
+          <img src="/brand/zeedo-logo-horizontal-white.png" alt="ZEEDO Logo White" />
+          <div class="asset-name" style="color: #CBD5E1;">zeedo-logo-horizontal-white.png</div>
+          <div style="margin-top: 12px;">
+            <a href="/brand/zeedo-logo-horizontal-white.png" download class="btn-download" style="background: white; color: var(--dark);">Download PNG</a>
+          </div>
+        </div>
+
       </div>
+    </section>
 
-      <!-- Card 2: Horizontal Brand Lockup -->
-      <div class="card">
-        <h2 class="card-title">🏷️ Horizontal Brand Lockup</h2>
-        <p class="card-subtitle">Official typography lockup with English & Arabic subline</p>
+    <!-- Color Palette -->
+    <section class="card">
+      <h2><span class="dot"></span> Color Architecture & Design Tokens</h2>
+      <div class="swatches-grid">
         
-        <div class="logo-preview-box">
-          <img src="/zeedo_brand_logo.jpg" alt="Zeedo Brand Logo Lockup" class="logo-img">
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #F83758;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Primary Coral</div>
+            <div class="swatch-hex">#F83758</div>
+            <small style="color: var(--muted); font-size: 11px;">Primary CTA, Bid Actions</small>
+          </div>
         </div>
 
-        <div class="btn-row">
-          <a href="/zeedo_brand_logo.jpg" download="zeedo_brand_logo.jpg" class="btn btn-primary">
-            Download Logo (16:9)
-          </a>
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #4392F9;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Electric Azure</div>
+            <div class="swatch-hex">#4392F9</div>
+            <small style="color: var(--muted); font-size: 11px;">Timers, Verification</small>
+          </div>
         </div>
+
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #17223B;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Obsidian Navy</div>
+            <div class="swatch-hex">#17223B</div>
+            <small style="color: var(--muted); font-size: 11px;">Headings, Wordmark, Footer</small>
+          </div>
+        </div>
+
+        <div class="swatch-card">
+          <div class="swatch-color" style="background: #F8991D;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Accent Gold</div>
+            <div class="swatch-hex">#F8991D</div>
+            <small style="color: var(--muted); font-size: 11px;">Winning Gavel, Ratings</small>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </section>
 
-    <!-- Color Palette Section -->
-    <div class="card" style="margin-bottom: 40px;">
-      <h2 class="card-title">🎨 Brand Color Tokens</h2>
-      <p class="card-subtitle">Harmonized color palette across the buyer app, mobile app, and admin panel</p>
-
-      <div class="palette-grid">
-        <div class="swatch">
-          <div class="swatch-color" style="background: #5B50D6;"></div>
-          <div class="swatch-name">Royal Indigo</div>
-          <div class="swatch-hex">#5B50D6</div>
-        </div>
-
-        <div class="swatch">
-          <div class="swatch-color" style="background: #FFB800;"></div>
-          <div class="swatch-name">Golden Yellow</div>
-          <div class="swatch-hex">#FFB800</div>
-        </div>
-
-        <div class="swatch">
-          <div class="swatch-color" style="background: #1E2235;"></div>
-          <div class="swatch-name">Deep Navy</div>
-          <div class="swatch-hex">#1E2235</div>
-        </div>
-
-        <div class="swatch">
-          <div class="swatch-color" style="background: #F5F6FA; border: 1px solid #ECEEF5;"></div>
-          <div class="swatch-name">Soft Periwinkle</div>
-          <div class="swatch-hex">#F5F6FA</div>
-        </div>
-
-        <div class="swatch">
-          <div class="swatch-color" style="background: #EEEDFB;"></div>
-          <div class="swatch-name">Lavender Pill</div>
-          <div class="swatch-hex">#EEEDFB</div>
-        </div>
-
-        <div class="swatch">
-          <div class="swatch-color" style="background: #EF4444;"></div>
-          <div class="swatch-name">Live Red</div>
-          <div class="swatch-hex">#EF4444</div>
-        </div>
-
-        <div class="swatch">
-          <div class="swatch-color" style="background: #10B981;"></div>
-          <div class="swatch-name">Verified Green</div>
-          <div class="swatch-hex">#10B981</div>
-        </div>
+    <!-- Typography -->
+    <section class="card">
+      <h2><span class="dot"></span> Typography & Bilingual Voice</h2>
+      <div class="type-spec">
+        <h3 style="font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 28px; margin-bottom: 4px;">
+          Montserrat Black — ZEEDO
+        </h3>
+        <p style="color: var(--muted); font-size: 14px;">Latin brand wordmark, hero headings, and numerical live bid amounts.</p>
       </div>
-    </div>
 
-    <!-- Quick Navigation Links -->
-    <div style="text-align: center;">
-      <a href="/marketplace" class="btn btn-secondary" style="margin-right: 10px;">← Open Web Marketplace</a>
-      <a href="/admin" class="btn btn-secondary">Open Admin Panel →</a>
-    </div>
+      <div class="type-spec">
+        <h3 style="font-family: 'Tajawal', sans-serif; font-weight: 900; font-size: 28px; margin-bottom: 4px; direction: rtl;">
+          تجوّل بولد — زايد. اربح. امتلك.
+        </h3>
+        <p style="color: var(--muted); font-size: 14px; direction: rtl;">الخط الرسمي المعتمد للنصوص العربية والكردية، العناوين، والإشعارات المباشرة.</p>
+      </div>
+    </section>
+
+    <footer style="text-align: center; color: var(--muted); font-size: 13px; margin-top: 40px;">
+      &copy; 2026 ZEEDO Inc. All rights reserved. • Baghdad & Erbil, Iraq
+    </footer>
   </div>
 
 </body>
