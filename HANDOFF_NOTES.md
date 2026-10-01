@@ -279,23 +279,23 @@
 ## 3. Key Credentials & Configurations
 
 - **Admin Login:** `ZAdmin9898` / `ZEEDOA98`
-- **Buyer WhatsApp Test Code:** `782910` or displayed sandbox code
+- **Buyer WhatsApp Verification:** Live dynamic 6-digit random code sent directly via Baileys WhatsApp Gateway
 - **Merchant ID:** `sel-01` (Zeedo Merchant Hub, Erbil)
-- **Vercel Project:** `zeedo1/admin` (`prj_CjmLqSrWrPki65DICvgMeCeUKWNI`)
-- **Latest Deployment:** `admin-h0t7ba4ki-zeedo1.vercel.app` (Aliased to `https://zeedo.auction`)
-- **Git Branches:** `master` and `main` synchronized at commit `3d5c2d5`.
+- **Production Server:** DigitalOcean Droplet `68.183.65.222` (Frankfurt)
+- **Live Domain:** `https://zeedo.bid` and `https://admin.zeedo.bid`
+- **Git Branches:** `master` and `main` synchronized.
 
 ---
 
 ## 4. Verification Instructions
 
 If verifying on a client browser:
-1. Open [zeedo.auction](https://zeedo.auction) in a fresh private/incognito window (or clear `zeedo_intro_seen_v1` from localStorage).
+1. Open [zeedo.bid](https://zeedo.bid) in a fresh private/incognito window.
 2. The **Intro Walkthrough Screen** immediately welcomes the user with feature highlights and dialect selector.
 3. Tap "Start Exploring Live Auctions" or "Skip" to enter the feed in guest read-only mode.
-4. Tap "+1,000 IQD" quick bid on any listing or tap "My Bids" / "Profile" in navigation.
+4. Tap "+1,000 IQD" quick bid on any listing or tap "Sign In" in navigation.
 5. The unified 3-step modal opens:
-   - Enter Iraqi mobile number -> Tap "Send WhatsApp Code" -> Enter OTP `782910`.
+   - Enter Iraqi mobile number -> Tap "Send WhatsApp Code" -> Enter the unique 6-digit OTP received on WhatsApp.
    - Enter Full Name -> Tap "Continue to Location Pin".
    - Pick city or tap GPS "Locate Me" on the interactive map -> Tap "Complete Registration & Start Bidding".
 6. The account is instantly verified, and the pending action (placing your bid or opening your bids page) executes automatically.

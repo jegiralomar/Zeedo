@@ -75,7 +75,6 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
   const [otpSent, setOtpSent] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
-  const [sandboxCode, setSandboxCode] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Step 2 states (Name & City)
@@ -135,7 +134,6 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
       setStep('phone_otp');
       setOtpSent(false);
       setOtpCode('');
-      setSandboxCode(null);
     }
   }, [isOpen]);
 
@@ -187,17 +185,11 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
       if (data.isSuccess) {
         setOtpSent(true);
         setResendCooldown(60);
-        if (data.code) {
-          setSandboxCode(data.code);
-        }
       } else {
         setError(data.message || (rtl ? 'هەڵەیەک ڕوویدا لە ناردنی کۆد' : 'Failed to send WhatsApp code'));
       }
     } catch {
-      // In case of network glitch, provide fallback sandbox demo code
-      setOtpSent(true);
-      setSandboxCode('782910');
-      setResendCooldown(60);
+      setError(rtl ? 'هەڵەیەک ڕوویدا لە ناردنی کۆد' : 'Failed to send WhatsApp verification code');
     } finally {
       setOtpSending(false);
     }
@@ -222,7 +214,7 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
       });
       const data = await res.json();
 
-      if (data.isValid || cleanCode === '782910' || cleanCode === sandboxCode) {
+      if (data.isValid) {
         // Phone successfully verified!
         // Check if an existing verified profile exists with this phone
         const existingBuyer = useBuyerAuthStore.getState().buyer;
@@ -247,12 +239,7 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
         setError(data.message || (rtl ? 'کۆدەکە هەڵەیە یان بەسەرچووە' : 'Invalid or expired OTP code'));
       }
     } catch {
-      // Allow master test code
-      if (cleanCode === '782910' || cleanCode === sandboxCode) {
-        setStep('name');
-      } else {
-        setError(rtl ? 'هەڵەیەک ڕوویدا لە پشتڕاستکردنەوە' : 'Verification request failed');
-      }
+      setError(rtl ? 'هەڵەیەک ڕوویدا لە پشتڕاستکردنەوە' : 'Verification request failed');
     } finally {
       setOtpVerifying(false);
     }
@@ -584,7 +571,6 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
                         onClick={() => {
                           setOtpSent(false);
                           setOtpCode('');
-                          setSandboxCode(null);
                         }}
                         className="text-[11px] text-blue-600 font-bold hover:underline"
                       >
@@ -601,23 +587,6 @@ export const BuyerAuthModal: React.FC<BuyerAuthModalProps> = ({
                       className="w-full py-3 text-center tracking-[0.5em] text-lg font-mono font-black rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-hidden focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                     />
                   </div>
-
-                  {/* Sandbox helper banner for test preview */}
-                  {sandboxCode && (
-                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-mono">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>Test Code: <strong>{sandboxCode}</strong></span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setOtpCode(sandboxCode)}
-                        className="px-2 py-0.5 rounded-lg bg-amber-200/80 hover:bg-amber-300 text-amber-950 font-bold text-[10px]"
-                      >
-                        {rtl ? 'پڕکردنەوەی خۆکار' : 'Auto-fill'}
-                      </button>
-                    </div>
-                  )}
 
                   <button
                     type="button"

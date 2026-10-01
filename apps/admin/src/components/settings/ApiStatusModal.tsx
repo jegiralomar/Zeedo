@@ -225,8 +225,8 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
                 </h4>
                 <p className="text-xs text-emerald-800 mt-0.5">
                   {apiMode === 'live'
-                    ? 'Calls live Google & Meta endpoints. Unconfigured keys safely fallback to realistic local data.'
-                    : 'Sandbox active: Zero external costs. Deterministic OTP codes (782910) and catalog scraping.'}
+                    ? 'Live production mode: Dynamic 6-digit WhatsApp OTP codes and AI extraction.'
+                    : 'Standard mode: Dynamic 6-digit WhatsApp OTP codes and local processing.'}
                 </p>
               </div>
             </div>

@@ -31,7 +31,6 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sandboxCode, setSandboxCode] = useState<string | null>(null);
 
   const handleDemoLogin = async () => {
     const demoSession: MobileBuyerSession = {
@@ -79,9 +78,6 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
         throw new Error(data.error || 'Failed to dispatch WhatsApp OTP');
       }
 
-      if (data.sandboxCode) {
-        setSandboxCode(data.sandboxCode);
-      }
       setPhone(formattedPhone);
       setStep('otp');
     } catch (err: any) {
@@ -193,17 +189,6 @@ export const WhatsAppAuthModal: React.FC<WhatsAppAuthModalProps> = ({
 
       {step === 'otp' && (
         <View style={styles.inputSection}>
-          {sandboxCode && (
-            <TouchableOpacity
-              onPress={() => setOtp(sandboxCode)}
-              style={styles.sandboxPill}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.sandboxText}>
-                ⚡ Sandbox Code: <Text style={styles.sandboxBold}>{sandboxCode}</Text> (Tap to fill)
-              </Text>
-            </TouchableOpacity>
-          )}
 
           <Text style={eviraWindowStyles.inputLabel}>6-Digit Verification Code</Text>
           <TextInput

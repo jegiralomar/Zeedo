@@ -81,9 +81,8 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
   const normalizedPhone = normalizeIraqiPhone(rawPhone);
   const { token, phoneId, templateName, isLive } = getWhatsAppConfig();
   
-  // Generate 6-digit verification code
-  // If sandbox, use reliable demo code or random 6 digits
-  const code = !isLive ? '782910' : Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate dynamic 6-digit verification code for every attempt (100000 - 999999)
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
   const now = Date.now();
   const expiresAt = now + 10 * 60 * 1000; // 10 minutes
 
@@ -104,7 +103,7 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
         phone: normalizedPhone,
         code,
       }),
-      signal: AbortSignal.timeout(4000), // 4s timeout
+      signal: AbortSignal.timeout(6000), // 6s timeout
     });
 
     if (gatewayResponse.ok) {
@@ -121,7 +120,7 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
       }
     }
   } catch (err) {
-    // Gateway offline or not linked, continue to Meta or sandbox fallback
+    // Gateway offline or not linked, continue to Meta API
   }
 
   // 2. Second Priority: Meta WhatsApp Cloud API (If credentials provided)
@@ -171,21 +170,20 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
         };
       } else {
         const errorData = await response.json();
-        console.warn('Meta WhatsApp API returned error, activating sandbox fallback:', errorData);
+        console.warn('Meta WhatsApp API error:', errorData);
       }
     } catch (err) {
-      console.warn('Meta WhatsApp fetch error, falling back to sandbox:', err);
+      console.warn('Meta WhatsApp fetch error:', err);
     }
   }
 
-  // Realistic Sandbox Fallback
+  // If neither gateway nor Meta API was able to send the message
   return {
-    isSuccess: true,
+    isSuccess: false,
     normalizedPhone,
-    isSandbox: true,
-    code,
+    isSandbox: false,
     expiresAt,
-    message: `[SANDBOX SIMULATION] WhatsApp OTP for ${normalizedPhone} is ${code}. (Add META_WHATSAPP_TOKEN in .env.local to send live message)`,
+    message: 'Failed to send WhatsApp verification code. Please try again.',
   };
 }
 
@@ -195,15 +193,6 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
 export function verifyWhatsAppOtp(rawPhone: string, submittedCode: string): WhatsAppOtpVerifyResult {
   const normalizedPhone = normalizeIraqiPhone(rawPhone);
   const cleanCode = submittedCode.trim();
-
-  // Master bypass / dev test code
-  if (cleanCode === '782910') {
-    return {
-      isValid: true,
-      normalizedPhone,
-      message: 'Verified successfully (ZEEDO Master Verification Code)',
-    };
-  }
 
   const session = otpStore.get(normalizedPhone);
 

@@ -223,11 +223,11 @@ export async function POST(req: NextRequest) {
         gemini: geminiTest,
         whatsapp: {
           success: true,
-          mode: mode === 'live' && metaToken ? 'live' : 'sandbox',
+          mode: mode === 'live' && metaToken ? 'live' : 'gateway',
           message:
             mode === 'live' && metaToken
               ? 'Meta Cloud Graph API credentials registered'
-              : 'Sandbox simulation ready (code 782910)',
+              : 'Zeedo WhatsApp Gateway operational (dynamic 6-digit OTP generation)',
         },
         r2: {
           success: r2Status.connected,
