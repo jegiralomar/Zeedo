@@ -73,10 +73,10 @@ export const MerchantOrdersScreen: React.FC = () => {
         {orders.map((item) => (
           <View key={item.id} style={styles.orderCard}>
             <View style={styles.cardHeader}>
-              <div>
+              <View>
                 <Text style={styles.lotTitle}>{item.lotTitle}</Text>
                 <Text style={styles.orderId}>ID: {item.id}</Text>
-              </div>
+              </View>
               <View
                 style={[
                   styles.statusBadge,
