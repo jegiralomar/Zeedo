@@ -79,7 +79,7 @@ const getInitialSession = (): { user: MobileUser | null; token: string | null } 
       if (savedUser && savedToken) {
         return { user: JSON.parse(savedUser), token: savedToken };
       }
-    } catch {
+    } catch (_err) {
       // Ignored
     }
   }
@@ -189,7 +189,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           set({ auctions: mapped });
         }
       }
-    } catch {
+    } catch (_err) {
       // Quietly handle network latency/offline mode in production
     } finally {
       set({ isLoadingAuctions: false });
