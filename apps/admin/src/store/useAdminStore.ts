@@ -915,32 +915,6 @@ export const useAdminStore = create<AdminStoreState>()(
         get().addToast('success', `One-Tap Relisted item! New auction ID: ${newAuctionId} at 1,000 IQD.`);
       },
 
-      syncAuctionsFromDb: async () => {
-        if (typeof window === 'undefined') return;
-        try {
-          const res = await fetch('/api/listings');
-          const data = await res.json();
-          if (data.success && Array.isArray(data.listings)) {
-            set({ auctions: data.listings });
-          }
-        } catch (err) {
-          console.warn('syncAuctionsFromDb error:', err);
-        }
-      },
-
-      syncSellersFromDb: async () => {
-        if (typeof window === 'undefined') return;
-        try {
-          const res = await fetch('/api/sellers');
-          const data = await res.json();
-          if (data.success && Array.isArray(data.sellers)) {
-            set({ sellers: data.sellers });
-          }
-        } catch (err) {
-          console.warn('syncSellersFromDb error:', err);
-        }
-      },
-
       placeBid: (auctionId, bidderId, customAmount) => {
         const auction = get().auctions.find((a) => a.id === auctionId);
         if (!auction || auction.status !== 'live') return;
