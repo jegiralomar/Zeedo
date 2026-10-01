@@ -17,6 +17,9 @@ web-build/
 # Vercel
 .vercel/
 
+# Cloudflare
+.wrangler/
+
 # Environment files
 .env*.local
 .env
