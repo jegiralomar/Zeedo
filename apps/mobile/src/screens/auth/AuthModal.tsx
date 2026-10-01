@@ -8,12 +8,15 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
-import { Phone, Lock, X, MessageSquare, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
+import { Phone, Lock, X, MessageSquare, ShieldCheck, MapPin } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 import { ZEEDO_CONFIG } from '../../config/api';
+import { LocationPickerStep } from '../../components/LocationPickerStep';
+import { MobileUser, DeliveryLocation } from '../../types';
 
 export const AuthModal: React.FC = () => {
   const {
@@ -21,16 +24,22 @@ export const AuthModal: React.FC = () => {
     isAuthModalOpen,
     closeAuthModal,
     loginWithSession,
+    saveDeliveryLocation,
   } = useAppStore();
 
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
+  type AuthStep = 'phone' | 'otp' | 'location';
+  const [step, setStep] = useState<AuthStep>('phone');
   const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  // Holds verified session until location is confirmed
+  const [pendingSession, setPendingSession] = useState<{ token: string; user: MobileUser } | null>(null);
 
   // 1. Dispatch Real WhatsApp OTP from Zeedo Baileys Gateway (+964 750 881 3641)
   const handleSendOtp = async () => {
@@ -103,19 +112,18 @@ export const AuthModal: React.FC = () => {
       const data = await response.json();
 
       if (response.ok && data.isValid) {
-        loginWithSession(
-          data.sessionToken || `tok-${Date.now()}`,
-          {
-            id: `usr-${phone.replace(/\D/g, '')}`,
-            name: isRtl ? 'مشترك زيدو' : 'Zeedo Member',
-            phone: phone.trim(),
-            city: 'العراق',
-            role: 'buyer',
-            kycStatus: 'verified',
-          }
-        );
-        resetState();
-        closeAuthModal();
+        const token = data.sessionToken || `tok-${Date.now()}`;
+        const user: MobileUser = {
+          id: `usr-${phone.replace(/\D/g, '')}`,
+          name: isRtl ? 'مشترك زيدو' : 'Zeedo Member',
+          phone: phone.trim(),
+          city: 'العراق',
+          role: 'buyer',
+          kycStatus: 'verified',
+        };
+        // Preserve session and proceed to Step 3 Location Picker (do NOT call loginWithSession yet as it closes the modal)
+        setPendingSession({ token, user });
+        setStep('location');
       } else {
         setErrorMessage(
           data.message ||
@@ -140,14 +148,54 @@ export const AuthModal: React.FC = () => {
     setPhone('');
     setOtpCode('');
     setIsOtpSent(false);
+    setStep('phone');
     setErrorMessage('');
     setIsLoading(false);
+    setIsSavingLocation(false);
+    setPendingSession(null);
+  };
+
+  const handleLocationConfirm = async (loc: DeliveryLocation) => {
+    if (!pendingSession) return;
+    setIsSavingLocation(true);
+    try {
+      const userWithLocation: MobileUser = {
+        ...pendingSession.user,
+        city: loc.city,
+        deliveryLocation: loc,
+      };
+      // Log in now that location has been pinned and confirmed
+      loginWithSession(pendingSession.token, userWithLocation);
+      await saveDeliveryLocation(loc, pendingSession.token);
+    } finally {
+      setIsSavingLocation(false);
+      resetState();
+      closeAuthModal();
+    }
   };
 
   const handleClose = () => {
     resetState();
     closeAuthModal();
   };
+
+  // ─── Step indicator ───────────────────────────────────────────────────────
+  const stepDots = (
+    <View style={styles.stepDots}>
+      {(['phone', 'otp', 'location'] as const).map((s, i) => (
+        <View
+          key={s}
+          style={[
+            styles.stepDot,
+            step === s && styles.stepDotActive,
+            (step === 'otp' && i === 0) || (step === 'location' && i <= 1)
+              ? styles.stepDotDone
+              : null,
+          ]}
+        />
+      ))}
+    </View>
+  );
 
   return (
     <Modal
@@ -157,14 +205,42 @@ export const AuthModal: React.FC = () => {
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, step === 'location' && styles.sheetTall]}>
           {/* Header Close */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
-              <X size={20} color={AppTheme.colors.textMuted} />
-            </TouchableOpacity>
+            {step === 'location' ? (
+              <View style={styles.locationHeader}>
+                <View style={styles.locationHeaderLeft}>
+                  <View style={styles.stepBadge}>
+                    <MapPin size={14} color="#FFFFFF" />
+                  </View>
+                  <Text style={styles.stepLabel}>
+                    {isRtl ? 'الخطوة 3 من 3' : 'Step 3 of 3'}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                  <X size={20} color={AppTheme.colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {stepDots}
+                <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                  <X size={20} color={AppTheme.colors.textMuted} />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
 
+          {/* ── Step 3: Location Picker ── */}
+          {step === 'location' ? (
+            <LocationPickerStep
+              isRtl={isRtl}
+              onConfirm={handleLocationConfirm}
+              isSaving={isSavingLocation}
+            />
+          ) : (
+            <>
           {/* Title & Trust Header */}
           <View style={styles.titleSection}>
             <View style={styles.brandBadge}>
@@ -278,6 +354,8 @@ export const AuthModal: React.FC = () => {
               </Text>
             </View>
           </View>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -299,9 +377,15 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     maxHeight: '90%',
   },
+  sheetTall: {
+    minHeight: '75%',
+    maxHeight: '92%',
+  },
   header: {
-    alignItems: 'flex-end',
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   closeBtn: {
     width: 34,
@@ -456,5 +540,49 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#059669',
     fontWeight: '600',
+  },
+  // Step dots
+  stepDots: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  stepDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  stepDotActive: {
+    width: 20,
+    backgroundColor: AppTheme.colors.primary,
+  },
+  stepDotDone: {
+    backgroundColor: '#A7F3D0',
+  },
+  // Location step header
+  locationHeader: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  locationHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: AppTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
   },
 });

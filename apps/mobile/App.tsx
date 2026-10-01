@@ -14,6 +14,7 @@ import { MerchantHomeScreen } from './src/screens/merchant/MerchantHomeScreen';
 import { MerchantOrdersScreen } from './src/screens/merchant/MerchantOrdersScreen';
 import { MerchantCommissionsScreen } from './src/screens/merchant/MerchantCommissionsScreen';
 import { AuthModal } from './src/screens/auth/AuthModal';
+import { LocationModal } from './src/components/LocationModal';
 import { IntroCarouselScreen } from './src/screens/intro/IntroCarouselScreen';
 
 export default function App() {
@@ -87,6 +88,7 @@ export default function App() {
           <View style={styles.screenContainer}>{renderScreen()}</View>
           <BottomNav />
           <AuthModal />
+          <LocationModal />
         </View>
       </SafeAreaView>
     </SafeAreaProvider>

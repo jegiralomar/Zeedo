@@ -32,6 +32,7 @@ export const ProfileScreen: React.FC = () => {
     currentUser,
     logout,
     openAuthModal,
+    openLocationSetup,
     wonOrders,
     myBids,
   } = useAppStore();
@@ -180,17 +181,29 @@ export const ProfileScreen: React.FC = () => {
 
       {/* 6. Saved Delivery Addresses */}
       <View style={styles.menuCard}>
-        <View style={styles.menuItem}>
-          <MapPin size={18} color="#64748B" />
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            if (!currentUser) {
+              openAuthModal();
+            } else {
+              openLocationSetup();
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <MapPin size={18} color={AppTheme.colors.primary} />
           <View style={styles.menuTextContent}>
             <Text style={styles.menuTitle}>
-              {isRtl ? 'عنوان التوصيل الافتراضي' : 'Default Delivery Address'}
+              {isRtl ? 'عنوان التوصيل المعتمد' : 'Verified Delivery Address'}
             </Text>
-            <Text style={styles.menuSub}>
-              {isRtl ? 'بغداد، المنصور، شارع 14 رمضان' : 'Baghdad, Al-Mansour'}
+            <Text style={styles.menuSub} numberOfLines={1}>
+              {currentUser?.deliveryLocation?.address ||
+                (isRtl ? 'بغداد، المنصور، شارع 14 رمضان (اضغط للتعديل)' : 'Baghdad, Al-Mansour (Tap to set)')}
             </Text>
           </View>
-        </View>
+          <ChevronRight size={18} color="#64748B" />
+        </TouchableOpacity>
 
         <View style={styles.menuDivider} />
 

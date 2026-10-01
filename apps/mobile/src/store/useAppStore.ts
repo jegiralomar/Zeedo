@@ -6,6 +6,7 @@ import {
   MobileAuctionItem,
   WonLotOrder,
   BidRecord,
+  DeliveryLocation,
 } from '../types';
 import { ZEEDO_CONFIG } from '../config/api';
 
@@ -29,6 +30,12 @@ interface AppState {
   closeAuthModal: () => void;
   loginWithSession: (token: string, user: MobileUser) => void;
   logout: () => void;
+
+  // Location Setup (Step 3 of auth flow)
+  isLocationSetupOpen: boolean;
+  openLocationSetup: () => void;
+  closeLocationSetup: () => void;
+  saveDeliveryLocation: (loc: DeliveryLocation, sessionToken: string) => Promise<void>;
 
   // Active Tab & Full Screen Selection
   activeTab: BuyerTab;
@@ -134,6 +141,42 @@ export const useAppStore = create<AppState>((set, get) => ({
       myBids: [],
       wonOrders: [],
     });
+  },
+
+  isLocationSetupOpen: false,
+  openLocationSetup: () => set({ isLocationSetupOpen: true }),
+  closeLocationSetup: () => set({ isLocationSetupOpen: false }),
+
+  saveDeliveryLocation: async (loc, sessionToken) => {
+    const { currentUser } = get();
+    if (!currentUser) return;
+
+    const updatedUser = { ...currentUser, deliveryLocation: loc, city: loc.city };
+
+    // Persist locally first
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('zeedo_user', JSON.stringify(updatedUser));
+    }
+    set({ currentUser: updatedUser, isLocationSetupOpen: false });
+
+    // Sync to server (non-blocking)
+    try {
+      await fetch(ZEEDO_CONFIG.ENDPOINTS.PATCH_PROFILE, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        body: JSON.stringify({
+          city: loc.city,
+          deliveryAddress: loc.address,
+          deliveryLat: loc.lat,
+          deliveryLng: loc.lng,
+        }),
+      });
+    } catch (_) {
+      // Server sync is best-effort; location is already saved locally
+    }
   },
 
   activeTab: 'auctions',

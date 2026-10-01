@@ -29,5 +29,6 @@ export const ZEEDO_CONFIG = {
 
     // User Profile & Won Orders
     USER_PROFILE: `${API_BASE_URL}/api/users`,
+    PATCH_PROFILE: `${API_BASE_URL}/api/users/profile`,
   },
 };

@@ -2,6 +2,13 @@ export type LanguageCode = 'en' | 'ar' | 'ckb' | 'badini';
 
 export type UserRole = 'guest' | 'buyer' | 'merchant';
 
+export interface DeliveryLocation {
+  lat: number;
+  lng: number;
+  address: string; // Human-readable reverse-geocoded address
+  city: string;
+}
+
 export interface MobileUser {
   id: string;
   name: string;
@@ -11,6 +18,7 @@ export interface MobileUser {
   storeName?: string;
   commissionRate?: number;
   kycStatus?: 'unsubmitted' | 'pending' | 'verified' | 'rejected';
+  deliveryLocation?: DeliveryLocation;
 }
 
 export interface BidRecord {
