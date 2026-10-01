@@ -45,6 +45,8 @@ export const AuctionDetailScreen: React.FC = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedIncrement, setSelectedIncrement] = useState(auction?.incrementStepIqd || 10000);
   const [bidSuccess, setBidSuccess] = useState(false);
+  const [bidError, setBidError] = useState('');
+  const [isBidding, setIsBidding] = useState(false);
   const [ticker, setTicker] = useState(0);
 
   useEffect(() => {
@@ -69,10 +71,18 @@ export const AuctionDetailScreen: React.FC = () => {
 
   const nextBidAmountIqd = auction.currentBidIqd + selectedIncrement;
 
-  const handlePlaceBid = () => {
-    placeBid(auction.id, nextBidAmountIqd);
-    setBidSuccess(true);
-    setTimeout(() => setBidSuccess(false), 3000);
+  const handlePlaceBid = async () => {
+    setIsBidding(true);
+    setBidError('');
+    const result = await placeBid(auction.id, nextBidAmountIqd);
+    setIsBidding(false);
+    if (result.success) {
+      setBidSuccess(true);
+      setTimeout(() => setBidSuccess(false), 3500);
+    } else if (result.message && result.message !== 'Login required') {
+      setBidError(result.message);
+      setTimeout(() => setBidError(''), 4000);
+    }
   };
 
   const increments = [
@@ -292,6 +302,14 @@ export const AuctionDetailScreen: React.FC = () => {
             </Text>
           </View>
         )}
+
+        {/* Error Feedback Banner */}
+        {bidError ? (
+          <View style={[styles.bidSuccessToast, { backgroundColor: '#EF4444' }]}>
+            <AlertCircle size={16} color="#FFFFFF" />
+            <Text style={styles.bidSuccessToastText}>{bidError}</Text>
+          </View>
+        ) : null}
 
         {/* Increment Selection Chips */}
         <View style={styles.chipsRow}>

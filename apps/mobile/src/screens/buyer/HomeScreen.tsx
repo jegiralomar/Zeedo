@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { Heart, ShieldCheck, MapPin, Gavel, Sparkles } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
@@ -21,6 +22,8 @@ export const HomeScreen: React.FC = () => {
   const {
     language,
     auctions,
+    fetchAuctions,
+    isLoadingAuctions,
     setSelectedAuctionId,
     searchQuery,
     selectedCategory,
@@ -34,6 +37,10 @@ export const HomeScreen: React.FC = () => {
 
   // Live countdown ticker simulator
   const [ticker, setTicker] = useState(0);
+
+  useEffect(() => {
+    fetchAuctions();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -75,7 +82,17 @@ export const HomeScreen: React.FC = () => {
   });
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isLoadingAuctions}
+          onRefresh={fetchAuctions}
+          tintColor={AppTheme.colors.primary}
+        />
+      }
+    >
       {/* 1. Doorstep Inspection Guarantee Banner */}
       <View style={styles.guaranteeBanner}>
         <View style={styles.guaranteeRow}>

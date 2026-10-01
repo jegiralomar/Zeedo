@@ -6,40 +6,146 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { User, Lock, X, MessageSquare, Store, ShieldCheck } from 'lucide-react-native';
+import { Phone, Lock, X, MessageSquare, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
+import { ZEEDO_CONFIG } from '../../config/api';
 
 export const AuthModal: React.FC = () => {
   const {
     language,
     isAuthModalOpen,
     closeAuthModal,
-    loginAsBuyer,
-    loginAsMerchant,
+    loginWithSession,
   } = useAppStore();
+
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
-  const [phone, setPhone] = useState('07701234567');
-  const [password, setPassword] = useState('••••••••');
-  const [isOtpMode, setIsOtpMode] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = () => {
-    // Check if phone or input corresponds to merchant
-    if (phone.includes('merchant') || phone.includes('sel') || phone.includes('0780')) {
-      loginAsMerchant('Al-Mansour Electronics', phone);
-    } else {
-      loginAsBuyer(phone, 'كرار حيدر');
+  // 1. Dispatch Real WhatsApp OTP from Zeedo Baileys Gateway (+964 750 881 3641)
+  const handleSendOtp = async () => {
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone || trimmedPhone.length < 10) {
+      setErrorMessage(
+        isRtl
+          ? 'يرجى إدخال رقم هاتف عراقي صحيح (مثال: 0750XXXXXXX)'
+          : 'Please enter a valid Iraqi mobile number (e.g. 0750XXXXXXX)'
+      );
+      return;
+    }
+
+    setErrorMessage('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(ZEEDO_CONFIG.ENDPOINTS.SEND_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: trimmedPhone }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.isSuccess) {
+        setIsOtpSent(true);
+      } else {
+        setErrorMessage(
+          data.message ||
+            (isRtl
+              ? 'تعذر إرسال الرمز، يرجى التأكد من الرقم والمحاولة ثانية'
+              : 'Failed to send OTP code. Please check the number and retry.')
+        );
+      }
+    } catch (err: any) {
+      // In local dev without live connection fallback:
+      setErrorMessage(
+        isRtl
+          ? 'تعذر الاتصال بخادم واتساب، يرجى التحقق من اتصال الإنترنت'
+          : 'Could not connect to WhatsApp gateway. Please check network connection.'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSendWhatsappOtp = () => {
-    setOtpSent(true);
-    setIsOtpMode(true);
+  // 2. Verify Real OTP Code and Log In
+  const handleVerifyOtp = async () => {
+    const trimmedOtp = otpCode.trim();
+    if (!trimmedOtp || trimmedOtp.length < 6) {
+      setErrorMessage(
+        isRtl
+          ? 'يرجى إدخال رمز التحقق المكون من 6 أرقام'
+          : 'Please enter the 6-digit verification code'
+      );
+      return;
+    }
+
+    setErrorMessage('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(ZEEDO_CONFIG.ENDPOINTS.VERIFY_OTP, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: phone.trim(), code: trimmedOtp }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.isValid) {
+        loginWithSession(
+          data.sessionToken || `tok-${Date.now()}`,
+          {
+            id: `usr-${phone.replace(/\D/g, '')}`,
+            name: isRtl ? 'مشترك زيدو' : 'Zeedo Member',
+            phone: phone.trim(),
+            city: 'العراق',
+            role: 'buyer',
+            kycStatus: 'verified',
+          }
+        );
+        resetState();
+        closeAuthModal();
+      } else {
+        setErrorMessage(
+          data.message ||
+            (isRtl
+              ? 'رمز التحقق غير صحيح أو منتهي الصلاحية'
+              : 'Invalid or expired OTP code.')
+        );
+      }
+    } catch (err: any) {
+      setErrorMessage(
+        isRtl
+          ? 'حدث خطأ أثناء التحقق، يرجى المحاولة ثانية'
+          : 'Error verifying OTP code. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetState = () => {
+    setPhone('');
+    setOtpCode('');
+    setIsOtpSent(false);
+    setErrorMessage('');
+    setIsLoading(false);
+  };
+
+  const handleClose = () => {
+    resetState();
+    closeAuthModal();
   };
 
   return (
@@ -47,103 +153,128 @@ export const AuthModal: React.FC = () => {
       visible={isAuthModalOpen}
       animationType="slide"
       transparent={true}
-      onRequestClose={closeAuthModal}
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           {/* Header Close */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={closeAuthModal} style={styles.closeBtn}>
+            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
               <X size={20} color={AppTheme.colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          {/* Title (Matching Sign In.jpg) */}
-          <Text style={[styles.title, isRtl && styles.textRtl]}>{t.welcomeBack}</Text>
-          <Text style={[styles.subtitle, isRtl && styles.textRtl]}>{t.loginSub}</Text>
+          {/* Title & Trust Header */}
+          <View style={styles.titleSection}>
+            <View style={styles.brandBadge}>
+              <Text style={styles.brandBadgeLetter}>Z</Text>
+            </View>
+            <Text style={[styles.title, isRtl && styles.textRtl]}>
+              {isRtl ? 'تسجيل الدخول إلى زيدو' : 'Sign in to Zeedo'}
+            </Text>
+            <Text style={[styles.subtitle, isRtl && styles.textRtl]}>
+              {isRtl
+                ? 'أدخل رقم هاتفك لاستلام رمز التحقق الفوري عبر واتساب'
+                : 'Enter your phone number for instant WhatsApp verification'}
+            </Text>
+          </View>
 
-          {/* Form Inputs (Matching Sign In.jpg) */}
+          {/* Bot Number Notice */}
+          <View style={styles.botNoticeBox}>
+            <MessageSquare size={16} color="#059669" />
+            <Text style={styles.botNoticeText}>
+              {isRtl
+                ? `يصلك الرمز مباشرة من رقم زيدو المعتمد: ${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER}`
+                : `OTP arrives from official Zeedo bot: ${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER}`}
+            </Text>
+          </View>
+
+          {/* Error Message */}
+          {errorMessage ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
+          {/* Form Inputs */}
           <View style={styles.form}>
-            {/* Input 1: Phone / Username */}
+            {/* Step 1: Phone Input */}
             <View style={[styles.inputContainer, isRtl && styles.inputContainerRtl]}>
-              <User size={18} color={AppTheme.colors.textMuted} style={styles.inputIcon} />
+              <Phone size={18} color="#64748B" style={styles.inputIcon} />
               <TextInput
                 value={phone}
-                onChangeText={setPhone}
-                placeholder={isRtl ? 'رقم الهاتف العراقي (0770...)' : 'Iraqi phone number (0770...)'}
-                placeholderTextColor={AppTheme.colors.textMuted}
+                onChangeText={(text) => {
+                  setPhone(text);
+                  setErrorMessage('');
+                }}
+                placeholder={isRtl ? 'رقم الهاتف (مثال: 07501234567)' : 'Phone (e.g. 07501234567)'}
+                placeholderTextColor="#94A3B8"
+                keyboardType="phone-pad"
+                editable={!isOtpSent}
                 style={[styles.input, isRtl && styles.textRtl]}
               />
             </View>
 
-            {/* Input 2: Password or OTP */}
-            <View style={[styles.inputContainer, isRtl && styles.inputContainerRtl]}>
-              <Lock size={18} color={AppTheme.colors.textMuted} style={styles.inputIcon} />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder={isOtpMode ? (isRtl ? 'أدخل رمز واتساب المكون من 6 أرقام' : 'Enter 6-digit WhatsApp OTP') : (isRtl ? 'كلمة المرور' : 'Password')}
-                placeholderTextColor={AppTheme.colors.textMuted}
-                secureTextEntry={!isOtpMode}
-                style={[styles.input, isRtl && styles.textRtl]}
-              />
-            </View>
+            {/* Step 2: OTP Input (Shown after OTP is sent) */}
+            {isOtpSent && (
+              <View>
+                <View style={[styles.inputContainer, isRtl && styles.inputContainerRtl]}>
+                  <Lock size={18} color="#64748B" style={styles.inputIcon} />
+                  <TextInput
+                    value={otpCode}
+                    onChangeText={(text) => {
+                      setOtpCode(text);
+                      setErrorMessage('');
+                    }}
+                    placeholder={isRtl ? 'أدخل رمز واتساب المكون من 6 أرقام' : 'Enter 6-digit WhatsApp OTP'}
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    style={[styles.input, isRtl && styles.textRtl, styles.otpInputText]}
+                  />
+                </View>
 
-            {/* WhatsApp OTP Status */}
-            {otpSent && (
-              <View style={styles.otpBanner}>
-                <MessageSquare size={14} color={AppTheme.colors.green} />
-                <Text style={styles.otpBannerText}>
-                  {isRtl ? 'تم إرسال رمز التحقق إلى واتساب الخاص بك!' : 'OTP Code sent to your WhatsApp!'}
-                </Text>
+                <TouchableOpacity
+                  onPress={handleSendOtp}
+                  disabled={isLoading}
+                  style={styles.resendButton}
+                >
+                  <Text style={styles.resendButtonText}>
+                    {isRtl ? 'إعادة إرسال الرمز؟' : 'Resend code?'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
 
-            {/* Primary Login Button */}
+            {/* Action Button */}
             <TouchableOpacity
-              onPress={handleLogin}
-              style={styles.loginBtn}
-              activeOpacity={0.85}
+              onPress={isOtpSent ? handleVerifyOtp : handleSendOtp}
+              disabled={isLoading}
+              style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+              activeOpacity={0.88}
             >
-              <Text style={styles.loginBtnText}>{t.loginBtn}</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <View style={styles.btnContent}>
+                  <MessageSquare size={18} color="#FFFFFF" />
+                  <Text style={styles.submitBtnText}>
+                    {isOtpSent
+                      ? (isRtl ? 'تأكيد الدخول' : 'Verify & Sign In')
+                      : (isRtl ? 'إرسال الرمز عبر واتساب' : 'Send WhatsApp Code')}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
 
-            {/* WhatsApp Direct OTP Trigger */}
-            <TouchableOpacity
-              onPress={handleSendWhatsappOtp}
-              style={styles.whatsappBtn}
-              activeOpacity={0.85}
-            >
-              <MessageSquare size={16} color="#059669" />
-              <Text style={styles.whatsappBtnText}>
-                {isRtl ? 'متابعة عبر واتساب' : 'Continue with WhatsApp'}
+            {/* Security Footnote */}
+            <View style={styles.secureFootnote}>
+              <ShieldCheck size={14} color="#059669" />
+              <Text style={styles.secureFootnoteText}>
+                {isRtl
+                  ? 'تسجيل آمن ومشفر 100% بدون أي كلمات مرور تقليدية'
+                  : '100% secure passwordless authentication'}
               </Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR QUICK DEMO</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* 1-Tap Demo Shortcuts */}
-            <View style={styles.demoRow}>
-              <TouchableOpacity
-                onPress={() => loginAsBuyer('07701234567', 'كرار حيدر')}
-                style={styles.demoPill}
-              >
-                <User size={13} color={AppTheme.colors.primary} />
-                <Text style={styles.demoPillText}>Buyer Demo</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => loginAsMerchant('Al-Mansour Electronics', '07809876543')}
-                style={styles.demoPill}
-              >
-                <Store size={13} color={AppTheme.colors.secondary} />
-                <Text style={styles.demoPillText}>Merchant Demo</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -155,34 +286,97 @@ export const AuthModal: React.FC = () => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#00000088',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: AppTheme.colors.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 36,
+    maxHeight: '90%',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
     marginBottom: 8,
   },
   closeBtn: {
-    padding: 4,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleSection: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  brandBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: AppTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  brandBadgeLetter: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFFFFF',
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '900',
-    color: AppTheme.colors.textPrimary,
-    marginBottom: 4,
+    color: '#0F172A',
+    marginBottom: 6,
   },
   subtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 280,
+  },
+  textRtl: {
+    textAlign: 'right',
+  },
+  botNoticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ECFDF5',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    marginBottom: 16,
+  },
+  botNoticeText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#065F46',
+    lineHeight: 16,
+  },
+  errorBox: {
+    backgroundColor: '#FEF2F2',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+  },
+  errorText: {
     fontSize: 12,
-    color: AppTheme.colors.textMuted,
-    marginBottom: 20,
+    fontWeight: '600',
+    color: '#DC2626',
+    textAlign: 'center',
   },
   form: {
     gap: 12,
@@ -190,109 +384,76 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-    borderRadius: AppTheme.radius.md,
-    paddingHorizontal: 12,
-    height: 48,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+    height: 52,
   },
   inputContainerRtl: {
     flexDirection: 'row-reverse',
   },
   inputIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 13,
-    color: AppTheme.colors.textPrimary,
+    fontSize: 14,
+    color: '#0F172A',
+    fontWeight: '600',
   },
-  loginBtn: {
+  otpInputText: {
+    letterSpacing: 4,
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  resendButton: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingVertical: 4,
+  },
+  resendButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: AppTheme.colors.primary,
+  },
+  submitBtn: {
     backgroundColor: AppTheme.colors.primary,
-    height: 48,
-    borderRadius: AppTheme.radius.md,
+    height: 52,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 6,
     shadowColor: AppTheme.colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
+    shadowRadius: 8,
     elevation: 4,
   },
-  loginBtnText: {
+  submitBtnDisabled: {
+    opacity: 0.7,
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  submitBtnText: {
     color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '800',
   },
-  whatsappBtn: {
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    height: 44,
-    borderRadius: AppTheme.radius.md,
+  secureFootnote: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
+    marginTop: 8,
   },
-  whatsappBtnText: {
+  secureFootnoteText: {
+    fontSize: 11,
     color: '#059669',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  otpBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#ECFDF5',
-    padding: 8,
-    borderRadius: 8,
-  },
-  otpBannerText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#065F46',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginVertical: 4,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: AppTheme.colors.border,
-  },
-  dividerText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: AppTheme.colors.textMuted,
-  },
-  demoRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  demoPill: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: AppTheme.colors.surface,
-    paddingVertical: 10,
-    borderRadius: AppTheme.radius.sm,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-  },
-  demoPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-  },
-  textRtl: {
-    textAlign: 'right',
+    fontWeight: '600',
   },
 });

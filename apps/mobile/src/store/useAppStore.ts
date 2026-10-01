@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import { LanguageCode, UserRole, MobileUser, MobileAuctionItem, WonLotOrder, BidRecord } from '../types';
+import {
+  LanguageCode,
+  UserRole,
+  MobileUser,
+  MobileAuctionItem,
+  WonLotOrder,
+  BidRecord,
+} from '../types';
+import { ZEEDO_CONFIG } from '../config/api';
 
 export type BuyerTab = 'auctions' | 'watchlist' | 'bag' | 'profile';
 
@@ -12,14 +20,14 @@ interface AppState {
   hasSeenIntro: boolean;
   completeIntro: () => void;
 
-  // Authentication & Role
+  // Authentication & Session
   currentUser: MobileUser | null;
+  sessionToken: string | null;
   userRole: UserRole;
   isAuthModalOpen: boolean;
   openAuthModal: () => void;
   closeAuthModal: () => void;
-  loginAsBuyer: (phone: string, name?: string) => void;
-  loginAsMerchant: (storeName: string, phone: string) => void;
+  loginWithSession: (token: string, user: MobileUser) => void;
   logout: () => void;
 
   // Active Tab & Full Screen Selection
@@ -34,8 +42,10 @@ interface AppState {
   merchantScreen: 'dashboard' | 'orders' | 'ledger';
   setMerchantScreen: (s: 'dashboard' | 'orders' | 'ledger') => void;
 
-  // Auctions Catalog
+  // Auctions Catalog (Live from Server)
   auctions: MobileAuctionItem[];
+  isLoadingAuctions: boolean;
+  fetchAuctions: () => Promise<void>;
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   searchQuery: string;
@@ -46,7 +56,7 @@ interface AppState {
   toggleWatchlist: (id: string) => void;
 
   // Real-Time Bids & Activity
-  placeBid: (auctionId: string, amountIqd: number) => void;
+  placeBid: (auctionId: string, amountIqd: number) => Promise<{ success: boolean; message?: string }>;
   myBids: { auctionId: string; amountIqd: number; isLeading: boolean }[];
 
   // Won Items & COD Orders
@@ -54,114 +64,29 @@ interface AppState {
   addWonOrder: (order: WonLotOrder) => void;
 }
 
-const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
-  {
-    id: 'auc-ps5-pro',
-    title: 'Sony PlayStation 5 Pro 2TB (عراقي أصلي)',
-    titleAr: 'سوني بلايستيشن 5 برو 2 تيرابايت (ضمان محلي)',
-    description: 'PlayStation 5 Pro console with enhanced ray tracing, AI-driven PSSR 4K 120fps upscaling, 2TB high-speed NVMe SSD, DualSense wireless controller.',
-    descriptionAr: 'نسخة برو الرسمية مع دعم 4K بمعدل 120 إطار، ذواكر تخزين فائقة السرعة 2 تيرابايت، ومعالج رسومي فائق الأداء مع ضمان الوكيل المعتمد.',
-    category: 'electronics',
-    startingPriceIqd: 1000,
-    currentBidIqd: 450000,
-    incrementStepIqd: 10000,
-    bidsCount: 24,
-    images: [
-      'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-    ],
-    endsAt: new Date(Date.now() + 2 * 3600 * 1000 + 45 * 60 * 1000).toISOString(),
-    isLive: true,
-    sellerCity: 'بغداد - المنصور',
-    specs: ['2TB High-Speed SSD', 'DualSense Haptic Feedback', 'Ray Tracing 2.0', 'ضمان عراقي أصلي 1 سنة'],
-    condition: 'New',
-    bidsHistory: [
-      { bidId: 'b-1', bidderId: 'u-1', bidderName: 'كرار حيدر', amountIqd: 450000, timestamp: '14:23:05' },
-      { bidId: 'b-2', bidderId: 'u-2', bidderName: 'أحمد البصري', amountIqd: 440000, timestamp: '14:21:40' },
-      { bidId: 'b-3', bidderId: 'u-3', bidderName: 'ريبوار كوردستان', amountIqd: 430000, timestamp: '14:18:12' },
-    ],
-  },
-  {
-    id: 'auc-rolex-sub',
-    title: 'Rolex Submariner Date 41mm Oystersteel Ceramic',
-    titleAr: 'ساعة رولكس صبمارينر ديت 41 ملم ستانلس ستيل مع ميناء أسود',
-    description: 'Rolex Submariner 126610LN Oystersteel case, Cerachrom ceramic rotating bezel, black dial with Chromalight luminescent display. Complete box & papers.',
-    descriptionAr: 'ساعة غوص فاخرة مقاومة للماء 300 متر، إطار سيراميك أسود مقاوم للخدش، حركة أوتوماتيكية سويسرية كاليبر 3235، الصندوق والأوراق الأصلية متوفرة.',
-    category: 'watches',
-    startingPriceIqd: 50000,
-    currentBidIqd: 4850000,
-    incrementStepIqd: 50000,
-    bidsCount: 41,
-    images: [
-      'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1547996160-71dfa63096aa?auto=format&fit=crop&w=800&q=80',
-    ],
-    endsAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
-    isLive: true,
-    sellerCity: 'بغداد - الكرادة',
-    specs: ['41mm Oystersteel', 'Calibre 3235 Movement', 'Cerachrom Bezel', 'شهادة الفحص والأصالة متوفرة'],
-    condition: 'New Open Box',
-    bidsHistory: [
-      { bidId: 'b-10', bidderId: 'u-5', bidderName: 'زياد طارق', amountIqd: 4850000, timestamp: '14:24:11' },
-      { bidId: 'b-11', bidderId: 'u-6', bidderName: 'عمر النعيمي', amountIqd: 4800000, timestamp: '14:22:00' },
-    ],
-  },
-  {
-    id: 'auc-iphone-16-pro',
-    title: 'Apple iPhone 16 Pro Max 256GB Natural Titanium',
-    titleAr: 'آيفون 16 برو ماكس 256 جيجابايت تيتانيوم طبيعي',
-    description: 'Latest A18 Pro Bionic chip, Camera Control button, Grade 5 Titanium finish, 48MP Fusion camera system with 5x telephoto optical zoom.',
-    descriptionAr: 'الهاتف الأقوى من أبل بتصميم التيتانيوم فائق المتانة، شاشة 6.9 إنش بروموشن 120 هرتز، نظام كاميرات سينمائي 48 ميجابكسل، وبطارية تدوم طوال اليوم.',
-    category: 'electronics',
-    startingPriceIqd: 5000,
-    currentBidIqd: 820000,
-    incrementStepIqd: 15000,
-    bidsCount: 19,
-    images: [
-      'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80',
-    ],
-    endsAt: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
-    isLive: true,
-    sellerCity: 'أربيل - القرية الإنجليزية',
-    specs: ['256GB Storage', 'A18 Pro Chip', 'Natural Titanium', 'ضمان محلي سنة كاملة'],
-    condition: 'New',
-    bidsHistory: [
-      { bidId: 'b-20', bidderId: 'u-7', bidderName: 'سامان عثمان', amountIqd: 820000, timestamp: '14:15:30' },
-    ],
-  },
-  {
-    id: 'auc-airjordan-1',
-    title: 'Nike Air Jordan 1 Retro High OG Chicago Lost & Found',
-    titleAr: 'حذاء نايكي إير جوردان 1 ريترو شيكاغو الأصلي',
-    description: 'Iconic Chicago colorway with aged vintage aesthetics, cracked leather collar, authentic retro Nike packaging and receipt.',
-    descriptionAr: 'الحذاء الأكثر شهرة في عالم الأحذية الرياضية، جلد طبيعي معتق بدرجات الأحمر والأسود والأبيض، إصدار محدود لهواة الجمع ومحبي الرياضة.',
-    category: 'fashion',
-    startingPriceIqd: 1000,
-    currentBidIqd: 195000,
-    incrementStepIqd: 5000,
-    bidsCount: 32,
-    images: [
-      'https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80',
-    ],
-    endsAt: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
-    isLive: true,
-    sellerCity: 'البصرة - العشار',
-    specs: ['Size 43 EU (9.5 US)', 'Chicago Vintage Colors', '100% Authentic with Tag'],
-    condition: 'New',
-    bidsHistory: [
-      { bidId: 'b-30', bidderId: 'u-8', bidderName: 'مصطفى علاء', amountIqd: 195000, timestamp: '14:26:55' },
-    ],
-  },
-];
-
 const getInitialIntroSeen = () => {
   if (typeof window !== 'undefined' && window.localStorage) {
     return window.localStorage.getItem('zeedo_has_seen_intro') === 'true';
   }
   return false;
 };
+
+const getInitialSession = (): { user: MobileUser | null; token: string | null } => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const savedUser = window.localStorage.getItem('zeedo_user');
+      const savedToken = window.localStorage.getItem('zeedo_session_token');
+      if (savedUser && savedToken) {
+        return { user: JSON.parse(savedUser), token: savedToken };
+      }
+    } catch {
+      // Ignored
+    }
+  }
+  return { user: null, token: null };
+};
+
+const initialSession = getInitialSession();
 
 export const useAppStore = create<AppState>((set, get) => ({
   language: 'ar',
@@ -175,52 +100,39 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ hasSeenIntro: true });
   },
 
-  currentUser: null,
-  userRole: 'guest',
+  currentUser: initialSession.user,
+  sessionToken: initialSession.token,
+  userRole: initialSession.user ? initialSession.user.role : 'guest',
   isAuthModalOpen: false,
   openAuthModal: () => set({ isAuthModalOpen: true }),
   closeAuthModal: () => set({ isAuthModalOpen: false }),
 
-  loginAsBuyer: (phone, name = 'كرار حيدر') => {
-    const user: MobileUser = {
-      id: `usr-${Date.now()}`,
-      name,
-      phone,
-      city: 'بغداد',
-      role: 'buyer',
-      kycStatus: 'verified',
-    };
+  loginWithSession: (token, user) => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('zeedo_session_token', token);
+      window.localStorage.setItem('zeedo_user', JSON.stringify(user));
+    }
     set({
       currentUser: user,
-      userRole: 'buyer',
+      sessionToken: token,
+      userRole: user.role,
       isAuthModalOpen: false,
       activeTab: 'auctions',
-    });
-  },
-
-  loginAsMerchant: (storeName, phone) => {
-    const merchant: MobileUser = {
-      id: `merch-${Date.now()}`,
-      name: storeName,
-      storeName,
-      phone,
-      city: 'بغداد - الكرادة',
-      role: 'merchant',
-      commissionRate: 10,
-    };
-    set({
-      currentUser: merchant,
-      userRole: 'merchant',
-      isAuthModalOpen: false,
-      merchantScreen: 'dashboard',
     });
   },
 
   logout: () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('zeedo_session_token');
+      window.localStorage.removeItem('zeedo_user');
+    }
     set({
       currentUser: null,
+      sessionToken: null,
       userRole: 'guest',
       activeTab: 'auctions',
+      myBids: [],
+      wonOrders: [],
     });
   },
 
@@ -242,13 +154,55 @@ export const useAppStore = create<AppState>((set, get) => ({
   merchantScreen: 'dashboard',
   setMerchantScreen: (s) => set({ merchantScreen: s }),
 
-  auctions: DEFAULT_AUCTIONS,
+  // 100% Clean Slate: Live Auctions from Production Server
+  auctions: [],
+  isLoadingAuctions: false,
+
+  fetchAuctions: async () => {
+    set({ isLoadingAuctions: true });
+    try {
+      const res = await fetch(ZEEDO_CONFIG.ENDPOINTS.LIVE_AUCTIONS);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const mapped: MobileAuctionItem[] = data.map((item: any) => ({
+            id: String(item.id),
+            title: item.title || 'Zeedo Auction Lot',
+            titleAr: item.title || 'مزاد زيدو المعتمد',
+            description: item.description || '',
+            descriptionAr: item.description || '',
+            category: item.category || 'general',
+            startingPriceIqd: Number(item.startingPrice || 1000),
+            currentBidIqd: Number(item.currentBid || 1000),
+            incrementStepIqd: Number(item.bidIncrement || 1000),
+            bidsCount: Number(item.totalBids || 0),
+            images: Array.isArray(item.photos) && item.photos.length > 0
+              ? item.photos
+              : ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'],
+            endsAt: item.endsAt || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+            isLive: true,
+            sellerCity: item.sellerCity || 'بغداد',
+            specs: item.condition ? [item.condition, 'فحص ومعاينة عند الباب'] : ['فحص ومعاينة عند الباب'],
+            condition: 'New',
+            bidsHistory: Array.isArray(item.bidsHistory) ? item.bidsHistory : [],
+          }));
+          set({ auctions: mapped });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch live auctions from production API:', err);
+    } finally {
+      set({ isLoadingAuctions: false });
+    }
+  },
+
   selectedCategory: 'all',
   setSelectedCategory: (cat) => set({ selectedCategory: cat }),
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
 
-  watchlistIds: ['auc-ps5-pro', 'auc-rolex-sub'],
+  // Watchlist (Clean initial array)
+  watchlistIds: [],
   toggleWatchlist: (id) => {
     const { watchlistIds } = get();
     if (watchlistIds.includes(id)) {
@@ -258,66 +212,74 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  myBids: [
-    { auctionId: 'auc-ps5-pro', amountIqd: 450000, isLeading: true },
-    { auctionId: 'auc-iphone-16-pro', amountIqd: 800000, isLeading: false },
-  ],
+  // Active Bids (Clean initial array)
+  myBids: [],
 
-  placeBid: (auctionId, amountIqd) => {
+  // Real Bidding Submission
+  placeBid: async (auctionId, amountIqd) => {
     const { currentUser, openAuthModal, auctions, myBids } = get();
+
     if (!currentUser) {
       openAuthModal();
-      return;
+      return { success: false, message: 'Login required' };
     }
 
-    const updated = auctions.map((item) => {
-      if (item.id !== auctionId) return item;
+    try {
+      const response = await fetch(ZEEDO_CONFIG.ENDPOINTS.PLACE_BID, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auctionId,
+          bidderId: currentUser.id,
+          bidderName: currentUser.name,
+          bidderPhone: currentUser.phone,
+          bidderCity: currentUser.city || 'العراق',
+          amountIqd,
+        }),
+      });
 
-      const newRecord: BidRecord = {
-        bidId: `b-${Date.now()}`,
-        bidderId: currentUser.id,
-        bidderName: currentUser.name,
-        amountIqd,
-        timestamp: new Date().toLocaleTimeString(),
-      };
+      const resData = await response.json();
 
-      const endsTime = new Date(item.endsAt).getTime();
-      const diffSecs = (endsTime - Date.now()) / 1000;
-      let newEndsAt = item.endsAt;
-      if (diffSecs <= 60 && diffSecs > 0) {
-        newEndsAt = new Date(Date.now() + 60 * 1000).toISOString();
+      if (!response.ok || resData.success === false) {
+        return {
+          success: false,
+          message: resData.error || 'Failed to place bid. You may have been outbid.',
+        };
       }
 
-      return {
-        ...item,
-        currentBidIqd: amountIqd,
-        bidsCount: item.bidsCount + 1,
-        endsAt: newEndsAt,
-        bidsHistory: [newRecord, ...item.bidsHistory].slice(0, 30),
-      };
-    });
+      // Optimistically update local auction and leading status
+      const updatedAuctions = auctions.map((it) => {
+        if (it.id !== auctionId) return it;
+        const newRecord: BidRecord = {
+          bidId: `b-${Date.now()}`,
+          bidderId: currentUser.id,
+          bidderName: currentUser.name,
+          amountIqd,
+          timestamp: new Date().toLocaleTimeString(),
+        };
 
-    const updatedMyBids = [
-      { auctionId, amountIqd, isLeading: true },
-      ...myBids.filter((b) => b.auctionId !== auctionId),
-    ];
+        return {
+          ...it,
+          currentBidIqd: amountIqd,
+          bidsCount: it.bidsCount + 1,
+          endsAt: resData.newEndTime || it.endsAt,
+          bidsHistory: [newRecord, ...(it.bidsHistory || [])].slice(0, 30),
+        };
+      });
 
-    set({ auctions: updated, myBids: updatedMyBids });
+      const updatedMyBids = [
+        { auctionId, amountIqd, isLeading: true },
+        ...myBids.filter((b) => b.auctionId !== auctionId),
+      ];
+
+      set({ auctions: updatedAuctions, myBids: updatedMyBids });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Network error placing bid' };
+    }
   },
 
-  wonOrders: [
-    {
-      orderId: 'ORD-ZED-98214',
-      auctionId: 'auc-ps5-pro',
-      title: 'سوني بلايستيشن 5 برو 2 تيرابايت (ضمان محلي)',
-      image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=400&q=80',
-      winningBidIqd: 450000,
-      deliveryCity: 'بغداد - المنصور',
-      addressText: 'شارع 14 رمضان، قرب جامع الرواد',
-      awbNumber: 'AWB-IQ-2026-98214',
-      codStatus: 'ready_for_dispatch',
-      placedAt: 'اليوم، 13:40',
-    },
-  ],
+  // Won Items & COD Orders (Clean initial array)
+  wonOrders: [],
   addWonOrder: (order) => set((state) => ({ wonOrders: [order, ...state.wonOrders] })),
 }));
