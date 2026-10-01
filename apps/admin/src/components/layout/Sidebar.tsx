@@ -119,6 +119,23 @@ export const Sidebar: React.FC = () => {
       ],
     },
     {
+      title: 'OPERATIONS & FINANCE',
+      items: [
+        {
+          label: 'Financial Cockpit',
+          href: '/finance',
+          icon: Coins,
+        },
+        {
+          label: '3PL Logistics Hub',
+          href: '/logistics',
+          icon: Truck,
+          badge: readyLogisticsCount > 0 ? `${readyLogisticsCount} Ready` : null,
+          badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+        },
+      ],
+    },
+    {
       title: 'GROWTH & CMS',
       items: [
         {

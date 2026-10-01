@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { broadcastLiveEvent } from '@/lib/realtime';
+import { sendOutbidAlert } from '@/lib/whatsappAlerts';
 
 export async function POST(request: Request) {
   try {
@@ -156,6 +157,17 @@ export async function POST(request: Request) {
           outbidAt: now.toISOString(),
         },
       }).catch(() => {});
+
+      if (previousHighestBidder.phone) {
+        sendOutbidAlert({
+          buyerPhone: previousHighestBidder.phone,
+          buyerName: previousHighestBidder.name || 'عزيزنا المزايد',
+          auctionTitle: auction.title || 'سلعة المزاد',
+          newBidAmountUsd: Math.round(newBid / 1510),
+          newBidAmountIqd: newBid,
+          auctionId,
+        }).catch(() => {});
+      }
     }
 
     return NextResponse.json({

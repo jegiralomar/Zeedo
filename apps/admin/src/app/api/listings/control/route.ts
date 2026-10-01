@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { broadcastLiveEvent } from '@/lib/realtime';
+import { sendAuctionWonAlert, sendMerchantSettlementAlert } from '@/lib/whatsappAlerts';
 
 export async function POST(request: Request) {
   try {
@@ -98,6 +99,18 @@ export async function POST(request: Request) {
               packageAwbId,
             },
           }).catch(() => {});
+
+          if (highestBidderObj.phone) {
+            sendAuctionWonAlert({
+              buyerPhone: highestBidderObj.phone,
+              buyerName: highestBidderObj.name || 'الفائز الكريم',
+              auctionTitle: auc.title || 'سلعة المزاد',
+              finalPriceUsd: Math.round(finalBidIqd / 1510),
+              finalPriceIqd: finalBidIqd,
+              city: highestBidderObj.city || 'بغداد',
+              auctionId: auc.id,
+            }).catch(() => {});
+          }
         }
 
         results.push({
@@ -279,6 +292,18 @@ export async function POST(request: Request) {
             packageAwbId,
           },
         }).catch(() => {});
+
+        if (highestBidderObj.phone) {
+          sendAuctionWonAlert({
+            buyerPhone: highestBidderObj.phone,
+            buyerName: highestBidderObj.name || 'الفائز الكريم',
+            auctionTitle: auction.title || 'سلعة المزاد',
+            finalPriceUsd: Math.round(finalBidIqd / 1510),
+            finalPriceIqd: finalBidIqd,
+            city: highestBidderObj.city || 'بغداد',
+            auctionId,
+          }).catch(() => {});
+        }
       }
 
       return NextResponse.json({
