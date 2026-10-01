@@ -238,3 +238,68 @@ export function verifyWhatsAppOtp(rawPhone: string, submittedCode: string): What
     message: 'WhatsApp phone number successfully verified!',
   };
 }
+
+/**
+ * Send a custom text message via WhatsApp (Gateway or Meta Cloud API)
+ */
+export async function sendWhatsAppCustomMessage(
+  rawPhone: string,
+  messageText: string
+): Promise<{ isSuccess: boolean; message: string; messageId?: string }> {
+  const normalizedPhone = normalizeIraqiPhone(rawPhone);
+  const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001';
+
+  // 1. Try Baileys Gateway
+  try {
+    const gatewayResponse = await fetch(`${gatewayUrl}/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: normalizedPhone,
+        message: messageText,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (gatewayResponse.ok) {
+      const data = await gatewayResponse.json();
+      if (data.isSuccess) {
+        return { isSuccess: true, message: 'Message sent via WhatsApp Gateway', messageId: data.messageId };
+      }
+    }
+  } catch (err) {
+    // Gateway offline or error
+  }
+
+  // 2. Try Meta WhatsApp Cloud API if configured
+  const { token, phoneId, isLive } = getWhatsAppConfig();
+  if (isLive) {
+    try {
+      const recipientPhone = normalizedPhone.replace('+', '');
+      const metaUrl = `https://graph.facebook.com/v20.0/${phoneId}/messages`;
+      const response = await fetch(metaUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: recipientPhone,
+          type: 'text',
+          text: { body: messageText },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { isSuccess: true, message: 'Message sent via Meta WhatsApp Cloud API', messageId: data?.messages?.[0]?.id };
+      }
+    } catch (err) {
+      console.warn('Meta text message send error:', err);
+    }
+  }
+
+  return { isSuccess: false, message: 'WhatsApp Gateway offline or unlinked' };
+}
+

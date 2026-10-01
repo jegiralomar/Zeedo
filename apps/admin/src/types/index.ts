@@ -168,6 +168,10 @@ export interface ListingAuction {
   
   // Logistics & Parcel Delivery Lifecycle
   codStatus?: CodLogisticsStatus;
+  orderStatus?: 'pending_dispatch' | 'dispatched' | 'delivered_paid' | 'cancelled_refunded';
+  orderDeliveredAt?: string;
+  orderCommissionRefunded?: boolean;
+  orderNotes?: string;
   packageAwbId?: string;
   courierManifestId?: string;
   deliveryStage?: ParcelDeliveryStage;
@@ -178,6 +182,20 @@ export interface ListingAuction {
   
   // Moderation notes
   moderationNotes?: string;
+}
+
+export interface MerchantReceipt {
+  id: string;
+  sellerId: string;
+  sellerName: string;
+  amountIqd: number;
+  paymentMethod: 'fib' | 'zaincash' | 'fastpay' | 'cash';
+  receiptImageUrl: string;
+  referenceNote?: string;
+  status: 'pending_review' | 'approved' | 'rejected';
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
 }
 
 export interface SellerInvoice {

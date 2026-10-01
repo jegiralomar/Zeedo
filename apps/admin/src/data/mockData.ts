@@ -8,6 +8,7 @@ import {
   SupportTicket,
   StaffUser,
   AuditLogEntry,
+  MerchantReceipt,
 } from '../types';
 
 /**
@@ -309,3 +310,31 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
 ];
 
 export const INITIAL_TICKETS: SupportTicket[] = [];
+
+export const INITIAL_RECEIPTS: MerchantReceipt[] = [
+  {
+    id: 'rcpt-101',
+    sellerId: 'sel-02',
+    sellerName: 'Al-Mansour Luxury Electronics',
+    amountIqd: 1050000,
+    paymentMethod: 'fib',
+    receiptImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80',
+    referenceNote: 'FIB Transfer Ref #FIB-99214 for Sept Commission',
+    status: 'pending_review',
+    createdAt: '2026-10-01T15:30:00Z',
+  },
+  {
+    id: 'rcpt-102',
+    sellerId: 'sel-03',
+    sellerName: 'Kurdistan Gold & Watches',
+    amountIqd: 2940000,
+    paymentMethod: 'zaincash',
+    receiptImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80',
+    referenceNote: 'ZainCash Wallet Ref #ZC-881239',
+    status: 'approved',
+    reviewedBy: 'ZEEDO Master Admin',
+    reviewedAt: '2026-10-01T16:00:00Z',
+    createdAt: '2026-09-30T12:00:00Z',
+  },
+];
+

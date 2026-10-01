@@ -21,6 +21,7 @@ import {
   ArrowUpRight,
   Gavel,
   Sparkles,
+  Key,
 } from 'lucide-react';
 
 interface SellerProfileDetailProps {
@@ -29,11 +30,12 @@ interface SellerProfileDetailProps {
 }
 
 export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ sellerId, onBack }) => {
-  const { sellers, auctions, toggleSellerAutonomy, updateSellerCommission, addToast } = useAdminStore();
+  const { sellers, auctions, toggleSellerAutonomy, updateSellerCommission, sendMerchantCredentials, addToast } = useAdminStore();
   const seller = sellers.find((s) => s.id === sellerId);
 
   const [activeTab, setActiveTab] = useState<'sales' | 'listings' | 'commissions'>('sales');
   const [sliderCommission, setSliderCommission] = useState<number>(seller?.commissionRate || 0.05);
+  const [sendingCreds, setSendingCreds] = useState<boolean>(false);
 
   if (!seller) {
     return (
@@ -128,6 +130,20 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
 
           {/* Action: Tell them to pay me */}
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={async () => {
+                setSendingCreds(true);
+                await sendMerchantCredentials(seller.id);
+                setSendingCreds(false);
+              }}
+              disabled={sendingCreds}
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition-all flex items-center gap-2 shadow-xs hover:scale-102 disabled:opacity-50"
+              title="Dispatch mobile login credentials to merchant WhatsApp"
+            >
+              <Key className="w-4 h-4" />
+              <span>{sendingCreds ? 'Sending...' : 'Send Login via WhatsApp'}</span>
+            </button>
+
             <a
               href={waPaymentUrl}
               target="_blank"

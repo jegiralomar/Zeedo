@@ -156,6 +156,45 @@ export async function initDatabaseSchema() {
     // Ensure pickup_coordinates column exists
     await sql`ALTER TABLE sellers ADD COLUMN IF NOT EXISTS pickup_coordinates JSONB DEFAULT '{"lat": 36.1911, "lng": 44.0092}'::jsonb;`;
 
+    // Ensure order tracking columns exist on auctions table
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_status VARCHAR(32) DEFAULT 'pending_dispatch';`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_delivered_at TIMESTAMPTZ;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_commission_refunded BOOLEAN DEFAULT FALSE;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_notes TEXT;`;
+
+    // 7. Merchant Payment & Settlement Receipts Table
+    await sql`
+      CREATE TABLE IF NOT EXISTS merchant_receipts (
+        id VARCHAR(64) PRIMARY KEY,
+        seller_id VARCHAR(64) NOT NULL,
+        seller_name VARCHAR(128) NOT NULL,
+        amount_iqd BIGINT NOT NULL,
+        payment_method VARCHAR(32) NOT NULL,
+        receipt_image_url TEXT NOT NULL,
+        reference_note TEXT,
+        status VARCHAR(32) DEFAULT 'pending_review',
+        reviewed_by VARCHAR(128),
+        reviewed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    // 8. Merchant Commission & Financial Ledger Table
+    await sql`
+      CREATE TABLE IF NOT EXISTS merchant_payouts_ledger (
+        id VARCHAR(64) PRIMARY KEY,
+        seller_id VARCHAR(64) NOT NULL,
+        type VARCHAR(32) NOT NULL,
+        amount_iqd BIGINT NOT NULL,
+        auction_id VARCHAR(64),
+        receipt_id VARCHAR(64),
+        payment_method VARCHAR(32),
+        notes TEXT,
+        created_by VARCHAR(128) DEFAULT 'system',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
     // Seed default pre-configured merchant if none exists
     await sql`
       INSERT INTO sellers (

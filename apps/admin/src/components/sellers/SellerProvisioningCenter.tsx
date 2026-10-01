@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Sparkles,
   Download,
+  Key,
 } from 'lucide-react';
 
 export const SellerProvisioningCenter: React.FC = () => {
@@ -36,6 +37,7 @@ export const SellerProvisioningCenter: React.FC = () => {
     generateSellerInvoice,
     markInvoicePaid,
     syncSellersFromDb,
+    sendMerchantCredentials,
     addToast,
   } = useAdminStore();
 
@@ -364,6 +366,14 @@ export const SellerProvisioningCenter: React.FC = () => {
 
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => sendMerchantCredentials(s.id)}
+                            className="btn-spark-light text-xs py-1 px-2.5 flex items-center gap-1.5 text-blue-700 hover:text-blue-800"
+                            title="Dispatch mobile login credentials to merchant WhatsApp"
+                          >
+                            <Key className="w-3 h-3 text-blue-600" />
+                            <span>Send Login</span>
+                          </button>
                           <button
                             onClick={() => setSelectedSellerId(s.id)}
                             className="btn-spark-primary text-xs py-1 px-3 flex items-center gap-1.5"

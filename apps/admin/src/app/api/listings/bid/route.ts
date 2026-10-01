@@ -32,6 +32,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Auction is not live' }, { status: 400 });
     }
 
+    // Anti-Shill Bidding Protection: Merchants are strictly prohibited from bidding on their own listings
+    const cleanBidderPhone = (bidderPhone || '').replace(/\D/g, '');
+    const cleanSellerPhone = (auction.seller_phone || '').replace(/\D/g, '');
+    if (
+      auction.seller_id === bidderId ||
+      (cleanSellerPhone && cleanBidderPhone && cleanSellerPhone === cleanBidderPhone)
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'Anti-Shill Protection: Merchants are strictly prohibited from bidding on their own listings.' },
+        { status: 403 }
+      );
+    }
+
     // Track previous highest bidder for outbid alerts
     let previousHighestBidder: any = null;
     try {

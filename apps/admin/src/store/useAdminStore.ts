@@ -22,6 +22,7 @@ import {
   TicketStatus,
   SupportTicketMessage,
   SellerInvoice,
+  MerchantReceipt,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -33,6 +34,7 @@ import {
   INITIAL_STAFF,
   INITIAL_AUDIT_LOGS,
   INITIAL_TICKETS,
+  INITIAL_RECEIPTS,
 } from '../data/mockData';
 
 interface ToastNotification {
@@ -51,6 +53,17 @@ interface AdminStoreState {
   lowDataSocketFeed: LowDataSocketPayload[];
   antiSnipingAlert: { auctionId: string; itemTitle: string; timestamp: string } | null;
   toasts: ToastNotification[];
+
+  // Merchant Receipts & Settlement State
+  merchantReceipts: MerchantReceipt[];
+  fetchReceipts: () => Promise<void>;
+  reviewReceipt: (id: string, status: 'approved' | 'rejected', notes?: string) => Promise<boolean>;
+  sendMerchantCredentials: (sellerId: string) => Promise<boolean>;
+  updateOrderStatus: (
+    auctionId: string,
+    orderStatus: 'pending_dispatch' | 'dispatched' | 'delivered_paid' | 'cancelled_refunded',
+    notes?: string
+  ) => Promise<boolean>;
 
   // Support & Helpdesk State
   tickets: SupportTicket[];
@@ -183,6 +196,7 @@ export const useAdminStore = create<AdminStoreState>()(
       lowDataSocketFeed: [],
       antiSnipingAlert: null,
       toasts: [],
+      merchantReceipts: INITIAL_RECEIPTS,
       invoices: [],
 
       // Support & Helpdesk State
@@ -1660,6 +1674,125 @@ export const useAdminStore = create<AdminStoreState>()(
             `Non-autonomous Seller "${chosenSeller.storeName}" submitted listing ${newId} -> Queued for Moderation!`
           );
         }
+      },
+
+      fetchReceipts: async () => {
+        try {
+          const res = await fetch('/api/sellers/receipts');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.receipts)) {
+              set({ merchantReceipts: data.receipts });
+            }
+          }
+        } catch (e) {
+          console.warn('fetchReceipts error:', e);
+        }
+      },
+
+      reviewReceipt: async (id: string, status: 'approved' | 'rejected', notes?: string) => {
+        try {
+          const staff = get().currentUser;
+          const res = await fetch(`/api/sellers/receipts/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status,
+              reviewedBy: staff?.name || 'Admin',
+              notes,
+            }),
+          });
+          if (res.ok) {
+            set((state) => ({
+              merchantReceipts: state.merchantReceipts.map((r) =>
+                r.id === id
+                  ? {
+                      ...r,
+                      status,
+                      reviewedBy: staff?.name || 'Admin',
+                      reviewedAt: new Date().toISOString(),
+                    }
+                  : r
+              ),
+            }));
+            get().addToast('success', `Receipt ${id} marked as ${status.toUpperCase()}`);
+            return true;
+          }
+        } catch (e) {
+          get().addToast('error', 'Failed to update receipt status');
+        }
+        return false;
+      },
+
+      sendMerchantCredentials: async (sellerId: string) => {
+        try {
+          const res = await fetch('/api/sellers/send-credentials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sellerId }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            get().addToast('success', data.message || 'Credentials sent to WhatsApp');
+            return true;
+          } else {
+            get().addToast('error', data.error || 'Failed to send credentials');
+            return false;
+          }
+        } catch (e) {
+          get().addToast('error', 'Network error sending credentials');
+          return false;
+        }
+      },
+
+      updateOrderStatus: async (auctionId: string, orderStatus, notes) => {
+        try {
+          const staff = get().currentUser;
+          const res = await fetch(`/api/sellers/orders/${auctionId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderStatus,
+              notes,
+              adminName: staff?.name || 'Admin',
+            }),
+          });
+          if (res.ok) {
+            set((state) => ({
+              auctions: state.auctions.map((a) =>
+                a.id === auctionId
+                  ? {
+                      ...a,
+                      orderStatus,
+                      codStatus:
+                        orderStatus === 'delivered_paid'
+                          ? 'collected_cod'
+                          : orderStatus === 'cancelled_refunded'
+                          ? 'cod_refused'
+                          : a.codStatus,
+                      orderDeliveredAt:
+                        orderStatus === 'delivered_paid'
+                          ? new Date().toISOString()
+                          : a.orderDeliveredAt,
+                      orderCommissionRefunded:
+                        orderStatus === 'cancelled_refunded'
+                          ? true
+                          : a.orderCommissionRefunded,
+                      orderNotes: notes || a.orderNotes,
+                    }
+                  : a
+              ),
+            }));
+            get().addToast(
+              'success',
+              `Order marked as ${orderStatus.replace('_', ' ').toUpperCase()}`
+            );
+            return true;
+          }
+        } catch (e) {
+          get().addToast('error', 'Failed to update order status');
+        }
+        return false;
       },
 
       resetToDefaults: () => {
