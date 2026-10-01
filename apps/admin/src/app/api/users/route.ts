@@ -13,7 +13,7 @@ async function ensureUsersTable(sql: any) {
       rooftop_landmark TEXT,
       rooftop_lat DOUBLE PRECISION,
       rooftop_lng DOUBLE PRECISION,
-      rooftop_pin JSONB,
+      rooftop_pin TEXT,
       total_bids INT DEFAULT 0,
       total_wins INT DEFAULT 0,
       total_spent_iqd BIGINT DEFAULT 0,
@@ -24,7 +24,7 @@ async function ensureUsersTable(sql: any) {
   try {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lat DOUBLE PRECISION;`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lng DOUBLE PRECISION;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin JSONB;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin TEXT;`;
   } catch {}
 }
 
@@ -46,29 +46,37 @@ export async function GET(request: Request) {
       } else {
         rows = await sql`SELECT * FROM users ORDER BY created_at DESC`;
       }
-      const users = rows.map((r: any) => ({
-        id: r.id,
-        phone: r.phone,
-        name: r.name,
-        city: r.city,
-        kycStatus: r.kyc_status || 'pending',
-        kycNationalId: r.kyc_national_id,
-        rooftopLandmark: r.rooftop_landmark,
-        rooftopPin: r.rooftop_pin || (r.rooftop_lat ? {
-          latitude: Number(r.rooftop_lat),
-          longitude: Number(r.rooftop_lng),
+      const users = rows.map((r: any) => {
+        let parsedPin = undefined;
+        if (r.rooftop_pin) {
+          try {
+            parsedPin = typeof r.rooftop_pin === 'string' ? JSON.parse(r.rooftop_pin) : r.rooftop_pin;
+          } catch {}
+        }
+        return {
+          id: r.id,
+          phone: r.phone,
+          name: r.name,
           city: r.city,
-          landmark: r.rooftop_landmark || '',
-          addressText: [r.rooftop_landmark, r.city, 'Iraq'].filter(Boolean).join(', '),
-          isVerified: r.kyc_status === 'verified',
-        } : undefined),
-        totalBids: r.total_bids || 0,
-        totalWins: r.total_wins || 0,
-        totalSpentIqd: Number(r.total_spent_iqd || 0),
-        role: r.role || 'buyer',
-        createdAt: r.created_at,
-        joinedAt: r.created_at,
-      }));
+          kycStatus: r.kyc_status || 'pending',
+          kycNationalId: r.kyc_national_id,
+          rooftopLandmark: r.rooftop_landmark,
+          rooftopPin: parsedPin || (r.rooftop_lat ? {
+            latitude: Number(r.rooftop_lat),
+            longitude: Number(r.rooftop_lng),
+            city: r.city,
+            landmark: r.rooftop_landmark || '',
+            addressText: [r.rooftop_landmark, r.city, 'Iraq'].filter(Boolean).join(', '),
+            isVerified: r.kyc_status === 'verified',
+          } : undefined),
+          totalBids: r.total_bids || 0,
+          totalWins: r.total_wins || 0,
+          totalSpentIqd: Number(r.total_spent_iqd || 0),
+          role: r.role || 'buyer',
+          createdAt: r.created_at,
+          joinedAt: r.created_at,
+        };
+      });
       return NextResponse.json({ success: true, count: users.length, users, source: 'postgres' });
     }
   } catch (error: any) {
@@ -101,7 +109,7 @@ export async function POST(request: Request) {
     const lat = rooftopPin?.latitude || null;
     const lng = rooftopPin?.longitude || null;
     const landmarkText = rooftopLandmark || rooftopPin?.landmark || rooftopPin?.addressText || null;
-    const pinJson = rooftopPin ? JSON.stringify(rooftopPin) : null;
+    const pinText = rooftopPin ? JSON.stringify(rooftopPin) : null;
 
     await initDatabaseSchema();
     const sql = getDb();
@@ -112,7 +120,7 @@ export async function POST(request: Request) {
           id, phone, name, city, role, kyc_status, rooftop_landmark, rooftop_lat, rooftop_lng, rooftop_pin, created_at
         )
         VALUES (
-          ${userId}, ${cleanPhone}, ${name}, ${city}, ${role}, ${effectiveKyc}, ${landmarkText}, ${lat}, ${lng}, ${pinJson}, NOW()
+          ${userId}, ${cleanPhone}, ${name}, ${city}, ${role}, ${effectiveKyc}, ${landmarkText}, ${lat}, ${lng}, ${pinText}, NOW()
         )
         ON CONFLICT (phone) DO UPDATE SET
           name = EXCLUDED.name,
