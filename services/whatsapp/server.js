@@ -28,6 +28,15 @@ let connectedPhone = null;
 
 const logger = pino({ level: 'info' });
 
+const messageStore = new Map();
+const retryCounterCache = {
+  data: new Map(),
+  get(key) { return this.data.get(key); },
+  set(key, val) { this.data.set(key, val); },
+  del(key) { this.data.delete(key); },
+  flushAll() { this.data.clear(); }
+};
+
 async function initWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   const { version } = await fetchLatestBaileysVersion();
@@ -41,7 +50,14 @@ async function initWhatsApp() {
     auth: state,
     browser: ['Zeedo Marketplace', 'Chrome', '1.0.0'],
     generateHighQualityLinkPreview: false,
-    syncFullHistory: false
+    syncFullHistory: false,
+    msgRetryCounterCache: retryCounterCache,
+    getMessage: async (key) => {
+      if (key && key.id && messageStore.has(key.id)) {
+        return messageStore.get(key.id);
+      }
+      return undefined;
+    }
   });
 
   sock.ev.on('creds.update', saveCreds);
@@ -224,7 +240,22 @@ app.post('/send-otp', async (req, res) => {
     ].join('\n');
 
     logger.info(`Sending OTP to ${jid}...`);
+    try {
+      await sock.presenceSubscribe(jid);
+      await sock.sendPresenceUpdate('available', jid);
+    } catch (_) {
+      // Non-blocking presence signal
+    }
+
     const sent = await sock.sendMessage(jid, { text: textContent });
+
+    if (sent?.key?.id && sent?.message) {
+      messageStore.set(sent.key.id, sent.message);
+      if (messageStore.size > 2000) {
+        const oldestKey = messageStore.keys().next().value;
+        messageStore.delete(oldestKey);
+      }
+    }
 
     return res.json({
       isSuccess: true,
