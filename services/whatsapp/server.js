@@ -3,7 +3,9 @@ const {
   default: makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
-  fetchLatestBaileysVersion
+  fetchLatestBaileysVersion,
+  makeCacheableSignalKeyStore,
+  Browsers
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const QRCode = require('qrcode');
@@ -43,17 +45,24 @@ async function initWhatsApp() {
 
   logger.info(`Starting Baileys WhatsApp Gateway v${version.join('.')}...`);
 
+  const silentLogger = pino({ level: 'silent' });
+
   sock = makeWASocket({
     version,
-    logger: pino({ level: 'warn' }),
-    printQRInTerminal: true,
-    auth: state,
-    browser: ['Zeedo Marketplace', 'Chrome', '1.0.0'],
+    logger: silentLogger,
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(state.keys, silentLogger)
+    },
+    browser: Browsers.macOS('Chrome'),
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
+    markOnlineOnConnect: false,
+    retryRequestDelayMs: 350,
+    maxMsgRetryCount: 5,
     msgRetryCounterCache: retryCounterCache,
     getMessage: async (key) => {
-      if (key && key.id && messageStore.has(key.id)) {
+      if (key?.id && messageStore.has(key.id)) {
         return messageStore.get(key.id);
       }
       return undefined;
@@ -61,6 +70,19 @@ async function initWhatsApp() {
   });
 
   sock.ev.on('creds.update', saveCreds);
+
+  // Store ALL messages (sent + received) so getMessage can serve retries
+  sock.ev.on('messages.upsert', ({ messages }) => {
+    for (const msg of messages) {
+      if (msg.key?.id && msg.message) {
+        messageStore.set(msg.key.id, msg.message);
+        if (messageStore.size > 5000) {
+          const oldest = messageStore.keys().next().value;
+          messageStore.delete(oldest);
+        }
+      }
+    }
+  });
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -269,6 +291,39 @@ app.post('/send-otp', async (req, res) => {
       isSuccess: false,
       message: error?.message || 'Internal error sending WhatsApp message'
     });
+  }
+});
+
+// 5. Reset session — clears auth_info and triggers new QR scan
+app.post('/reset-session', async (req, res) => {
+  try {
+    logger.warn('🔄 Session reset requested. Disconnecting and clearing auth...');
+    if (sock) {
+      try { sock.end(); } catch (_) {}
+      sock = null;
+    }
+    isConnected = false;
+    connectedPhone = null;
+    currentQrDataUrl = null;
+    currentQrRaw = null;
+
+    // Clear all auth files
+    if (fs.existsSync(AUTH_DIR)) {
+      const files = fs.readdirSync(AUTH_DIR);
+      for (const f of files) fs.unlinkSync(path.join(AUTH_DIR, f));
+    }
+    messageStore.clear();
+    retryCounterCache.flushAll();
+
+    // Re-init after a brief delay
+    setTimeout(() => {
+      initWhatsApp().catch((err) => logger.error('Error re-initializing WhatsApp:', err));
+    }, 1500);
+
+    return res.json({ isSuccess: true, message: 'Session cleared. Scan new QR at /qr' });
+  } catch (err) {
+    logger.error('Reset failed:', err);
+    return res.status(500).json({ isSuccess: false, message: err.message });
   }
 });
 
