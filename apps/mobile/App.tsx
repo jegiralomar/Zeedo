@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, SafeAreaView, StatusBar, Platform } from 'react-native';
+import { StyleSheet, View, StatusBar, Platform } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from './src/store/useAppStore';
 import { AppTheme } from './src/theme/colors';
 import { Header } from './src/components/common/Header';
@@ -64,15 +65,17 @@ export default function App() {
   const showHeader = !selectedAuctionId && userRole !== 'merchant';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <View style={styles.container}>
-        {showHeader && <Header onSearchChange={setSearchQuery} />}
-        <View style={styles.screenContainer}>{renderScreen()}</View>
-        <BottomNav />
-        <AuthModal />
-      </View>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <View style={styles.container}>
+          {showHeader && <Header onSearchChange={setSearchQuery} />}
+          <View style={styles.screenContainer}>{renderScreen()}</View>
+          <BottomNav />
+          <AuthModal />
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
