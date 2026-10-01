@@ -20,6 +20,7 @@ services:
 
   # 2. Real-Time WebSocket Bidding Gateway
   websocket:
+    image: ghcr.io/jegiralomar/zeedo-websocket:latest
     build:
       context: ./services/websocket
       dockerfile: Dockerfile
@@ -41,6 +42,7 @@ services:
 
   # 3. Next.js Web App & API
   web:
+    image: ghcr.io/jegiralomar/zeedo-web:latest
     build:
       context: ./apps/admin
       dockerfile: Dockerfile

@@ -43,6 +43,11 @@
     encode zstd gzip
 }
 
+# 3. WWW Subdomain Redirect (https://www.zeedo.bid -> https://zeedo.bid)
+www.zeedo.bid {
+    redir https://zeedo.bid{uri} permanent
+}
+
 # 3. Direct IP Access (For testing via raw IP before DNS cutover)
 http:// {
     handle /ws* {
