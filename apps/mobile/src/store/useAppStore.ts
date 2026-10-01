@@ -8,6 +8,10 @@ interface AppState {
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
 
+  // Onboarding Intro
+  hasSeenIntro: boolean;
+  completeIntro: () => void;
+
   // Authentication & Role
   currentUser: MobileUser | null;
   userRole: UserRole;
@@ -152,9 +156,24 @@ const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
   },
 ];
 
+const getInitialIntroSeen = () => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return window.localStorage.getItem('zeedo_has_seen_intro') === 'true';
+  }
+  return false;
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   language: 'ar',
   setLanguage: (lang) => set({ language: lang }),
+
+  hasSeenIntro: getInitialIntroSeen(),
+  completeIntro: () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('zeedo_has_seen_intro', 'true');
+    }
+    set({ hasSeenIntro: true });
+  },
 
   currentUser: null,
   userRole: 'guest',

@@ -14,15 +14,29 @@ import { MerchantHomeScreen } from './src/screens/merchant/MerchantHomeScreen';
 import { MerchantOrdersScreen } from './src/screens/merchant/MerchantOrdersScreen';
 import { MerchantCommissionsScreen } from './src/screens/merchant/MerchantCommissionsScreen';
 import { AuthModal } from './src/screens/auth/AuthModal';
+import { IntroCarouselScreen } from './src/screens/intro/IntroCarouselScreen';
 
 export default function App() {
   const {
+    hasSeenIntro,
     activeTab,
     selectedAuctionId,
     setSearchQuery,
     userRole,
     merchantScreen,
   } = useAppStore();
+
+  // If first-time user, display the Language Picker & Intro Carousel
+  if (!hasSeenIntro) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea}>
+          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+          <IntroCarouselScreen />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
 
   const renderScreen = () => {
     // 1. Dedicated Full Auction Room Detail
