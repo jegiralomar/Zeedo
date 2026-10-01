@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useAdminStore } from '@/store/useAdminStore';
 import { AnalyticsReports } from './AnalyticsReports';
@@ -23,7 +23,11 @@ import {
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
-  const { users, sellers, auctions, manifests, auditLogs, tickets } = useAdminStore();
+  const { users, sellers, auctions, manifests, auditLogs, tickets, syncUsersFromDb } = useAdminStore();
+
+  useEffect(() => {
+    syncUsersFromDb?.();
+  }, [syncUsersFromDb]);
 
   const totalCodVolume =
     auctions.reduce((acc, a) => acc + (a.status === 'completed' ? a.currentBidIqd : 0), 0) +

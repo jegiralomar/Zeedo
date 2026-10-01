@@ -28,18 +28,19 @@ import {
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { users, auctions, currentUser, logoutStaff, tickets } = useAdminStore();
+  const { users, auctions, currentUser, logoutStaff, tickets, syncUsersFromDb } = useAdminStore();
 
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
 
   useEffect(() => {
     setMounted(true);
+    syncUsersFromDb?.();
     const saved = localStorage.getItem('zeedo_admin_sidebar_collapsed');
     if (saved !== null) {
       setCollapsed(saved === 'true');
     }
-  }, []);
+  }, [syncUsersFromDb]);
 
   const toggleCollapsed = () => {
     const next = !collapsed;
@@ -73,6 +74,13 @@ export const Sidebar: React.FC = () => {
           icon: Gavel,
           badge: liveAuctionsCount > 0 ? `${liveAuctionsCount} Live` : null,
           badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        },
+        {
+          label: 'Buyers Directory',
+          href: '/buyers',
+          icon: Users,
+          badge: users.length > 0 ? `${users.length}` : null,
+          badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
         },
       ],
     },

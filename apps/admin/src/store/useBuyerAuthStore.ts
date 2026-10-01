@@ -84,6 +84,9 @@ export const useBuyerAuthStore = create<BuyerAuthStoreState>()(
               phone: cleanPhone,
               city: cleanCity,
               role: 'buyer',
+              kycStatus: 'verified',
+              rooftopPin: newBuyer.rooftopPin,
+              rooftopLandmark: pin.landmark || pin.district || cleanCity,
             }),
           }).catch(() => {});
         }

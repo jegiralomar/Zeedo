@@ -14,6 +14,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, RoleConfig> = {
     allowedRoutes: [
       '/',
       '/auctions',
+      '/buyers',
       '/kyc',
       '/moderation',
       '/logistics',
@@ -30,7 +31,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, RoleConfig> = {
     description: 'Full unconstrained platform control, seller provisioning, commission edits & team management.',
   },
   moderator: {
-    allowedRoutes: ['/moderation', '/kyc', '/cms', '/auctions', '/support'],
+    allowedRoutes: ['/moderation', '/kyc', '/buyers', '/cms', '/auctions', '/support'],
     defaultHub: '/moderation',
     roleLabel: 'Listing & KYC Moderator',
     badgeBg: 'bg-[#FFEDD5]',
@@ -46,7 +47,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, RoleConfig> = {
     description: 'Thermal AWB label generation and 3PL courier route manifest handoffs.',
   },
   auditor: {
-    allowedRoutes: ['/', '/audit', '/auctions'],
+    allowedRoutes: ['/', '/audit', '/buyers', '/auctions'],
     defaultHub: '/audit',
     roleLabel: 'Financial & Compliance Auditor',
     badgeBg: 'bg-[#F3E8FF]',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdminStore } from '@/store/useAdminStore';
 import { UserBuyer, KycDocument } from '@/types';
 import {
@@ -19,7 +19,11 @@ import {
 } from 'lucide-react';
 
 export const SplitScreenKycCard: React.FC = () => {
-  const { users, approveKyc, rejectKyc, updateKycOcrFields } = useAdminStore();
+  const { users, approveKyc, rejectKyc, updateKycOcrFields, syncUsersFromDb } = useAdminStore();
+
+  useEffect(() => {
+    syncUsersFromDb?.();
+  }, [syncUsersFromDb]);
 
   const [selectedUserId, setSelectedUserId] = useState<string>(
     users.find((u) => u.kycStatus === 'pending')?.id || users[0]?.id || ''

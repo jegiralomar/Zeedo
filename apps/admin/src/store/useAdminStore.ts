@@ -126,6 +126,7 @@ interface AdminStoreState {
   relistAuction: (listingId: string) => void;
   syncAuctionsFromDb: () => Promise<void>;
   syncSellersFromDb: () => Promise<void>;
+  syncUsersFromDb: () => Promise<void>;
 
   // Live Auction Actions & Anti-Sniping
   placeBid: (auctionId: string, bidderId?: string, customAmount?: number) => void;
@@ -769,6 +770,84 @@ export const useAdminStore = create<AdminStoreState>()(
           description: `Rejected listing ${listingId}. Reason: ${reason}`,
           diff: { after: { status: 'rejected', reason } },
         });
+      },
+
+      syncUsersFromDb: async () => {
+        if (typeof window === 'undefined') return;
+        try {
+          const res = await fetch('/api/users');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.users) && data.users.length > 0) {
+              const dbUsers: UserBuyer[] = data.users.map((u: any) => ({
+                id: u.id,
+                name: u.name,
+                phone: u.phone,
+                city: u.city || 'Erbil',
+                avatarUrl: u.avatarUrl,
+                kycStatus: u.kycStatus || 'pending',
+                rooftopPin: u.rooftopPin,
+                totalBids: u.totalBids || 0,
+                totalWins: u.totalWins || 0,
+                joinedAt: u.createdAt || u.joinedAt || new Date().toISOString(),
+              }));
+              set((state) => {
+                const existingMap = new Map(state.users.map((item) => [item.phone || item.id, item]));
+                for (const dbUser of dbUsers) {
+                  existingMap.set(dbUser.phone || dbUser.id, {
+                    ...(existingMap.get(dbUser.phone || dbUser.id) || {}),
+                    ...dbUser,
+                  });
+                }
+                return { users: Array.from(existingMap.values()) };
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to sync users from DB:', err);
+        }
+      },
+
+      syncAuctionsFromDb: async () => {
+        if (typeof window === 'undefined') return;
+        try {
+          const res = await fetch('/api/listings');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.listings) && data.listings.length > 0) {
+              set((state) => {
+                const existingMap = new Map(state.auctions.map((a) => [a.id, a]));
+                for (const l of data.listings) {
+                  existingMap.set(l.id, { ...(existingMap.get(l.id) || {}), ...l });
+                }
+                return { auctions: Array.from(existingMap.values()) };
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to sync listings from DB:', err);
+        }
+      },
+
+      syncSellersFromDb: async () => {
+        if (typeof window === 'undefined') return;
+        try {
+          const res = await fetch('/api/sellers');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.sellers) && data.sellers.length > 0) {
+              set((state) => {
+                const existingMap = new Map(state.sellers.map((s) => [s.id, s]));
+                for (const s of data.sellers) {
+                  existingMap.set(s.id, { ...(existingMap.get(s.id) || {}), ...s });
+                }
+                return { sellers: Array.from(existingMap.values()) };
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to sync sellers from DB:', err);
+        }
       },
 
       updateListingMultilingual: (listingId, lang, content) => {
