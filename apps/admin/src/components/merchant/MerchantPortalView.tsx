@@ -512,7 +512,7 @@ export const MerchantPortalView: React.FC = () => {
                         {item.status === 'live' && (
                           <span className="text-emerald-400 text-[11px] font-bold flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            Live on zeedo.auction
+                            Live on zeedo.bid
                           </span>
                         )}
                         {item.status === 'completed' && item.highestBidder && (

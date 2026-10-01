@@ -24,13 +24,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    setTimeout(() => {
-      const success = loginStaff(identifier, password);
-      setLoading(false);
+    try {
+      const success = await loginStaff(identifier, password);
       if (success) {
         // Redirect to admin operations hub
         const staff = staffUsers.find(
@@ -41,7 +40,9 @@ export default function LoginPage() {
         const targetHub = staff ? ROLE_PERMISSIONS[staff.role]?.defaultHub || '/admin' : '/admin';
         router.push(targetHub === '/' ? '/admin' : targetHub);
       }
-    }, 400);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFillDefaultAdmin = () => {
@@ -150,34 +151,37 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Default Admin Credentials Notice */}
-          <div className="p-4 rounded-2xl bg-[#072F1F]/5 border border-[#072F1F]/15 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 font-bold text-[#072F1F] text-xs">
-                <KeyRound className="w-3.5 h-3.5 text-[#072F1F]" />
-                <span>Default Master Admin</span>
+          {/* Default Admin Credentials Notice (Dev Mode Only) */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="p-4 rounded-2xl bg-[#072F1F]/5 border border-[#072F1F]/15 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold text-[#072F1F] text-xs">
+                  <KeyRound className="w-3.5 h-3.5 text-[#072F1F]" />
+                  <span>Dev Credentials</span>
+                  <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono font-bold">DEV ONLY</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFillDefaultAdmin}
+                  className="text-[11px] font-bold text-[#072F1F] hover:underline flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3 text-[#15803d]" />
+                  <span>Auto-Fill</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleFillDefaultAdmin}
-                className="text-[11px] font-bold text-[#072F1F] hover:underline flex items-center gap-1"
-              >
-                <Sparkles className="w-3 h-3 text-[#15803d]" />
-                <span>Auto-Fill</span>
-              </button>
-            </div>
 
-            <div className="text-[11px] font-mono text-slate-700 space-y-1 bg-white p-2.5 rounded-xl border border-slate-200">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Username:</span>
-                <span className="font-bold text-[#0B130F]">ZAdmin9898</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Password:</span>
-                <span className="font-bold text-[#0B130F]">ZEEDOA98</span>
+              <div className="text-[11px] font-mono text-slate-700 space-y-1 bg-white p-2.5 rounded-xl border border-slate-200">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Username:</span>
+                  <span className="font-bold text-[#0B130F]">ZAdmin9898</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Password:</span>
+                  <span className="font-bold text-[#0B130F]">ZEEDOA98</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Security Notice */}

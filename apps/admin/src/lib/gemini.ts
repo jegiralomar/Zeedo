@@ -1,12 +1,9 @@
 /**
  * Google Gemini Multimodal AI Client for ZEEDO BID APP
- * Supports Gemini 2.0 Flash / 1.5 Flash for Multimodal Vision OCR and Google Search Grounded Web Enrichment.
+ * Supports Gemini 2.0 Flash / 1.5 Flash for Google Search Grounded Web Enrichment.
  */
 
 import { getSetting, initDatabaseSchema } from './db';
-import { ocrIraqiNationalIdWithTesseract, IraqiNationalIdOcrResult } from './ocr';
-
-export type { IraqiNationalIdOcrResult };
 
 export interface ItemEnrichmentResult {
   isSuccess: boolean;
@@ -36,20 +33,10 @@ const GEMINI_MODEL = 'gemini-flash-latest'; // Updated from deprecated gemini-2.
 
 async function getGeminiConfig() {
   await initDatabaseSchema();
-  // DB takes priority over env vars (user saved via admin modal → Neon Postgres)
+  // DB takes priority over env vars (user saved via admin modal → PostgreSQL)
   const key = (await getSetting('gemini_api_key')) || process.env.GEMINI_API_KEY || '';
   const mode = (await getSetting('api_mode')) || process.env.ZEEDO_API_MODE || 'sandbox';
   return { key, isLive: mode === 'live' && Boolean(key && key.length > 5) };
-}
-
-/**
- * Perform Self-Contained Dual-Language OCR on an Iraqi National ID Card (Bataqa Wataniya)
- * Uses Tesseract.js (Arabic + English) with zero external API dependencies or quotas.
- */
-export async function ocrIraqiNationalId(
-  imageBase64?: string
-): Promise<IraqiNationalIdOcrResult> {
-  return ocrIraqiNationalIdWithTesseract(imageBase64);
 }
 
 /**

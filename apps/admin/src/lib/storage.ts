@@ -14,7 +14,7 @@ interface UploadOptions {
 
 export interface UploadResult {
   url: string;
-  provider: 'cloudflare_r2' | 'vercel_blob' | 'local_storage';
+  provider: 'cloudflare_r2' | 'local_storage';
   sizeBytes?: number;
 }
 
@@ -27,7 +27,7 @@ export function getR2Config() {
     accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
     bucketName: process.env.R2_BUCKET_NAME || '',
-    publicDomain: process.env.R2_PUBLIC_DOMAIN || '', // e.g. https://cdn.zeedo.auction or https://pub-xxx.r2.dev
+    publicDomain: process.env.R2_PUBLIC_DOMAIN || '', // e.g. https://cdn.zeedo.bid or https://pub-xxx.r2.dev
   };
 }
 
@@ -141,29 +141,10 @@ export async function uploadMedia(
       sizeBytes: buffer.length,
     };
   } catch {
-    // If running in read-only environment (e.g. serverless edge), proceed to next fallback
+    // If running in read-only environment, proceed to fallback
   }
 
-  // 3. Vercel Blob Fallback (if token exists)
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    try {
-      const { put } = await import('@vercel/blob');
-      const blob = await put(cleanPath, buffer, {
-        access: 'public',
-        contentType,
-      });
-
-      return {
-        url: blob.url,
-        provider: 'vercel_blob',
-        sizeBytes: buffer.length,
-      };
-    } catch (err: any) {
-      console.warn('[Storage] Vercel Blob fallback error:', err.message || err);
-    }
-  }
-
-  // 4. Default fallback placeholder image
+  // 3. Default fallback placeholder image
   return {
     url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
     provider: 'local_storage',

@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Detect if request is targeting the Admin subdomain (e.g. admin.zeedo.auction, admin.localhost:3000)
+  // 2. Detect if request is targeting the Admin subdomain (e.g. admin.zeedo.bid, admin.localhost:3000)
   const isAdminSubdomain = hostname.toLowerCase().startsWith('admin.');
 
   if (isAdminSubdomain) {
@@ -28,20 +28,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  // 3. For main domain (zeedo.auction or default localhost)
+  // 3. For main domain (zeedo.bid or default localhost)
   // If user navigates directly to /admin, allow direct path access as a fallback
   if (pathname.startsWith('/admin')) {
     return NextResponse.next();
   }
 
-  // If already prefixed with /marketplace, allow
+  // 3. Redirect any legacy /marketplace paths to the new landing page
   if (pathname.startsWith('/marketplace')) {
-    return NextResponse.next();
+    url.pathname = '/';
+    return NextResponse.redirect(url, { status: 301 });
   }
 
-  // Rewrite to buyer marketplace experience
-  url.pathname = `/marketplace${pathname === '/' ? '' : pathname}`;
-  return NextResponse.rewrite(url);
+  // 4. Default: Continue to the landing page at /
+  return NextResponse.next();
 }
 
 export const config = {

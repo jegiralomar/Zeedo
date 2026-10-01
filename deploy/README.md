@@ -63,15 +63,15 @@ You can also open `http://<YOUR_SERVER_IP>` in your browser to verify the web in
 
 ## 4. Cloudflare DNS Cutover (Point to Hostinger)
 
-Log in to your **Cloudflare Dashboard** &rarr; Select `zeedo.auction` &rarr; **DNS** &rarr; **Records**:
+Log in to your **Cloudflare Dashboard** &rarr; Select `zeedo.bid` &rarr; **DNS** &rarr; **Records**:
 
-1. **Main Domain (`zeedo.auction`):**
-   * Change `A` record `zeedo.auction` to point to `<YOUR_HOSTINGER_VPS_IP>`.
+1. **Main Domain (`zeedo.bid`):**
+   * Change `A` record `zeedo.bid` to point to `<YOUR_HOSTINGER_VPS_IP>`.
    * Proxy status: **DNS Only** (Gray Cloud) initially so Caddy can obtain the Let's Encrypt TLS certificate.
-2. **Admin Domain (`admin.zeedo.auction`):**
-   * Change `A` record `admin.zeedo.auction` to point to `<YOUR_HOSTINGER_VPS_IP>`.
+2. **Admin Domain (`admin.zeedo.bid`):**
+   * Change `A` record `admin.zeedo.bid` to point to `<YOUR_HOSTINGER_VPS_IP>`.
    * Proxy status: **DNS Only** (Gray Cloud).
-3. Once `https://zeedo.auction` loads with a valid padlock, you can switch Cloudflare proxy to **Proxied** (Orange Cloud). Under **SSL/TLS**, set mode to **Full (Strict)** and enable **WebSockets** under Network settings.
+3. Once `https://zeedo.bid` loads with a valid padlock, you can switch Cloudflare proxy to **Proxied** (Orange Cloud). Under **SSL/TLS**, set mode to **Full (Strict)** and enable **WebSockets** under Network settings.
 
 ---
 

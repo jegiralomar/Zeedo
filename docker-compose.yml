@@ -66,6 +66,8 @@ services:
       R2_BUCKET_NAME: ${R2_BUCKET_NAME}
       R2_PUBLIC_DOMAIN: ${R2_PUBLIC_DOMAIN}
       WHATSAPP_GATEWAY_URL: http://whatsapp-gateway:3001
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-ZAdmin9898}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ZEEDOA98}
     depends_on:
       db:
         condition: service_healthy

@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${plusJakartaSans.variable} h-full`}>
-      <body className="min-h-full bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#B4F105] selection:text-[#051C12]">
+      <body className="min-h-full bg-white text-[#17223B] font-sans antialiased selection:bg-[#F83758] selection:text-white">
         {children}
         <ToastContainer />
       </body>

@@ -31,7 +31,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy static assets and standalone server bundle
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/*.traineddata ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 

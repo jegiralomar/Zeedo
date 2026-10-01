@@ -67,7 +67,7 @@ interface AdminStoreState {
   auditLogs: AuditLogEntry[];
 
   // Auth & Team RBAC Actions
-  loginStaff: (email: string, password: string) => boolean;
+  loginStaff: (email: string, password: string) => Promise<boolean>;
   logoutStaff: () => void;
   setCurrentUser: (user: StaffUser | null) => void;
   createStaffUser: (userData: {
@@ -291,43 +291,65 @@ export const useAdminStore = create<AdminStoreState>()(
 
       setCurrentUser: (user) => set({ currentUser: user }),
 
-      loginStaff: (identifier, password) => {
-        const cleanId = identifier.trim().toLowerCase();
+      loginStaff: async (identifier, password) => {
+        const cleanId = identifier.trim();
 
-        // Direct check for master administrator credentials
-        if (
-          (cleanId === 'zadmin9898' ||
-            cleanId === 'zadmin' ||
-            cleanId === 'admin@zeedo.bid' ||
-            cleanId === 'admin@zeedo.auction' ||
-            cleanId === 'superadmin@zeedo.iq') &&
-          password === 'ZEEDOA98'
-        ) {
-          const masterAdmin = get().staffUsers[0] || INITIAL_STAFF[0];
-          const updatedStaff: StaffUser = { ...masterAdmin, lastLogin: new Date().toISOString() };
-          set((state) => ({
-            currentUser: updatedStaff,
-            staffUsers: state.staffUsers.map((s) => (s.id === masterAdmin.id ? updatedStaff : s)),
-          }));
-          get().logAuditEvent({
-            action: 'STAFF_LOGIN',
-            category: 'auth',
-            targetId: masterAdmin.id,
-            description: `Master Administrator logged into Admin Console (${masterAdmin.role})`,
+        // 1. Primary: Verify credentials securely against PostgreSQL DB with bcrypt
+        try {
+          const res = await fetch('/api/auth/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: cleanId, password }),
           });
-          get().addToast('success', `Signed in as ZEEDO Master Admin (Super Admin)`);
-          return true;
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.user) {
+              const masterAdmin = get().staffUsers[0] || INITIAL_STAFF[0];
+              const updatedStaff: StaffUser = {
+                ...masterAdmin,
+                id: data.user.id || masterAdmin.id,
+                name: data.user.name || masterAdmin.name,
+                role: (data.user.role as any) || masterAdmin.role,
+                lastLogin: new Date().toISOString(),
+              };
+
+              set((state) => ({
+                currentUser: updatedStaff,
+                staffUsers: state.staffUsers.map((s) => (s.id === masterAdmin.id ? updatedStaff : s)),
+              }));
+
+              if (typeof window !== 'undefined' && data.sessionToken) {
+                localStorage.setItem('zeedo_admin_session', data.sessionToken);
+              }
+
+              get().logAuditEvent({
+                action: 'STAFF_LOGIN',
+                category: 'auth',
+                targetId: updatedStaff.id,
+                description: `Admin logged in securely via PostgreSQL/bcrypt (${updatedStaff.role})`,
+              });
+
+              get().addToast('success', `Signed in as ${updatedStaff.name}`);
+              return true;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('[AdminAuth] Backend auth route unreachable, checking local fallback:', apiErr);
         }
 
+        // 2. Fallback: Local staff accounts for offline development
+        const normalizedId = cleanId.toLowerCase();
         const staff = get().staffUsers.find(
           (s) =>
-            (s.email.toLowerCase() === cleanId ||
-              s.name.toLowerCase() === cleanId ||
-              s.phone.replace(/\s+/g, '') === cleanId) &&
+            (s.email.toLowerCase() === normalizedId ||
+              s.name.toLowerCase() === normalizedId ||
+              s.phone.replace(/\s+/g, '') === normalizedId) &&
             s.password === password
         );
+
         if (!staff) {
-          get().addToast('error', 'Invalid staff credentials. Default admin: ZAdmin9898 / ZEEDOA98');
+          get().addToast('error', 'Invalid admin credentials.');
           return false;
         }
         if (staff.status === 'suspended') {

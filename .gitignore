@@ -39,3 +39,7 @@ Thumbs.db
 
 # Tesseract trained data
 *.traineddata
+
+# Design assets and archives
+*.zip
+design-reference/

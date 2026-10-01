@@ -50,12 +50,10 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
   const [showMetaToken, setShowMetaToken] = useState(false);
 
   const [services, setServices] = useState<{
-    ocr?: ServiceInfo;
     gemini?: ServiceInfo;
     whatsapp?: ServiceInfo;
   }>({});
   const [testResults, setTestResults] = useState<{
-    ocr?: { success: boolean; latencyMs: number; message: string };
     gemini?: { success: boolean; latencyMs: number; message: string };
     whatsapp?: { success: boolean; mode: string; message: string };
   } | null>(null);
@@ -173,7 +171,7 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
                 </span>
               </h3>
               <p className="text-xs text-slate-500">
-                Tesseract OCR (Arabic & English), Google Gemini Catalog AI, & Meta WhatsApp Cloud API
+                Google Gemini Flash AI, Meta WhatsApp Cloud API & Cloudflare R2 Storage
               </p>
             </div>
           </div>
@@ -247,12 +245,6 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
                 <span>Latency & Health Status</span>
                 <span className="text-emerald-400">● Live Test Passed</span>
               </div>
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-slate-300">Tesseract OCR Engine:</span>
-                <span className="text-emerald-400 font-bold">
-                  {testResults.ocr?.latencyMs ?? 1}ms ({testResults.ocr?.message ?? 'Local ara+eng ready'})
-                </span>
-              </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Google Gemini Catalog AI:</span>
                 <span className="text-emerald-400 font-bold">
@@ -267,39 +259,6 @@ export const ApiStatusModal: React.FC<ApiStatusModalProps> = ({ isOpen, onClose 
               </div>
             </div>
           )}
-
-          {/* Service: Tesseract OCR Engine (Self-Contained) */}
-          <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/40 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h5 className="text-xs font-bold text-slate-900">Tesseract OCR Engine (Self-Contained)</h5>
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      Active (Zero Cost)
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-600">
-                    Powers Iraqi National ID (البطاقة الوطنية) KYC with Arabic & English trained language models
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <span className="text-[10px] bg-white text-emerald-800 border border-emerald-200 rounded-md px-2 py-0.5 font-medium">
-                Dual Language: Arabic (ara) + English (eng)
-              </span>
-              <span className="text-[10px] bg-white text-emerald-800 border border-emerald-200 rounded-md px-2 py-0.5 font-medium">
-                100% Offline & Private
-              </span>
-              <span className="text-[10px] bg-white text-emerald-800 border border-emerald-200 rounded-md px-2 py-0.5 font-medium">
-                Zero API Keys or Rate Limits
-              </span>
-            </div>
-          </div>
 
           {/* Interactive Credential Inputs Form */}
           <div className="space-y-4 pt-1">

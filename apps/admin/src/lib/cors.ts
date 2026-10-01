@@ -1,15 +1,37 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-};
+const ALLOWED_ORIGINS = [
+  'https://zeedo.bid',
+  'https://admin.zeedo.bid',
+  'https://www.zeedo.bid',
+];
 
-export function handleCorsOptions() {
+// In development, also allow localhost
+if (process.env.NODE_ENV !== 'production') {
+  ALLOWED_ORIGINS.push('http://localhost:3000', 'http://admin.localhost:3000');
+}
+
+function resolveOrigin(requestOrOrigin?: Request | string): string {
+  if (!requestOrOrigin) return ALLOWED_ORIGINS[0];
+  const origin = typeof requestOrOrigin === 'string'
+    ? requestOrOrigin
+    : requestOrOrigin.headers.get('origin') || '';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+}
+
+export function corsHeaders(requestOrOrigin?: Request | string) {
+  return {
+    'Access-Control-Allow-Origin': resolveOrigin(requestOrOrigin),
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
+
+export function handleCorsOptions(request?: Request) {
   return new NextResponse(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: corsHeaders(request),
   });
 }
 
@@ -30,7 +52,7 @@ export function jsonResponse(data: unknown, init?: ResponseInit) {
   return NextResponse.json(data, {
     ...init,
     headers: {
-      ...corsHeaders,
+      ...corsHeaders(),
       ...(init?.headers || {}),
     },
   });

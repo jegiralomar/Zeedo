@@ -65,18 +65,6 @@ export async function GET() {
       r2PublicDomain: r2PublicDomain || '',
     },
     services: {
-      ocr: {
-        name: 'Tesseract OCR Engine (Self-Contained Arabic & English)',
-        isConfigured: true,
-        mode: 'local_engine',
-        model: 'Tesseract v7 (ara + eng)',
-        features: [
-          'Iraqi National ID (Bataqa Wataniya) Extraction',
-          'Zero API Costs & Quota Limits',
-          'Offline & Self-Contained Execution',
-          '12-Digit & Arabic Numerals Normalization',
-        ],
-      },
       gemini: {
         name: 'Google Gemini Flash (Catalog Enrichment & Grounded Search)',
         isConfigured: geminiConfigured,
@@ -96,7 +84,7 @@ export async function GET() {
         isConfigured: r2Configured,
         mode: r2Configured ? 'live_r2' : 'local_storage_fallback',
         bucket: r2Bucket || 'zeedo-media',
-        publicDomain: r2PublicDomain || 'https://cdn.zeedo.auction',
+        publicDomain: r2PublicDomain || 'https://cdn.zeedo.bid',
         features: [
           '100% Free 10GB S3-Compatible Media Storage',
           '$0 Zero-Egress Bandwidth Forever',
@@ -215,11 +203,6 @@ export async function POST(req: NextRequest) {
     return jsonResponse({
       timestamp: new Date().toISOString(),
       tests: {
-        ocr: {
-          success: true,
-          latencyMs: 1,
-          message: 'Tesseract v7 operational (ara + eng languages ready, 0 API cost)',
-        },
         gemini: geminiTest,
         whatsapp: {
           success: true,

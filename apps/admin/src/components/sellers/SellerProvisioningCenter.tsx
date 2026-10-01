@@ -575,11 +575,11 @@ export const SellerProvisioningCenter: React.FC = () => {
                 </div>
               </div>
 
-              {/* Login Credentials for zeedo.auction */}
+              {/* Login Credentials for zeedo.bid */}
               <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-amber-50/60 border border-amber-200/80">
                 <div>
                   <label className="text-amber-900 font-bold block mb-1">
-                    Store Username (for zeedo.auction)
+                    Store Username (for zeedo.bid)
                   </label>
                   <input
                     type="text"

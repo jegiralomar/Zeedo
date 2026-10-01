@@ -10,12 +10,6 @@ export async function GET() {
     success: true,
     apiMode,
     services: {
-      ocr: {
-        configured: true,
-        engine: 'tesseract.js',
-        languages: ['ara', 'eng'],
-        isLive: true,
-      },
       gemini: {
         configured: Boolean(geminiKey && geminiKey.length > 5),
         keyMasked: geminiKey ? `${geminiKey.slice(0, 6)}...${geminiKey.slice(-4)}` : '',
@@ -31,7 +25,7 @@ export async function GET() {
     },
     database: {
       connected: Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL),
-      provider: 'neon_postgres',
+      provider: 'postgresql',
     },
   });
 }

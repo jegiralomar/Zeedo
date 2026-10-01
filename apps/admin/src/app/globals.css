@@ -1,28 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Tajawal:wght@300;400;500;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
 @layer base {
   :root {
-    /* Zeedo Royal Indigo & Deep Navy Design System Tokens */
-    --bs-body-bg: #F5F6FA; /* Signature soft lavender/periwinkle canvas */
-    --bs-body-font-family: 'Plus Jakarta Sans', sans-serif;
+    /* Zeedo Stylish Brand Identity Tokens */
+    --stylish-coral: #F83758;
+    --stylish-coral-hover: #E02647;
+    --stylish-coral-light: #FFF0F2;
+    --stylish-blue: #4392F9;
+    --stylish-blue-hover: #297CE6;
+    --stylish-blue-light: #EBF3FF;
+    --stylish-amber: #F8991D;
+    --stylish-dark: #17223B;
+    --stylish-gray: #626262;
+    --stylish-border: #EEEEEE;
+    --stylish-bg-alt: #F9FAFB;
+
+    /* Base Body Tokens */
+    --bs-body-bg: #FFFFFF;
+    --bs-body-font-family: 'Montserrat', 'Tajawal', sans-serif;
     
-    --brand-indigo: #5B50D6;          /* Core Brand Action / Logo */
-    --brand-indigo-hover: #4A40C4;
-    --brand-indigo-light: #EEEDFB;    /* Soft pastel active highlights */
-    --brand-navy: #1E2235;            /* High-contrast dark typography & FAB */
-    --brand-yellow: #FFB800;          /* Warm golden accent */
+    --brand-indigo: #F83758;          /* Mapped to Stylish Coral-Pink */
+    --brand-indigo-hover: #E02647;
+    --brand-indigo-light: #FFF0F2;
+    --brand-navy: #17223B;
+    --brand-yellow: #F8991D;
     
-    /* Legacy aliases mapped to Royal Indigo & Deep Navy */
-    --brand-forest-dark: #1E2235;
-    --brand-forest-medium: #262940;
-    --brand-forest-light: #353958;
-    --brand-lime: #5B50D6;
-    --brand-lime-hover: #4A40C4;
-    --brand-lime-translucent: rgba(91, 80, 214, 0.15);
+    /* Legacy aliases mapped to Stylish palette */
+    --brand-forest-dark: #17223B;
+    --brand-forest-medium: #232D48;
+    --brand-forest-light: #323E5E;
+    --brand-lime: #F83758;
+    --brand-lime-hover: #E02647;
+    --brand-lime-translucent: rgba(248, 55, 88, 0.15);
     
-    --text-main: #1E2235;             /* Deep navy headers, main labels */
+    --text-main: #17223B;             /* Deep navy headers, main labels */
     --text-muted-green: #64748B;      /* Secondary labels, muted details */
     --text-sidebar-muted: #64748B;    /* Sidebar inactive link labels */
     
