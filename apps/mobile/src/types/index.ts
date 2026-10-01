@@ -18,7 +18,6 @@ export interface BidRecord {
   bidderId: string;
   bidderName: string;
   amountIqd: number;
-  amountUsd: number;
   timestamp: string;
 }
 
@@ -31,19 +30,15 @@ export interface MobileAuctionItem {
   description: string;
   descriptionAr?: string;
   category: string;
-  retailPriceUsd: number;
+  startingPriceIqd: number;
   currentBidIqd: number;
-  currentBidUsd: number;
   incrementStepIqd: number;
   bidsCount: number;
   images: string[];
   endsAt: string;
   isLive: boolean;
-  sellerName: string;
-  sellerId: string;
   sellerCity: string;
-  rating: number;
-  reviewCount: number;
+  sellerId?: string;
   specs: string[];
   condition: 'New' | 'Used' | 'New Open Box';
   bidsHistory: BidRecord[];
@@ -54,7 +49,6 @@ export interface WonLotOrder {
   auctionId: string;
   title: string;
   image: string;
-  winningBidUsd: number;
   winningBidIqd: number;
   deliveryCity: string;
   addressText: string;

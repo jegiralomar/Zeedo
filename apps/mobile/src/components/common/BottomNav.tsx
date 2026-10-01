@@ -1,179 +1,190 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Home, Heart, Gavel, Search, Settings, ShoppingBag, Store, Package } from 'lucide-react-native';
+import { Gavel, Heart, ShoppingBag, User, LayoutDashboard, Package, Receipt, Store } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 
 export const BottomNav: React.FC = () => {
-  const { language, activeScreen, setActiveScreen, userRole } = useAppStore();
+  const {
+    language,
+    activeTab,
+    setActiveTab,
+    merchantScreen,
+    setMerchantScreen,
+    userRole,
+    wonOrders,
+    myBids,
+  } = useAppStore();
   const t = getTranslation(language);
 
-  // If merchant is logged in, show merchant bottom dock
+  // Total active bag items (won orders + active bids)
+  const bagCount = wonOrders.length + myBids.length;
+
+  // Strict Merchant Dock if logged in as merchant
   if (userRole === 'merchant') {
     return (
       <View style={styles.container}>
         <TouchableOpacity
-          onPress={() => setActiveScreen('merchant_home')}
+          onPress={() => {
+            setMerchantScreen('dashboard');
+            setActiveTab('auctions');
+          }}
           style={styles.tabItem}
           activeOpacity={0.7}
         >
-          <Store
+          <LayoutDashboard
             size={22}
-            color={activeScreen === 'merchant_home' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+            color={merchantScreen === 'dashboard' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
           />
           <Text
             style={[
               styles.tabLabel,
-              activeScreen === 'merchant_home' && styles.tabLabelActive,
+              merchantScreen === 'dashboard' && styles.tabLabelActive,
             ]}
           >
-            Dashboard
+            {language === 'en' ? 'Dashboard' : 'لوحة التحكم'}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setActiveScreen('merchant_orders')}
+          onPress={() => {
+            setMerchantScreen('orders');
+            setActiveTab('auctions');
+          }}
           style={styles.tabItem}
           activeOpacity={0.7}
         >
           <Package
             size={22}
-            color={activeScreen === 'merchant_orders' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+            color={merchantScreen === 'orders' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
           />
           <Text
             style={[
               styles.tabLabel,
-              activeScreen === 'merchant_orders' && styles.tabLabelActive,
+              merchantScreen === 'orders' && styles.tabLabelActive,
             ]}
           >
-            COD Orders
-          </Text>
-        </TouchableOpacity>
-
-        {/* Center Floating Fast Action */}
-        <TouchableOpacity
-          onPress={() => setActiveScreen('merchant_orders')}
-          style={styles.centerFab}
-          activeOpacity={0.85}
-        >
-          <View style={styles.fabInner}>
-            <Gavel size={24} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveScreen('merchant_commissions')}
-          style={styles.tabItem}
-          activeOpacity={0.7}
-        >
-          <ShoppingBag
-            size={22}
-            color={activeScreen === 'merchant_commissions' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-          />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeScreen === 'merchant_commissions' && styles.tabLabelActive,
-            ]}
-          >
-            Ledger
+            {language === 'en' ? 'COD Orders' : 'طلبات COD'}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setActiveScreen('profile')}
+          onPress={() => {
+            setMerchantScreen('ledger');
+            setActiveTab('auctions');
+          }}
           style={styles.tabItem}
           activeOpacity={0.7}
         >
-          <Settings
+          <Receipt
             size={22}
-            color={activeScreen === 'profile' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+            color={merchantScreen === 'ledger' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
           />
           <Text
             style={[
               styles.tabLabel,
-              activeScreen === 'profile' && styles.tabLabelActive,
+              merchantScreen === 'ledger' && styles.tabLabelActive,
             ]}
           >
-            Store
+            {language === 'en' ? 'Commissions' : 'العمولات'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setActiveTab('profile')}
+          style={styles.tabItem}
+          activeOpacity={0.7}
+        >
+          <Store
+            size={22}
+            color={activeTab === 'profile' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          />
+          <Text
+            style={[
+              styles.tabLabel,
+              activeTab === 'profile' && styles.tabLabelActive,
+            ]}
+          >
+            {language === 'en' ? 'Store' : 'حساب المتجر'}
           </Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Regular Buyer / Guest Bottom Dock (Matches Home page.jpg)
+  // Pure Buyer 4-Tab Custom Dock (Auctions, Watchlist, Bag, Profile)
   return (
     <View style={styles.container}>
-      {/* Home Tab */}
+      {/* 1. Auctions / المزادات */}
       <TouchableOpacity
-        onPress={() => setActiveScreen('home')}
+        onPress={() => setActiveTab('auctions')}
         style={styles.tabItem}
         activeOpacity={0.7}
       >
-        <Home
+        <Gavel
           size={22}
-          color={activeScreen === 'home' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          color={activeTab === 'auctions' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
         />
-        <Text style={[styles.tabLabel, activeScreen === 'home' && styles.tabLabelActive]}>
-          {t.home}
+        <Text
+          style={[
+            styles.tabLabel,
+            activeTab === 'auctions' && styles.tabLabelActive,
+          ]}
+        >
+          {t.auctionsTab}
         </Text>
       </TouchableOpacity>
 
-      {/* Wishlist Tab */}
+      {/* 2. Watchlist / المفضلة */}
       <TouchableOpacity
-        onPress={() => setActiveScreen('home')}
+        onPress={() => setActiveTab('watchlist')}
         style={styles.tabItem}
         activeOpacity={0.7}
       >
         <Heart
           size={22}
-          color={activeScreen === 'wishlist' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          color={activeTab === 'watchlist' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
         />
-        <Text style={[styles.tabLabel, activeScreen === 'wishlist' && styles.tabLabelActive]}>
-          {t.wishlist}
+        <Text style={[styles.tabLabel, activeTab === 'watchlist' && styles.tabLabelActive]}>
+          {t.watchlistTab}
         </Text>
       </TouchableOpacity>
 
-      {/* Center Floating Red Button (Cart / Bids) */}
+      {/* 3. My Bag / حقيبتي (Won Lots + Active Bids) */}
       <TouchableOpacity
-        onPress={() => setActiveScreen('won_lots')}
-        style={styles.centerFab}
-        activeOpacity={0.85}
+        onPress={() => setActiveTab('bag')}
+        style={styles.tabItem}
+        activeOpacity={0.7}
       >
-        <View style={styles.fabInner}>
-          <Gavel size={24} color="#FFFFFF" />
+        <View style={styles.iconWithBadge}>
+          <ShoppingBag
+            size={22}
+            color={activeTab === 'bag' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          />
+          {bagCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{bagCount}</Text>
+            </View>
+          )}
         </View>
-      </TouchableOpacity>
-
-      {/* Search Tab */}
-      <TouchableOpacity
-        onPress={() => setActiveScreen('home')}
-        style={styles.tabItem}
-        activeOpacity={0.7}
-      >
-        <Search
-          size={22}
-          color={activeScreen === 'search' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-        />
-        <Text style={[styles.tabLabel, activeScreen === 'search' && styles.tabLabelActive]}>
-          {t.search}
+        <Text style={[styles.tabLabel, activeTab === 'bag' && styles.tabLabelActive]}>
+          {t.bagTab}
         </Text>
       </TouchableOpacity>
 
-      {/* Profile / Settings Tab */}
+      {/* 4. Profile / حسابي */}
       <TouchableOpacity
-        onPress={() => setActiveScreen('profile')}
+        onPress={() => setActiveTab('profile')}
         style={styles.tabItem}
         activeOpacity={0.7}
       >
-        <Settings
+        <User
           size={22}
-          color={activeScreen === 'profile' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          color={activeTab === 'profile' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
         />
-        <Text style={[styles.tabLabel, activeScreen === 'profile' && styles.tabLabelActive]}>
-          {t.settings}
+        <Text style={[styles.tabLabel, activeTab === 'profile' && styles.tabLabelActive]}>
+          {t.profileTab}
         </Text>
       </TouchableOpacity>
     </View>
@@ -185,12 +196,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    height: 64,
-    backgroundColor: AppTheme.colors.card,
+    height: 62,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: AppTheme.colors.border,
+    borderTopColor: '#E2E8F0',
     paddingBottom: 4,
-    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 6,
   },
   tabItem: {
     flex: 1,
@@ -198,8 +213,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 6,
   },
-  tabLabel: {
+  iconWithBadge: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    backgroundColor: AppTheme.colors.primary,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  badgeText: {
+    color: '#FFFFFF',
     fontSize: 10,
+    fontWeight: '700',
+  },
+  tabLabel: {
+    fontSize: 11,
     fontWeight: '600',
     color: AppTheme.colors.textMuted,
     marginTop: 3,
@@ -207,25 +246,5 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: AppTheme.colors.primary,
     fontWeight: '700',
-  },
-  centerFab: {
-    top: -14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabInner: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: AppTheme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: AppTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
   },
 });

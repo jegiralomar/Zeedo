@@ -70,7 +70,7 @@ export const AuthModal: React.FC = () => {
               <TextInput
                 value={phone}
                 onChangeText={setPhone}
-                placeholder={t.usernameOrPhone}
+                placeholder={isRtl ? 'رقم الهاتف العراقي (0770...)' : 'Iraqi phone number (0770...)'}
                 placeholderTextColor={AppTheme.colors.textMuted}
                 style={[styles.input, isRtl && styles.textRtl]}
               />
@@ -82,7 +82,7 @@ export const AuthModal: React.FC = () => {
               <TextInput
                 value={password}
                 onChangeText={setPassword}
-                placeholder={isOtpMode ? 'Enter 6-digit WhatsApp OTP' : t.password}
+                placeholder={isOtpMode ? (isRtl ? 'أدخل رمز واتساب المكون من 6 أرقام' : 'Enter 6-digit WhatsApp OTP') : (isRtl ? 'كلمة المرور' : 'Password')}
                 placeholderTextColor={AppTheme.colors.textMuted}
                 secureTextEntry={!isOtpMode}
                 style={[styles.input, isRtl && styles.textRtl]}
@@ -99,7 +99,7 @@ export const AuthModal: React.FC = () => {
               </View>
             )}
 
-            {/* Primary Login Button (Matching Sign In.jpg Coral Button) */}
+            {/* Primary Login Button */}
             <TouchableOpacity
               onPress={handleLogin}
               style={styles.loginBtn}
@@ -115,7 +115,9 @@ export const AuthModal: React.FC = () => {
               activeOpacity={0.85}
             >
               <MessageSquare size={16} color="#059669" />
-              <Text style={styles.whatsappBtnText}>{t.continueWithWhatsapp}</Text>
+              <Text style={styles.whatsappBtnText}>
+                {isRtl ? 'متابعة عبر واتساب' : 'Continue with WhatsApp'}
+              </Text>
             </TouchableOpacity>
 
             {/* Divider */}

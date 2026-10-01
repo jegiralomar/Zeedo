@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onMenuPress, onSearchChange }) => {
-  const { language, currentUser, openAuthModal, setActiveScreen } = useAppStore();
+  const { language, currentUser, openAuthModal, setActiveTab } = useAppStore();
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
@@ -21,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuPress, onSearchChange }) =
       <View style={[styles.topBar, isRtl && styles.topBarRtl]}>
         {/* Menu Button */}
         <TouchableOpacity
-          onPress={() => setActiveScreen('profile')}
+          onPress={() => setActiveTab('profile')}
           style={styles.iconButton}
           activeOpacity={0.7}
         >
@@ -30,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuPress, onSearchChange }) =
 
         {/* Center Brand */}
         <TouchableOpacity
-          onPress={() => setActiveScreen('home')}
+          onPress={() => setActiveTab('auctions')}
           style={[styles.brandContainer, isRtl && styles.brandContainerRtl]}
           activeOpacity={0.8}
         >
@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuPress, onSearchChange }) =
         <TouchableOpacity
           onPress={() => {
             if (currentUser) {
-              setActiveScreen('profile');
+              setActiveTab('profile');
             } else {
               openAuthModal();
             }

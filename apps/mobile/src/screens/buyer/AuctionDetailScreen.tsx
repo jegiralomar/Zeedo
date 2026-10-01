@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,17 +10,15 @@ import {
 } from 'react-native';
 import {
   ArrowLeft,
-  ShoppingBag,
-  Star,
+  Heart,
   ShieldCheck,
   Clock,
   Flame,
   CheckCircle2,
   TrendingUp,
   MapPin,
-  Building2,
-  Truck,
-  RotateCcw,
+  AlertCircle,
+  Share2,
 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
@@ -35,22 +33,39 @@ export const AuctionDetailScreen: React.FC = () => {
     setSelectedAuctionId,
     auctions,
     placeBid,
-    addWonOrder,
-    setActiveScreen,
+    watchlistIds,
+    toggleWatchlist,
   } = useAppStore();
+
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
   const auction = auctions.find((a) => a.id === selectedAuctionId) || auctions[0];
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedIncrement, setSelectedIncrement] = useState(auction.incrementStepIqd);
+  const [selectedIncrement, setSelectedIncrement] = useState(auction?.incrementStepIqd || 10000);
   const [bidSuccess, setBidSuccess] = useState(false);
+  const [ticker, setTicker] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTicker((prev) => prev + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (!auction) return null;
 
+  const isWatched = watchlistIds.includes(auction.id);
   const title = isRtl && auction.titleAr ? auction.titleAr : auction.title;
   const description = isRtl && auction.descriptionAr ? auction.descriptionAr : auction.description;
+
+  // Format remaining time
+  const totalMs = new Date(auction.endsAt).getTime() - Date.now();
+  const isEnded = totalMs <= 0;
+  const totalSecs = Math.max(0, Math.floor(totalMs / 1000));
+  const hours = Math.floor(totalSecs / 3600);
+  const minutes = Math.floor((totalSecs % 3600) / 60);
+  const seconds = totalSecs % 60;
+  const countdownFormatted = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   const nextBidAmountIqd = auction.currentBidIqd + selectedIncrement;
 
@@ -60,242 +75,267 @@ export const AuctionDetailScreen: React.FC = () => {
     setTimeout(() => setBidSuccess(false), 3000);
   };
 
-  const handleInstantBuy = () => {
-    addWonOrder({
-      orderId: `ORD-${Date.now().toString().slice(-6)}`,
-      auctionId: auction.id,
-      title,
-      image: auction.images[0],
-      winningBidUsd: auction.currentBidUsd,
-      winningBidIqd: auction.currentBidIqd,
-      deliveryCity: 'بغداد - المنصور',
-      addressText: 'شارع فلسطين، قرب مجسر النخلة',
-      awbNumber: `AWB-IQ-${Date.now().toString().slice(-5)}`,
-      codStatus: 'ready_for_dispatch',
-      placedAt: 'الآن',
-    });
-    setActiveScreen('checkout');
-  };
+  const increments = [
+    auction.incrementStepIqd,
+    auction.incrementStepIqd * 2,
+    auction.incrementStepIqd * 5,
+    auction.incrementStepIqd * 10,
+  ];
 
   return (
     <View style={styles.container}>
-      {/* Top Bar (Matching Shop page.jpg) */}
+      {/* Top Header Bar */}
       <View style={[styles.topBar, isRtl && styles.topBarRtl]}>
         <TouchableOpacity
           onPress={() => setSelectedAuctionId(null)}
-          style={styles.backButton}
+          style={styles.circleButton}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={20} color={AppTheme.colors.textPrimary} />
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
 
-        <Text style={styles.topBarTitle} numberOfLines={1}>
-          {auction.category.toUpperCase()}
-        </Text>
-
-        <TouchableOpacity
-          onPress={() => setActiveScreen('won_lots')}
-          style={styles.cartButton}
-          activeOpacity={0.7}
-        >
-          <ShoppingBag size={20} color={AppTheme.colors.textPrimary} />
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>1</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* 1. Image Gallery Carousel (Matching Shop page.jpg) */}
-        <View style={styles.carouselContainer}>
-          <Image source={{ uri: auction.images[activeImageIndex] || auction.images[0] }} style={styles.mainImage} />
-
-          {/* Pagination Dots */}
-          <View style={styles.dotsRow}>
-            {auction.images.map((_, idx) => (
-              <TouchableOpacity
-                key={idx}
-                onPress={() => setActiveImageIndex(idx)}
-                style={[
-                  styles.dot,
-                  activeImageIndex === idx && styles.dotActive,
-                ]}
-              />
-            ))}
+        <View style={styles.headerCenter}>
+          <View style={styles.liveIndicator}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveIndicatorText}>
+              {isRtl ? 'مزاد حي مباشر' : 'LIVE AUCTION'}
+            </Text>
           </View>
         </View>
 
-        <View style={styles.detailsContainer}>
-          {/* Anti-Sniping Soft-Close Banner */}
-          <View style={styles.snipingAlert}>
-            <Flame size={16} color={AppTheme.colors.primary} />
-            <Text style={[styles.snipingAlertText, isRtl && styles.textRtl]}>
-              {t.antiSnipingNotice}
-            </Text>
-          </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={() => toggleWatchlist(auction.id)}
+            activeOpacity={0.7}
+          >
+            <Heart
+              size={18}
+              color={isWatched ? '#F83758' : '#0F172A'}
+              fill={isWatched ? '#F83758' : 'none'}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
-          {/* Title & Subtitle */}
-          <Text style={[styles.title, isRtl && styles.textRtl]}>{title}</Text>
-          <Text style={[styles.sellerSub, isRtl && styles.textRtl]}>
-            {auction.sellerName} • {auction.sellerCity}
-          </Text>
+      <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
+        {/* 1. Main High-Res Image Gallery */}
+        <View style={styles.imageGallery}>
+          <Image
+            source={{ uri: auction.images[activeImageIndex] || auction.images[0] }}
+            style={styles.mainImage}
+          />
 
-          {/* Star Rating & Reviews */}
-          <View style={[styles.ratingRow, isRtl && styles.ratingRowRtl]}>
-            <Star size={14} color={AppTheme.colors.star} fill={AppTheme.colors.star} />
-            <Text style={styles.ratingText}>{auction.rating}</Text>
-            <Text style={styles.reviewCount}>({auction.reviewCount} {isRtl ? 'تقييم موثق' : 'reviews'})</Text>
-          </View>
-
-          {/* Pricing Row (Matching Shop page.jpg) */}
-          <View style={[styles.priceContainer, isRtl && styles.priceContainerRtl]}>
-            <View>
-              <Text style={styles.priceLabel}>{t.currentBid}</Text>
-              <Text style={styles.currentBidIqd}>
-                {auction.currentBidIqd.toLocaleString()} د.ع
-              </Text>
-              <Text style={styles.currentBidUsd}>
-                ≈ ${auction.currentBidUsd} USD
-              </Text>
-            </View>
-
-            <View style={styles.retailBox}>
-              <Text style={styles.retailLabel}>{t.retailPrice}</Text>
-              <Text style={styles.retailPriceStrikethrough}>
-                ${auction.retailPriceUsd}
-              </Text>
-              <View style={styles.offBadge}>
-                <Text style={styles.offBadgeText}>45% {t.off}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Bid Increment Step Selector */}
-          <View style={styles.incrementSection}>
-            <Text style={[styles.sectionLabel, isRtl && styles.textRtl]}>
-              {isRtl ? 'اختر زيادة العطاء القادمة:' : 'Select Next Bid Step:'}
-            </Text>
-            <View style={[styles.incrementRow, isRtl && styles.incrementRowRtl]}>
-              {[auction.incrementStepIqd, auction.incrementStepIqd * 2, auction.incrementStepIqd * 5].map((step) => (
+          {/* Image Dots */}
+          {auction.images.length > 1 && (
+            <View style={styles.dotsContainer}>
+              {auction.images.map((_, idx) => (
                 <TouchableOpacity
-                  key={step}
-                  onPress={() => setSelectedIncrement(step)}
-                  style={[
-                    styles.incrementPill,
-                    selectedIncrement === step && styles.incrementPillActive,
-                  ]}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.incrementPillText,
-                      selectedIncrement === step && styles.incrementPillTextActive,
-                    ]}
-                  >
-                    +{step.toLocaleString()} د.ع
-                  </Text>
-                </TouchableOpacity>
+                  key={idx}
+                  onPress={() => setActiveImageIndex(idx)}
+                  style={[styles.dot, activeImageIndex === idx && styles.dotActive]}
+                />
               ))}
-            </View>
-          </View>
-
-          {/* Quick Verification Badges (From Shop page.jpg) */}
-          <View style={[styles.badgeBar, isRtl && styles.badgeBarRtl]}>
-            <View style={styles.badgeItem}>
-              <Building2 size={13} color={AppTheme.colors.textMuted} />
-              <Text style={styles.badgeItemText}>{t.nearestStore}</Text>
-            </View>
-            <View style={styles.badgeItem}>
-              <ShieldCheck size={13} color={AppTheme.colors.primary} />
-              <Text style={styles.badgeItemText}>{t.vipVerified}</Text>
-            </View>
-            <View style={styles.badgeItem}>
-              <RotateCcw size={13} color={AppTheme.colors.green} />
-              <Text style={styles.badgeItemText}>{t.returnPolicy}</Text>
-            </View>
-          </View>
-
-          {/* Delivery In 1 Hour / Doorstep COD Banner (Pink box from Shop page.jpg) */}
-          <View style={styles.deliveryBox}>
-            <Truck size={20} color={AppTheme.colors.primary} />
-            <View style={styles.deliveryBoxContent}>
-              <Text style={styles.deliveryBoxTitle}>
-                {isRtl ? 'التوصيل لجميع المحافظات خلال 24 - 48 ساعة' : 'Delivery Across Iraq in 24-48 Hours'}
-              </Text>
-              <Text style={styles.deliveryBoxSub}>
-                {isRtl ? 'فحص ومعاينة وتشغيل عند الباب قبل تسليم المبلغ' : 'Doorstep inspection before paying cash'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Action Buttons: Go to Cart (Blue) + 1-Tap Fast Bid (Green) */}
-          <View style={styles.ctaRow}>
-            <TouchableOpacity
-              onPress={handleInstantBuy}
-              style={styles.cartCta}
-              activeOpacity={0.85}
-            >
-              <ShoppingBag size={18} color="#FFFFFF" />
-              <Text style={styles.cartCtaText}>{t.buyNow}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handlePlaceBid}
-              style={styles.bidCta}
-              activeOpacity={0.85}
-            >
-              <Flame size={18} color="#FFFFFF" />
-              <Text style={styles.bidCtaText}>
-                {t.placeBid} (+{selectedIncrement.toLocaleString()})
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {bidSuccess && (
-            <View style={styles.successNotice}>
-              <CheckCircle2 size={16} color={AppTheme.colors.green} />
-              <Text style={styles.successNoticeText}>
-                {isRtl ? 'تم رفع عطائك وتصدرت المزاد بنجاح!' : 'Bid placed successfully! You are highest bidder.'}
-              </Text>
             </View>
           )}
 
-          {/* Specifications */}
-          <View style={styles.specsSection}>
-            <Text style={[styles.sectionTitle, isRtl && styles.textRtl]}>{t.productDetails}</Text>
-            <Text style={[styles.descriptionText, isRtl && styles.textRtl]}>{description}</Text>
+          {/* Floating Time Pill */}
+          <View style={styles.floatingTimer}>
+            <Clock size={14} color="#FFFFFF" />
+            <Text style={styles.floatingTimerText}>{countdownFormatted}</Text>
+          </View>
+        </View>
 
+        {/* 2. Soft-Close Anti-Sniping Alert */}
+        <View style={styles.antiSnipingCard}>
+          <AlertCircle size={16} color="#D97706" />
+          <Text style={styles.antiSnipingText}>
+            {isRtl
+              ? 'قاعدة تمديد الدقيقة الأخيرة: أي مزايدة في آخر 60 ثانية تمدد وقت المزاد 60 ثانية إضافية لمنع القنص.'
+              : 'Soft-Close Rule: Any bid placed in the final 60 seconds extends the auction by 60s to prevent sniping.'}
+          </Text>
+        </View>
+
+        {/* 3. Title & Current Price Section */}
+        <View style={styles.infoCard}>
+          <View style={styles.categoryRow}>
+            <Text style={styles.categoryBadge}>{auction.category.toUpperCase()}</Text>
+            {auction.sellerCity && (
+              <View style={styles.locationBadge}>
+                <MapPin size={12} color="#64748B" />
+                <Text style={styles.locationText}>{auction.sellerCity}</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={[styles.titleText, isRtl && styles.titleTextRtl]}>{title}</Text>
+
+          <View style={styles.priceContainer}>
+            <View>
+              <Text style={styles.priceLabel}>{t.currentBid}</Text>
+              <Text style={styles.priceValue}>
+                {auction.currentBidIqd.toLocaleString()} {t.currency}
+              </Text>
+            </View>
+            <View style={styles.bidsCountBox}>
+              <TrendingUp size={16} color="#10B981" />
+              <Text style={styles.bidsCountText}>
+                {auction.bidsCount} {isRtl ? 'مزايدة مسجلة' : 'bids'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 4. Zeedo Trust & Doorstep Inspection Guarantee */}
+        <View style={styles.guaranteeBox}>
+          <View style={styles.guaranteeHeader}>
+            <ShieldCheck size={20} color="#10B981" />
+            <Text style={styles.guaranteeTitle}>
+              {isRtl ? 'ضمان زيدو للمعانية عند الاستلام (COD)' : 'Zeedo Doorstep Inspection Guarantee'}
+            </Text>
+          </View>
+          <Text style={styles.guaranteeBody}>
+            {isRtl
+              ? 'يحق لك فتح الطرد وفحص ومطابقة السلعة بالكامل أمام مندوب التوصيل في منزلك قبل دفع أي دينار. الدفع نقداً عند الاستلام فقط.'
+              : 'Open and inspect the item completely at your doorstep with the courier before paying cash. 100% peace of mind.'}
+          </Text>
+        </View>
+
+        {/* 5. Product Specs */}
+        {auction.specs && auction.specs.length > 0 && (
+          <View style={styles.specsCard}>
+            <Text style={styles.sectionHeader}>{isRtl ? 'مواصفات السلعة' : 'Specifications'}</Text>
             <View style={styles.specsList}>
               {auction.specs.map((spec, i) => (
-                <View key={i} style={[styles.specRow, isRtl && styles.specRowRtl]}>
-                  <View style={styles.specDot} />
+                <View key={i} style={styles.specItem}>
+                  <CheckCircle2 size={15} color="#10B981" />
                   <Text style={styles.specText}>{spec}</Text>
                 </View>
               ))}
             </View>
           </View>
+        )}
 
-          {/* Live Bids History */}
-          <View style={styles.historySection}>
-            <Text style={[styles.sectionTitle, isRtl && styles.textRtl]}>{t.bidHistory}</Text>
-            <View style={styles.historyCard}>
-              {auction.bidsHistory.map((bid, i) => (
-                <View key={bid.bidId} style={[styles.historyRow, i > 0 && styles.historyBorder]}>
-                  <View>
-                    <Text style={styles.bidderName}>{bid.bidderName}</Text>
-                    <Text style={styles.bidTime}>{bid.timestamp}</Text>
+        {/* 6. Item Description */}
+        <View style={styles.descriptionCard}>
+          <Text style={styles.sectionHeader}>{isRtl ? 'تفاصيل السلعة' : 'Description'}</Text>
+          <Text style={[styles.descriptionText, isRtl && styles.descriptionTextRtl]}>
+            {description}
+          </Text>
+        </View>
+
+        {/* 7. Live Room Bid History Ticker */}
+        <View style={styles.historyCard}>
+          <View style={styles.historyHeader}>
+            <Flame size={18} color="#EF4444" />
+            <Text style={styles.sectionHeader}>{isRtl ? 'سجل المزايدات الحية' : 'Live Bid Activity'}</Text>
+          </View>
+          <View style={styles.historyList}>
+            {auction.bidsHistory && auction.bidsHistory.length > 0 ? (
+              auction.bidsHistory.map((bid, index) => (
+                <View
+                  key={bid.bidId || index}
+                  style={[styles.historyRow, index === 0 && styles.historyRowLeading]}
+                >
+                  <View style={styles.bidderInfo}>
+                    <View style={[styles.bidderAvatar, index === 0 && styles.bidderAvatarLeading]}>
+                      <Text style={styles.bidderAvatarText}>
+                        {bid.bidderName ? bid.bidderName.charAt(0) : 'Z'}
+                      </Text>
+                    </View>
+                    <View>
+                      <View style={styles.bidderNameRow}>
+                        <Text style={styles.bidderName}>{bid.bidderName}</Text>
+                        {index === 0 && (
+                          <View style={styles.leadingPill}>
+                            <Text style={styles.leadingPillText}>
+                              {isRtl ? 'المتصدر الحالي' : 'Leading'}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.bidTime}>{bid.timestamp}</Text>
+                    </View>
                   </View>
-                  <Text style={styles.historyBidAmount}>
-                    {bid.amountIqd.toLocaleString()} د.ع
+                  <Text
+                    style={[
+                      styles.bidAmount,
+                      index === 0 && styles.bidAmountLeading,
+                    ]}
+                  >
+                    {bid.amountIqd.toLocaleString()} {t.currency}
                   </Text>
                 </View>
-              ))}
-            </View>
+              ))
+            ) : (
+              <Text style={styles.noBidsText}>
+                {isRtl ? 'كن أول من يفتتح المزاد!' : 'Be the first to place a bid!'}
+              </Text>
+            )}
           </View>
         </View>
 
-        <View style={{ height: 40 }} />
+        {/* Spacer for sticky bottom bar */}
+        <View style={{ height: 110 }} />
       </ScrollView>
+
+      {/* 8. Sticky Bottom Bidding Controller */}
+      <View style={styles.bottomBar}>
+        {/* Success Feedback Banner */}
+        {bidSuccess && (
+          <View style={styles.bidSuccessToast}>
+            <CheckCircle2 size={16} color="#FFFFFF" />
+            <Text style={styles.bidSuccessToastText}>
+              {isRtl
+                ? `تم تسجيل مزايدتك بنجاح بقيمة ${auction.currentBidIqd.toLocaleString()} د.ع! أنت المتصدر الآن 🏆`
+                : `Your bid of ${auction.currentBidIqd.toLocaleString()} IQD is placed! You are leading 🏆`}
+            </Text>
+          </View>
+        )}
+
+        {/* Increment Selection Chips */}
+        <View style={styles.chipsRow}>
+          <Text style={styles.chipsLabel}>{isRtl ? 'اختر الزيادة:' : 'Increment:'}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+            {increments.map((inc) => {
+              const isSelected = selectedIncrement === inc;
+              return (
+                <TouchableOpacity
+                  key={inc}
+                  onPress={() => setSelectedIncrement(inc)}
+                  style={[styles.incrementChip, isSelected && styles.incrementChipActive]}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.incrementChipText,
+                      isSelected && styles.incrementChipTextActive,
+                    ]}
+                  >
+                    +{inc.toLocaleString()} {t.currency}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Big Action Bid Button */}
+        <TouchableOpacity
+          style={[styles.mainBidButton, isEnded && styles.mainBidButtonDisabled]}
+          onPress={handlePlaceBid}
+          disabled={isEnded}
+          activeOpacity={0.85}
+        >
+          <View style={styles.bidButtonContent}>
+            <Text style={styles.bidButtonText}>
+              {isEnded
+                ? (isRtl ? 'المزاد منتهي' : 'Auction Ended')
+                : (isRtl ? `زايد الآن بـ ${nextBidAmountIqd.toLocaleString()} د.ع` : `Place Bid: ${nextBidAmountIqd.toLocaleString()} IQD`)}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -303,74 +343,74 @@ export const AuctionDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppTheme.colors.card,
+    backgroundColor: '#F8FAFC',
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: AppTheme.colors.border,
+    borderBottomColor: '#E2E8F0',
   },
   topBarRtl: {
     flexDirection: 'row-reverse',
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: AppTheme.radius.sm,
-    backgroundColor: AppTheme.colors.surface,
+  circleButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topBarTitle: {
-    fontSize: 13,
+  headerCenter: {
+    alignItems: 'center',
+  },
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    gap: 6,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#EF4444',
+  },
+  liveIndicatorText: {
+    fontSize: 11,
     fontWeight: '800',
-    color: AppTheme.colors.textPrimary,
-    letterSpacing: 1,
+    color: '#DC2626',
+    letterSpacing: 0.5,
   },
-  cartButton: {
-    width: 36,
-    height: 36,
-    borderRadius: AppTheme.radius.sm,
-    backgroundColor: AppTheme.colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  cartBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: AppTheme.colors.primary,
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  scroll: {
+  scrollArea: {
     flex: 1,
   },
-  carouselContainer: {
-    width,
-    height: 300,
-    backgroundColor: AppTheme.colors.surface,
+  imageGallery: {
     position: 'relative',
+    width: '100%',
+    height: width * 0.85,
+    backgroundColor: '#FFFFFF',
   },
   mainImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  dotsRow: {
+  dotsContainer: {
     position: 'absolute',
     bottom: 12,
     left: 0,
@@ -383,320 +423,376 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF66',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
   },
   dotActive: {
-    backgroundColor: AppTheme.colors.primary,
     width: 20,
+    backgroundColor: AppTheme.colors.primary,
   },
-  detailsContainer: {
-    padding: 16,
+  floatingTimer: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15, 23, 42, 0.82)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
   },
-  snipingAlert: {
+  floatingTimerText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  antiSnipingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: AppTheme.colors.primaryLight,
-    borderWidth: 1,
-    borderColor: '#FFE4E8',
-    borderRadius: AppTheme.radius.md,
-    padding: 10,
-    marginBottom: 12,
+    backgroundColor: '#FFFBEB',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FDE68A',
   },
-  snipingAlertText: {
-    fontSize: 11,
-    color: AppTheme.colors.primary,
-    fontWeight: '700',
+  antiSnipingText: {
     flex: 1,
+    fontSize: 11,
+    color: '#B45309',
+    fontWeight: '600',
+    lineHeight: 16,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: AppTheme.colors.textPrimary,
-    lineHeight: 24,
-    marginBottom: 4,
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
-  sellerSub: {
-    fontSize: 12,
-    color: AppTheme.colors.textMuted,
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 8,
   },
-  ratingRow: {
+  categoryBadge: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: AppTheme.colors.primary,
+    backgroundColor: '#FFF1F2',
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  locationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 16,
   },
-  ratingRowRtl: {
-    flexDirection: 'row-reverse',
-  },
-  ratingText: {
+  locationText: {
     fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  titleText: {
+    fontSize: 18,
     fontWeight: '800',
-    color: AppTheme.colors.textPrimary,
+    color: '#0F172A',
+    lineHeight: 26,
+    marginBottom: 14,
   },
-  reviewCount: {
-    fontSize: 12,
-    color: AppTheme.colors.textMuted,
+  titleTextRtl: {
+    textAlign: 'right',
   },
   priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: AppTheme.colors.surface,
+    alignItems: 'flex-end',
+    backgroundColor: '#F8FAFC',
     padding: 14,
-    borderRadius: AppTheme.radius.md,
-    marginBottom: 16,
-  },
-  priceContainerRtl: {
-    flexDirection: 'row-reverse',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   priceLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    color: AppTheme.colors.textMuted,
-  },
-  currentBidIqd: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: AppTheme.colors.primary,
-  },
-  currentBidUsd: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: AppTheme.colors.textMuted,
-  },
-  retailBox: {
-    alignItems: 'flex-end',
-  },
-  retailLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    color: AppTheme.colors.textMuted,
-  },
-  retailPriceStrikethrough: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: AppTheme.colors.textMuted,
-    textDecorationLine: 'line-through',
-  },
-  offBadge: {
-    backgroundColor: AppTheme.colors.primary,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 2,
-  },
-  offBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  incrementSection: {
-    marginBottom: 16,
-  },
-  sectionLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-    marginBottom: 8,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 2,
   },
-  incrementRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  incrementRowRtl: {
-    flexDirection: 'row-reverse',
-  },
-  incrementPill: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-    paddingVertical: 8,
-    borderRadius: AppTheme.radius.sm,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  incrementPillActive: {
-    borderColor: AppTheme.colors.primary,
-    backgroundColor: AppTheme.colors.primaryLight,
-  },
-  incrementPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-  },
-  incrementPillTextActive: {
-    color: AppTheme.colors.primary,
+  priceValue: {
+    fontSize: 22,
     fontWeight: '900',
+    color: AppTheme.colors.primary,
   },
-  badgeBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: AppTheme.colors.border,
-    marginBottom: 16,
-  },
-  badgeBarRtl: {
-    flexDirection: 'row-reverse',
-  },
-  badgeItem: {
+  bidsCountBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
-  badgeItemText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-  },
-  deliveryBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFF1F3',
-    padding: 12,
-    borderRadius: AppTheme.radius.md,
-    borderWidth: 1,
-    borderColor: '#FFE4E8',
-    marginBottom: 16,
-  },
-  deliveryBoxContent: {
-    flex: 1,
-  },
-  deliveryBoxTitle: {
+  bidsCountText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: AppTheme.colors.primary,
-  },
-  deliveryBoxSub: {
-    fontSize: 10,
-    color: '#D81B43',
-    marginTop: 2,
-  },
-  ctaRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 12,
-  },
-  cartCta: {
-    flex: 1,
-    backgroundColor: AppTheme.colors.secondary,
-    paddingVertical: 12,
-    borderRadius: AppTheme.radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  cartCtaText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 13,
-  },
-  bidCta: {
-    flex: 1.5,
-    backgroundColor: AppTheme.colors.green,
-    paddingVertical: 12,
-    borderRadius: AppTheme.radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  bidCtaText: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 13,
-  },
-  successNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: AppTheme.colors.greenLight,
-    padding: 10,
-    borderRadius: AppTheme.radius.sm,
-    marginBottom: 16,
-  },
-  successNoticeText: {
+    fontWeight: '700',
     color: '#065F46',
-    fontSize: 11,
-    fontWeight: '700',
   },
-  specsSection: {
-    marginVertical: 12,
+  guaranteeBox: {
+    backgroundColor: '#ECFDF5',
+    margin: 16,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: AppTheme.colors.textPrimary,
+  guaranteeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 6,
   },
-  descriptionText: {
+  guaranteeTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  guaranteeBody: {
     fontSize: 12,
-    color: AppTheme.colors.textSecondary,
+    color: '#047857',
     lineHeight: 18,
+    fontWeight: '500',
+  },
+  specsCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  sectionHeader: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 10,
   },
   specsList: {
-    gap: 6,
+    gap: 8,
   },
-  specRow: {
+  specItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  specRowRtl: {
-    flexDirection: 'row-reverse',
-  },
-  specDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: AppTheme.colors.primary,
-  },
   specText: {
-    fontSize: 11,
-    color: AppTheme.colors.textPrimary,
+    fontSize: 13,
+    color: '#334155',
     fontWeight: '600',
   },
-  historySection: {
-    marginTop: 12,
+  descriptionCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  descriptionText: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 20,
+  },
+  descriptionTextRtl: {
+    textAlign: 'right',
   },
   historyCard: {
-    backgroundColor: AppTheme.colors.surface,
-    borderRadius: AppTheme.radius.md,
-    padding: 10,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  historyList: {
+    gap: 10,
   },
   historyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
   },
-  historyBorder: {
-    borderTopWidth: 1,
-    borderTopColor: AppTheme.colors.border,
+  historyRowLeading: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  bidderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bidderAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bidderAvatarLeading: {
+    backgroundColor: '#3B82F6',
+  },
+  bidderAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  bidderNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   bidderName: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
+    color: '#1E293B',
+  },
+  leadingPill: {
+    backgroundColor: '#DBEAFE',
+    paddingVertical: 1,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+  },
+  leadingPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#1E40AF',
   },
   bidTime: {
-    fontSize: 9,
-    color: AppTheme.colors.textMuted,
+    fontSize: 10,
+    color: '#94A3B8',
   },
-  historyBidAmount: {
-    fontSize: 12,
+  bidAmount: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  bidAmountLeading: {
+    fontSize: 14,
     fontWeight: '900',
+    color: '#1D4ED8',
+  },
+  noBidsText: {
+    fontSize: 13,
+    color: '#94A3B8',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  bidSuccessToast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#10B981',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  bidSuccessToastText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    flex: 1,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  chipsLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    marginRight: 8,
+  },
+  chipsScroll: {
+    gap: 6,
+  },
+  incrementChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  incrementChipActive: {
+    backgroundColor: '#FFF1F2',
+    borderColor: AppTheme.colors.primary,
+  },
+  incrementChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  incrementChipTextActive: {
     color: AppTheme.colors.primary,
   },
-  textRtl: {
-    textAlign: 'right',
+  mainBidButton: {
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: AppTheme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  mainBidButtonDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  bidButtonContent: {
+    alignItems: 'center',
+  },
+  bidButtonText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
 });

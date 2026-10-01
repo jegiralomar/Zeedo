@@ -5,19 +5,20 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  Linking,
+  Alert,
 } from 'react-native';
 import {
-  User,
   ShieldCheck,
   Globe,
   Gavel,
   Trophy,
-  Store,
   LogOut,
-  ChevronRight,
-  Phone,
   MapPin,
+  MessageCircle,
+  FileText,
+  ChevronRight,
+  User,
 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
@@ -29,63 +30,79 @@ export const ProfileScreen: React.FC = () => {
     language,
     setLanguage,
     currentUser,
-    userRole,
     logout,
     openAuthModal,
-    loginAsBuyer,
-    loginAsMerchant,
-    setActiveScreen,
+    wonOrders,
+    myBids,
   } = useAppStore();
+
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
   const languages: { code: LanguageCode; label: string; sub: string }[] = [
-    { code: 'ar', label: 'العربية', sub: 'Iraqi Standard' },
-    { code: 'ckb', label: 'کوردی (سۆرانی)', sub: 'Sorani Kurdish' },
-    { code: 'badini', label: 'کوردی (بادینی)', sub: 'Badini Kurdish' },
-    { code: 'en', label: 'English', sub: 'International' },
+    { code: 'ar', label: 'العربية', sub: 'العراق' },
+    { code: 'ckb', label: 'کوردی (سۆرانی)', sub: 'کوردستان' },
+    { code: 'badini', label: 'کوردی (بادینی)', sub: 'کوردستان' },
+    { code: 'en', label: 'English', sub: 'Global' },
   ];
+
+  const handleOpenWhatsApp = () => {
+    const phone = '+9647700000000';
+    const message = encodeURIComponent(
+      isRtl
+        ? 'مرحباً دعم زيدو للمزادات، أحتاج مساعدة بخصوص مزاداتي.'
+        : 'Hello Zeedo Support, I need assistance regarding my auctions.'
+    );
+    Linking.openURL(`whatsapp://send?phone=${phone}&text=${message}`).catch(() => {
+      Alert.alert(
+        isRtl ? 'تطبيق واتساب غير مثبت' : 'WhatsApp not found',
+        isRtl
+          ? 'يمكنك التواصل مع خدمة العملاء عبر الرقم: 07700000000'
+          : 'You can contact customer service at: +964 770 000 0000'
+      );
+    });
+  };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* 1. Profile Avatar Header (Matching Profile.jpg) */}
+      {/* 1. Header Profile Card */}
       <View style={styles.headerCard}>
-        <View style={styles.avatarWrapper}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarLetter}>
-              {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'Z'}
-            </Text>
-          </View>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarLetter}>
+            {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'Z'}
+          </Text>
         </View>
 
         <Text style={styles.userName}>
-          {currentUser ? currentUser.name : (isRtl ? 'زائر غير مسجل' : 'Guest Visitor')}
+          {currentUser ? currentUser.name : (isRtl ? 'زائر زيدو' : 'Zeedo Guest')}
         </Text>
         <Text style={styles.userPhone}>
           {currentUser ? currentUser.phone : '+964 770 000 0000'}
         </Text>
 
         <View style={styles.kycBadge}>
-          <ShieldCheck size={14} color={AppTheme.colors.green} />
+          <ShieldCheck size={14} color="#059669" />
           <Text style={styles.kycBadgeText}>
-            {currentUser?.kycStatus === 'verified' ? t.verified : t.unverified}
+            {currentUser?.kycStatus === 'verified'
+              ? (isRtl ? 'حساب موثق بالبطاقة الوطنية' : 'KYC Verified Bidder')
+              : (isRtl ? 'حساب مؤكد برقم الهاتف' : 'Verified Phone Account')}
           </Text>
         </View>
       </View>
 
-      {/* 2. Stats Bar */}
+      {/* 2. Bidder Stats Bar */}
       <View style={styles.statsBar}>
         <View style={styles.statItem}>
           <Gavel size={18} color={AppTheme.colors.primary} />
-          <Text style={styles.statNumber}>18</Text>
+          <Text style={styles.statNumber}>{myBids.length + 12}</Text>
           <Text style={styles.statLabel}>{t.totalBids}</Text>
         </View>
 
         <View style={styles.statDivider} />
 
         <View style={styles.statItem}>
-          <Trophy size={18} color={AppTheme.colors.amber} />
-          <Text style={styles.statNumber}>3</Text>
+          <Trophy size={18} color="#D97706" />
+          <Text style={styles.statNumber}>{wonOrders.length}</Text>
           <Text style={styles.statLabel}>{t.totalWins}</Text>
         </View>
       </View>
@@ -122,38 +139,75 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 4. Quick Account Switching (Buyer vs Merchant) */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, isRtl && styles.textRtl]}>
-          {isRtl ? 'تبديل تجريبي للحسابات' : 'Instant Demo Roles'}
-        </Text>
-
-        <View style={styles.demoButtonsRow}>
-          <TouchableOpacity
-            onPress={() => loginAsBuyer('07701234567', 'كرار حيدر')}
-            style={[styles.rolePill, userRole === 'buyer' && styles.rolePillActive]}
-            activeOpacity={0.8}
-          >
-            <User size={16} color={userRole === 'buyer' ? '#FFFFFF' : AppTheme.colors.textPrimary} />
-            <Text style={[styles.rolePillText, userRole === 'buyer' && styles.rolePillTextActive]}>
-              {isRtl ? 'دخول كمشتري عراقي' : 'Login as Buyer'}
+      {/* 4. Trust & Doorstep Inspection Disclosure */}
+      <View style={styles.trustSection}>
+        <View style={styles.trustRow}>
+          <ShieldCheck size={20} color="#10B981" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.trustTitle}>
+              {isRtl ? 'حق المعاينة قبل الدفع' : 'Doorstep Inspection Policy'}
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => loginAsMerchant('Al-Mansour Electronics', '07809876543')}
-            style={[styles.rolePill, userRole === 'merchant' && styles.rolePillActive]}
-            activeOpacity={0.8}
-          >
-            <Store size={16} color={userRole === 'merchant' ? '#FFFFFF' : AppTheme.colors.textPrimary} />
-            <Text style={[styles.rolePillText, userRole === 'merchant' && styles.rolePillTextActive]}>
-              {isRtl ? 'دخول كتاجر معتمد' : 'Login as Merchant'}
+            <Text style={styles.trustBody}>
+              {isRtl
+                ? 'في زيدو، لك الحق الكامل بفتح الطرد وتشغيل وفحص السلعة أمام مندوب التوصيل في منزلك والتأكد من مطابقتها قبل دفع المبلغ نقداً.'
+                : 'You have full right to open and inspect the item at your doorstep with the courier before paying cash on delivery.'}
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* 5. Auth / Logout Button */}
+      {/* 5. Direct WhatsApp Support */}
+      <TouchableOpacity
+        style={styles.whatsappCard}
+        onPress={handleOpenWhatsApp}
+        activeOpacity={0.85}
+      >
+        <View style={styles.whatsappIconCircle}>
+          <MessageCircle size={22} color="#FFFFFF" />
+        </View>
+        <View style={styles.whatsappContent}>
+          <Text style={styles.whatsappTitle}>
+            {isRtl ? 'تواصل مع الدعم الفني عبر واتساب' : 'Direct WhatsApp Support'}
+          </Text>
+          <Text style={styles.whatsappSub}>
+            {isRtl
+              ? 'فريق الدعم متاح 24/7 لمساعدتك في أي استفسار'
+              : 'Our support team is available 24/7 to assist you'}
+          </Text>
+        </View>
+        <ChevronRight size={18} color="#64748B" />
+      </TouchableOpacity>
+
+      {/* 6. Saved Delivery Addresses */}
+      <View style={styles.menuCard}>
+        <View style={styles.menuItem}>
+          <MapPin size={18} color="#64748B" />
+          <View style={styles.menuTextContent}>
+            <Text style={styles.menuTitle}>
+              {isRtl ? 'عنوان التوصيل الافتراضي' : 'Default Delivery Address'}
+            </Text>
+            <Text style={styles.menuSub}>
+              {isRtl ? 'بغداد، المنصور، شارع 14 رمضان' : 'Baghdad, Al-Mansour'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.menuDivider} />
+
+        <View style={styles.menuItem}>
+          <FileText size={18} color="#64748B" />
+          <View style={styles.menuTextContent}>
+            <Text style={styles.menuTitle}>
+              {isRtl ? 'شروط وأحكام المزايدة في العراق' : 'Bidding Terms & Conditions'}
+            </Text>
+            <Text style={styles.menuSub}>
+              {isRtl ? 'نظام المزايدة العادل، وتمديد الدقيقة الأخيرة' : 'Fair Bidding & Soft-Close Rules'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 7. Auth Action Button */}
       <View style={styles.authSection}>
         {currentUser ? (
           <TouchableOpacity
@@ -184,116 +238,112 @@ export const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppTheme.colors.canvas,
+    backgroundColor: '#F8FAFC',
     padding: 16,
   },
   headerCard: {
-    backgroundColor: AppTheme.colors.card,
-    borderRadius: AppTheme.radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: AppTheme.colors.border,
+    borderColor: '#E2E8F0',
     marginBottom: 16,
-  },
-  avatarWrapper: {
-    marginBottom: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     backgroundColor: AppTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 10,
     borderWidth: 3,
-    borderColor: AppTheme.colors.primaryLight,
+    borderColor: '#FFF1F2',
   },
   avatarLetter: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '900',
     color: '#FFFFFF',
   },
   userName: {
     fontSize: 18,
-    fontWeight: '900',
-    color: AppTheme.colors.textPrimary,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 2,
   },
   userPhone: {
     fontSize: 12,
-    color: AppTheme.colors.textMuted,
-    fontFamily: 'monospace',
-    marginBottom: 8,
+    color: '#64748B',
+    marginBottom: 10,
   },
   kycBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: AppTheme.colors.greenLight,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: AppTheme.radius.full,
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
   kycBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     color: '#065F46',
   },
   statsBar: {
     flexDirection: 'row',
-    backgroundColor: AppTheme.colors.card,
-    borderRadius: AppTheme.radius.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: AppTheme.colors.border,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     marginBottom: 16,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
+    gap: 4,
   },
   statNumber: {
     fontSize: 18,
     fontWeight: '900',
-    color: AppTheme.colors.textPrimary,
-    marginTop: 4,
+    color: '#0F172A',
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
-    color: AppTheme.colors.textMuted,
-    marginTop: 2,
-    textAlign: 'center',
+    color: '#64748B',
   },
   statDivider: {
     width: 1,
     height: 36,
-    backgroundColor: AppTheme.colors.border,
+    backgroundColor: '#E2E8F0',
   },
   section: {
-    backgroundColor: AppTheme.colors.card,
-    borderRadius: AppTheme.radius.md,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
     marginBottom: 16,
   },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: 6,
+    marginBottom: 10,
   },
   sectionTitleRowRtl: {
     flexDirection: 'row-reverse',
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
-    color: AppTheme.colors.textPrimary,
-    marginBottom: 10,
+    color: '#0F172A',
   },
   langGrid: {
     flexDirection: 'row',
@@ -301,91 +351,150 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   langButton: {
-    width: '48%',
-    padding: 10,
-    borderRadius: AppTheme.radius.sm,
+    flex: 1,
+    minWidth: '47%',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-    backgroundColor: AppTheme.colors.surface,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
   },
   langButtonActive: {
     borderColor: AppTheme.colors.primary,
-    backgroundColor: AppTheme.colors.primaryLight,
+    backgroundColor: '#FFF1F2',
   },
   langButtonText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
+    color: '#334155',
   },
   langButtonTextActive: {
     color: AppTheme.colors.primary,
-    fontWeight: '900',
-  },
-  langSub: {
-    fontSize: 9,
-    color: AppTheme.colors.textMuted,
-    marginTop: 2,
-  },
-  demoButtonsRow: {
-    gap: 8,
-  },
-  rolePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: AppTheme.colors.surface,
-    padding: 12,
-    borderRadius: AppTheme.radius.sm,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-  },
-  rolePillActive: {
-    backgroundColor: AppTheme.colors.primary,
-    borderColor: AppTheme.colors.primary,
-  },
-  rolePillText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-  },
-  rolePillTextActive: {
-    color: '#FFFFFF',
     fontWeight: '800',
   },
-  authSection: {
-    marginTop: 8,
+  langSub: {
+    fontSize: 10,
+    color: '#94A3B8',
+    marginTop: 2,
   },
-  loginMainButton: {
-    backgroundColor: AppTheme.colors.primary,
-    paddingVertical: 14,
-    borderRadius: AppTheme.radius.md,
+  trustSection: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    marginBottom: 16,
+  },
+  trustRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  trustTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#065F46',
+    marginBottom: 4,
+  },
+  trustBody: {
+    fontSize: 11,
+    color: '#047857',
+    lineHeight: 16,
+  },
+  whatsappCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+    gap: 12,
+  },
+  whatsappIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#25D366',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  whatsappContent: {
+    flex: 1,
+  },
+  whatsappTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  whatsappSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  menuCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+  },
+  menuTextContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  menuSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 14,
+  },
+  authSection: {
+    marginTop: 4,
+  },
+  logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  logoutButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  loginMainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: 14,
+    borderRadius: 12,
     gap: 8,
   },
   loginMainButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '900',
     fontSize: 14,
-  },
-  logoutButton: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    paddingVertical: 12,
-    borderRadius: AppTheme.radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  logoutButtonText: {
-    color: '#DC2626',
     fontWeight: '800',
-    fontSize: 13,
-  },
-  textRtl: {
-    textAlign: 'right',
+    color: '#FFFFFF',
   },
 });

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { LanguageCode, UserRole, MobileUser, MobileAuctionItem, WonLotOrder, BidRecord } from '../types';
 
+export type BuyerTab = 'auctions' | 'watchlist' | 'bag' | 'profile';
+
 interface AppState {
   // Localization
   language: LanguageCode;
@@ -16,42 +18,48 @@ interface AppState {
   loginAsMerchant: (storeName: string, phone: string) => void;
   logout: () => void;
 
-  // Navigation Screen State
-  activeScreen: string;
-  setActiveScreen: (screen: string) => void;
+  // Active Tab & Full Screen Selection
+  activeTab: BuyerTab;
+  setActiveTab: (tab: BuyerTab) => void;
+  activeScreen?: string;
+  setActiveScreen: (s: string) => void;
   selectedAuctionId: string | null;
   setSelectedAuctionId: (id: string | null) => void;
 
-  // Live Auctions Catalog
+  // Merchant Sub-Screens
+  merchantScreen: 'dashboard' | 'orders' | 'ledger';
+  setMerchantScreen: (s: 'dashboard' | 'orders' | 'ledger') => void;
+
+  // Auctions Catalog
   auctions: MobileAuctionItem[];
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 
-  // Real-Time Bidding Action
+  // Watchlist
+  watchlistIds: string[];
+  toggleWatchlist: (id: string) => void;
+
+  // Real-Time Bids & Activity
   placeBid: (auctionId: string, amountIqd: number) => void;
+  myBids: { auctionId: string; amountIqd: number; isLeading: boolean }[];
 
   // Won Items & COD Orders
   wonOrders: WonLotOrder[];
   addWonOrder: (order: WonLotOrder) => void;
-
-  // WebSocket Live Connection Status
-  isWsConnected: boolean;
-  setWsConnected: (connected: boolean) => void;
 }
 
 const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
   {
     id: 'auc-ps5-pro',
-    title: 'Sony PlayStation 5 Pro 2TB Edition (عراقي أصلي)',
-    titleAr: 'جهاز سوني بلايستيشن 5 برو 2 تيرابايت (ضمان محلي)',
+    title: 'Sony PlayStation 5 Pro 2TB (عراقي أصلي)',
+    titleAr: 'سوني بلايستيشن 5 برو 2 تيرابايت (ضمان محلي)',
     description: 'PlayStation 5 Pro console with enhanced ray tracing, AI-driven PSSR 4K 120fps upscaling, 2TB high-speed NVMe SSD, DualSense wireless controller.',
     descriptionAr: 'نسخة برو الرسمية مع دعم 4K بمعدل 120 إطار، ذواكر تخزين فائقة السرعة 2 تيرابايت، ومعالج رسومي فائق الأداء مع ضمان الوكيل المعتمد.',
     category: 'electronics',
-    retailPriceUsd: 799,
+    startingPriceIqd: 1000,
     currentBidIqd: 450000,
-    currentBidUsd: 298,
     incrementStepIqd: 10000,
     bidsCount: 24,
     images: [
@@ -60,17 +68,13 @@ const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
     ],
     endsAt: new Date(Date.now() + 2 * 3600 * 1000 + 45 * 60 * 1000).toISOString(),
     isLive: true,
-    sellerName: 'Al-Mansour Electronics',
-    sellerId: 'sel-mansour',
-    sellerCity: 'Baghdad - Al-Mansour',
-    rating: 4.9,
-    reviewCount: 384,
-    specs: ['2TB High-Speed SSD', 'DualSense Haptic Feedback', 'Ray Tracing 2.0', '100% Authentic Stock'],
+    sellerCity: 'بغداد - المنصور',
+    specs: ['2TB High-Speed SSD', 'DualSense Haptic Feedback', 'Ray Tracing 2.0', 'ضمان عراقي أصلي 1 سنة'],
     condition: 'New',
     bidsHistory: [
-      { bidId: 'b-1', bidderId: 'u-1', bidderName: 'كرار حيدر', amountIqd: 450000, amountUsd: 298, timestamp: '14:23:05' },
-      { bidId: 'b-2', bidderId: 'u-2', bidderName: 'أحمد البصري', amountIqd: 440000, amountUsd: 291, timestamp: '14:21:40' },
-      { bidId: 'b-3', bidderId: 'u-3', bidderName: 'ريبوار كوردستان', amountIqd: 430000, amountUsd: 285, timestamp: '14:18:12' },
+      { bidId: 'b-1', bidderId: 'u-1', bidderName: 'كرار حيدر', amountIqd: 450000, timestamp: '14:23:05' },
+      { bidId: 'b-2', bidderId: 'u-2', bidderName: 'أحمد البصري', amountIqd: 440000, timestamp: '14:21:40' },
+      { bidId: 'b-3', bidderId: 'u-3', bidderName: 'ريبوار كوردستان', amountIqd: 430000, timestamp: '14:18:12' },
     ],
   },
   {
@@ -79,28 +83,23 @@ const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
     titleAr: 'ساعة رولكس صبمارينر ديت 41 ملم ستانلس ستيل مع ميناء أسود',
     description: 'Rolex Submariner 126610LN Oystersteel case, Cerachrom ceramic rotating bezel, black dial with Chromalight luminescent display. Complete box & papers.',
     descriptionAr: 'ساعة غوص فاخرة مقاومة للماء 300 متر، إطار سيراميك أسود مقاوم للخدش، حركة أوتوماتيكية سويسرية كاليبر 3235، الصندوق والأوراق الأصلية متوفرة.',
-    category: 'mens',
-    retailPriceUsd: 14200,
+    category: 'watches',
+    startingPriceIqd: 50000,
     currentBidIqd: 4850000,
-    currentBidUsd: 3212,
     incrementStepIqd: 50000,
     bidsCount: 41,
     images: [
       'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1547996160-71dfa63096aa?auto=format&fit=crop&w=800&q=80',
     ],
-    endsAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(), // 45 minutes
+    endsAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(),
     isLive: true,
-    sellerName: 'Baghdad Prime Watches',
-    sellerId: 'sel-watches',
-    sellerCity: 'Baghdad - Karrada',
-    rating: 5.0,
-    reviewCount: 92,
-    specs: ['41mm Oystersteel', 'Calibre 3235 Movement', 'Cerachrom Bezel', 'Certificate Included'],
+    sellerCity: 'بغداد - الكرادة',
+    specs: ['41mm Oystersteel', 'Calibre 3235 Movement', 'Cerachrom Bezel', 'شهادة الفحص والأصالة متوفرة'],
     condition: 'New Open Box',
     bidsHistory: [
-      { bidId: 'b-10', bidderId: 'u-5', bidderName: 'زياد طارق', amountIqd: 4850000, amountUsd: 3212, timestamp: '14:24:11' },
-      { bidId: 'b-11', bidderId: 'u-6', bidderName: 'عمر النعيمي', amountIqd: 4800000, amountUsd: 3178, timestamp: '14:22:00' },
+      { bidId: 'b-10', bidderId: 'u-5', bidderName: 'زياد طارق', amountIqd: 4850000, timestamp: '14:24:11' },
+      { bidId: 'b-11', bidderId: 'u-6', bidderName: 'عمر النعيمي', amountIqd: 4800000, timestamp: '14:22:00' },
     ],
   },
   {
@@ -110,9 +109,8 @@ const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
     description: 'Latest A18 Pro Bionic chip, Camera Control button, Grade 5 Titanium finish, 48MP Fusion camera system with 5x telephoto optical zoom.',
     descriptionAr: 'الهاتف الأقوى من أبل بتصميم التيتانيوم فائق المتانة، شاشة 6.9 إنش بروموشن 120 هرتز، نظام كاميرات سينمائي 48 ميجابكسل، وبطارية تدوم طوال اليوم.',
     category: 'electronics',
-    retailPriceUsd: 1199,
+    startingPriceIqd: 5000,
     currentBidIqd: 820000,
-    currentBidUsd: 543,
     incrementStepIqd: 15000,
     bidsCount: 19,
     images: [
@@ -121,15 +119,11 @@ const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
     ],
     endsAt: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
     isLive: true,
-    sellerName: 'Erbil Apple Center',
-    sellerId: 'sel-erbil-tech',
-    sellerCity: 'Erbil - Dream City',
-    rating: 4.8,
-    reviewCount: 215,
-    specs: ['256GB Storage', 'A18 Pro Chip', 'Natural Titanium', 'Official Iraqi 1-Year Warranty'],
+    sellerCity: 'أربيل - القرية الإنجليزية',
+    specs: ['256GB Storage', 'A18 Pro Chip', 'Natural Titanium', 'ضمان محلي سنة كاملة'],
     condition: 'New',
     bidsHistory: [
-      { bidId: 'b-20', bidderId: 'u-7', bidderName: 'سامان عثمان', amountIqd: 820000, amountUsd: 543, timestamp: '14:15:30' },
+      { bidId: 'b-20', bidderId: 'u-7', bidderName: 'سامان عثمان', amountIqd: 820000, timestamp: '14:15:30' },
     ],
   },
   {
@@ -139,32 +133,27 @@ const DEFAULT_AUCTIONS: MobileAuctionItem[] = [
     description: 'Iconic Chicago colorway with aged vintage aesthetics, cracked leather collar, authentic retro Nike packaging and receipt.',
     descriptionAr: 'الحذاء الأكثر شهرة في عالم الأحذية الرياضية، جلد طبيعي معتق بدرجات الأحمر والأسود والأبيض، إصدار محدود لهواة الجمع ومحبي الرياضة.',
     category: 'fashion',
-    retailPriceUsd: 380,
+    startingPriceIqd: 1000,
     currentBidIqd: 195000,
-    currentBidUsd: 129,
     incrementStepIqd: 5000,
     bidsCount: 32,
     images: [
       'https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=800&q=80',
     ],
-    endsAt: new Date(Date.now() + 18 * 60 * 1000).toISOString(), // 18m remaining!
+    endsAt: new Date(Date.now() + 18 * 60 * 1000).toISOString(),
     isLive: true,
-    sellerName: 'Basra Streetwear Co.',
-    sellerId: 'sel-basra',
-    sellerCity: 'Basra - Al-Ashar',
-    rating: 4.7,
-    reviewCount: 140,
+    sellerCity: 'البصرة - العشار',
     specs: ['Size 43 EU (9.5 US)', 'Chicago Vintage Colors', '100% Authentic with Tag'],
     condition: 'New',
     bidsHistory: [
-      { bidId: 'b-30', bidderId: 'u-8', bidderName: 'مصطفى علاء', amountIqd: 195000, amountUsd: 129, timestamp: '14:26:55' },
+      { bidId: 'b-30', bidderId: 'u-8', bidderName: 'مصطفى علاء', amountIqd: 195000, timestamp: '14:26:55' },
     ],
   },
 ];
 
 export const useAppStore = create<AppState>((set, get) => ({
-  language: 'ar', // Default to Arabic for Iraqi audience
+  language: 'ar',
   setLanguage: (lang) => set({ language: lang }),
 
   currentUser: null,
@@ -173,7 +162,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   openAuthModal: () => set({ isAuthModalOpen: true }),
   closeAuthModal: () => set({ isAuthModalOpen: false }),
 
-  loginAsBuyer: (phone, name = 'مشتري معتمد') => {
+  loginAsBuyer: (phone, name = 'كرار حيدر') => {
     const user: MobileUser = {
       id: `usr-${Date.now()}`,
       name,
@@ -186,7 +175,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentUser: user,
       userRole: 'buyer',
       isAuthModalOpen: false,
-      activeScreen: 'home',
+      activeTab: 'auctions',
     });
   },
 
@@ -204,7 +193,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentUser: merchant,
       userRole: 'merchant',
       isAuthModalOpen: false,
-      activeScreen: 'merchant_home',
+      merchantScreen: 'dashboard',
     });
   },
 
@@ -212,14 +201,27 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentUser: null,
       userRole: 'guest',
-      activeScreen: 'home',
+      activeTab: 'auctions',
     });
   },
 
-  activeScreen: 'home',
-  setActiveScreen: (screen) => set({ activeScreen: screen }),
+  activeTab: 'auctions',
+  setActiveTab: (tab) => set({ activeTab: tab, selectedAuctionId: null }),
+  activeScreen: 'auctions',
+  setActiveScreen: (s: string) => {
+    if (s === 'merchant_orders') set({ merchantScreen: 'orders' });
+    else if (s === 'merchant_commissions') set({ merchantScreen: 'ledger' });
+    else if (s === 'merchant_home') set({ merchantScreen: 'dashboard' });
+    else if (s === 'profile') set({ activeTab: 'profile' });
+    else if (s === 'watchlist') set({ activeTab: 'watchlist' });
+    else if (s === 'won_lots' || s === 'checkout' || s === 'bag') set({ activeTab: 'bag' });
+    else set({ activeTab: 'auctions', selectedAuctionId: null });
+  },
   selectedAuctionId: null,
-  setSelectedAuctionId: (id) => set({ selectedAuctionId: id, activeScreen: id ? 'auction_detail' : 'home' }),
+  setSelectedAuctionId: (id) => set({ selectedAuctionId: id }),
+
+  merchantScreen: 'dashboard',
+  setMerchantScreen: (s) => set({ merchantScreen: s }),
 
   auctions: DEFAULT_AUCTIONS,
   selectedCategory: 'all',
@@ -227,8 +229,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
 
+  watchlistIds: ['auc-ps5-pro', 'auc-rolex-sub'],
+  toggleWatchlist: (id) => {
+    const { watchlistIds } = get();
+    if (watchlistIds.includes(id)) {
+      set({ watchlistIds: watchlistIds.filter((x) => x !== id) });
+    } else {
+      set({ watchlistIds: [...watchlistIds, id] });
+    }
+  },
+
+  myBids: [
+    { auctionId: 'auc-ps5-pro', amountIqd: 450000, isLeading: true },
+    { auctionId: 'auc-iphone-16-pro', amountIqd: 800000, isLeading: false },
+  ],
+
   placeBid: (auctionId, amountIqd) => {
-    const { currentUser, openAuthModal, auctions } = get();
+    const { currentUser, openAuthModal, auctions, myBids } = get();
     if (!currentUser) {
       openAuthModal();
       return;
@@ -242,11 +259,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         bidderId: currentUser.id,
         bidderName: currentUser.name,
         amountIqd,
-        amountUsd: Math.round(amountIqd / 1510),
         timestamp: new Date().toLocaleTimeString(),
       };
 
-      // Extend soft close anti-sniping if < 60s remaining
       const endsTime = new Date(item.endsAt).getTime();
       const diffSecs = (endsTime - Date.now()) / 1000;
       let newEndsAt = item.endsAt;
@@ -257,23 +272,26 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         ...item,
         currentBidIqd: amountIqd,
-        currentBidUsd: Math.round(amountIqd / 1510),
         bidsCount: item.bidsCount + 1,
         endsAt: newEndsAt,
         bidsHistory: [newRecord, ...item.bidsHistory].slice(0, 30),
       };
     });
 
-    set({ auctions: updated });
+    const updatedMyBids = [
+      { auctionId, amountIqd, isLeading: true },
+      ...myBids.filter((b) => b.auctionId !== auctionId),
+    ];
+
+    set({ auctions: updated, myBids: updatedMyBids });
   },
 
   wonOrders: [
     {
       orderId: 'ORD-ZED-98214',
       auctionId: 'auc-ps5-pro',
-      title: 'Sony PlayStation 5 Pro 2TB Edition (عراقي أصلي)',
+      title: 'سوني بلايستيشن 5 برو 2 تيرابايت (ضمان محلي)',
       image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=400&q=80',
-      winningBidUsd: 298,
       winningBidIqd: 450000,
       deliveryCity: 'بغداد - المنصور',
       addressText: 'شارع 14 رمضان، قرب جامع الرواد',
@@ -283,7 +301,4 @@ export const useAppStore = create<AppState>((set, get) => ({
     },
   ],
   addWonOrder: (order) => set((state) => ({ wonOrders: [order, ...state.wonOrders] })),
-
-  isWsConnected: true,
-  setWsConnected: (connected) => set({ isWsConnected: connected }),
 }));

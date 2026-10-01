@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { Clock, ArrowRight, Star, ShieldCheck, Flame, ChevronRight } from 'lucide-react-native';
+import { Heart, ShieldCheck, MapPin, Gavel, Sparkles } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
@@ -18,26 +18,53 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
 
 export const HomeScreen: React.FC = () => {
-  const { language, auctions, setSelectedAuctionId, placeBid, searchQuery } = useAppStore();
+  const {
+    language,
+    auctions,
+    setSelectedAuctionId,
+    searchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    watchlistIds,
+    toggleWatchlist,
+  } = useAppStore();
+
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
   // Live countdown ticker simulator
-  const [timeLeft, setTimeLeft] = useState('02h 45m 12s');
+  const [ticker, setTicker] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const h = String(23 - now.getHours()).padStart(2, '0');
-      const m = String(59 - now.getMinutes()).padStart(2, '0');
-      const s = String(59 - now.getSeconds()).padStart(2, '0');
-      setTimeLeft(`${h}h ${m}m ${s}s`);
+    const timer = setInterval(() => {
+      setTicker((prev) => prev + 1);
     }, 1000);
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, []);
 
-  // Filter auctions by search query
+  // Format remaining time for an auction
+  const formatCountdown = (endsAt: string) => {
+    const totalMs = new Date(endsAt).getTime() - Date.now();
+    if (totalMs <= 0) return isRtl ? 'منتهي' : 'Ended';
+    const totalSecs = Math.floor(totalMs / 1000);
+    const hours = Math.floor(totalSecs / 3600);
+    const minutes = Math.floor((totalSecs % 3600) / 60);
+    const seconds = totalSecs % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const categories = [
+    { id: 'all', name: t.categories, icon: '⚡' },
+    { id: 'electronics', name: t.electronics, icon: '📱' },
+    { id: 'watches', name: language === 'en' ? 'Watches' : 'ساعات ومجوهرات', icon: '⌚' },
+    { id: 'fashion', name: t.fashion, icon: '👟' },
+    { id: 'motors', name: language === 'en' ? 'Motors' : 'سيارات ومحركات', icon: '🚗' },
+  ];
+
+  // Filter auctions by category and search
   const filteredAuctions = auctions.filter((a) => {
+    const matchesCategory = selectedCategory === 'all' || a.category === selectedCategory;
+    if (!matchesCategory) return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -47,543 +74,454 @@ export const HomeScreen: React.FC = () => {
     );
   });
 
-  const categories = [
-    { id: 'all', name: t.categories, icon: '🔥', color: AppTheme.colors.primaryLight },
-    { id: 'electronics', name: t.electronics, icon: '📱', color: AppTheme.colors.catTech },
-    { id: 'mens', name: t.mens, icon: '⌚', color: AppTheme.colors.catMens },
-    { id: 'fashion', name: t.fashion, icon: '👟', color: AppTheme.colors.catFashion },
-    { id: 'beauty', name: t.beauty, icon: '💎', color: AppTheme.colors.catBeauty },
-  ];
-
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* 1. Category Circles (Matching Home page.jpg) */}
+      {/* 1. Doorstep Inspection Guarantee Banner */}
+      <View style={styles.guaranteeBanner}>
+        <View style={styles.guaranteeRow}>
+          <ShieldCheck size={18} color="#10B981" />
+          <Text style={styles.guaranteeText}>
+            {isRtl
+              ? 'ضمان زيدو: افحص السلعة عند الباب قبل دفع دينار واحد لمندوب التوصيل'
+              : 'Zeedo Guarantee: Inspect at your doorstep before paying COD'}
+          </Text>
+        </View>
+      </View>
+
+      {/* 2. Category Filter Pills */}
       <View style={styles.categoriesSection}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[styles.categoriesScroll, isRtl && styles.categoriesScrollRtl]}
         >
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={styles.categoryItem}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.categoryCircle, { backgroundColor: cat.color }]}>
-                <Text style={styles.categoryEmoji}>{cat.icon}</Text>
-              </View>
-              <Text style={styles.categoryLabel}>{cat.name}</Text>
-            </TouchableOpacity>
-          ))}
+          {categories.map((cat) => {
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                onPress={() => setSelectedCategory(cat.id)}
+                style={[styles.categoryPill, isSelected && styles.categoryPillActive]}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                <Text
+                  style={[styles.categoryPillText, isSelected && styles.categoryPillTextActive]}
+                >
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
-      {/* 2. Hero Promotional Banner Carousel (Matching Home page.jpg) */}
-      <View style={styles.heroBanner}>
-        <View style={styles.heroContent}>
-          <Text style={styles.heroBadge}>50-40% OFF</Text>
-          <Text style={styles.heroHeadline}>
-            {isRtl ? 'مزادات حية بأسعار تبدأ من 1,000 د.ع' : 'Live Doorstep COD Auctions'}
-          </Text>
-          <Text style={styles.heroSub}>
-            {isRtl ? 'معاينة وفحص السلعة عند الباب قبل الدفع' : 'Inspect before you pay the courier'}
-          </Text>
+      {/* 3. Section Title Bar */}
+      <View style={[styles.sectionHeader, isRtl && styles.sectionHeaderRtl]}>
+        <View style={styles.titleWithBadge}>
+          <View style={styles.livePulseDot} />
+          <Text style={styles.sectionTitle}>{t.liveAuctions}</Text>
+        </View>
+        <Text style={styles.resultsCount}>
+          {filteredAuctions.length} {isRtl ? 'مزاد نشط' : 'active lots'}
+        </Text>
+      </View>
 
+      {/* 4. High-Urgency 2-Column Live Auction Grid */}
+      <View style={styles.gridContainer}>
+        {filteredAuctions.map((item) => {
+          const isWatched = watchlistIds.includes(item.id);
+          const countdown = formatCountdown(item.endsAt);
+          const isEnded = countdown === 'Ended' || countdown === 'منتهي';
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.card}
+              onPress={() => setSelectedAuctionId(item.id)}
+              activeOpacity={0.88}
+            >
+              {/* Product Image & Overlays */}
+              <View style={styles.imageContainer}>
+                <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
+
+                {/* Live Countdown Glass Pill */}
+                <View style={[styles.countdownPill, isEnded && styles.countdownPillEnded]}>
+                  <View style={[styles.timerDot, isEnded && styles.timerDotEnded]} />
+                  <Text style={styles.countdownText}>{countdown}</Text>
+                </View>
+
+                {/* Heart Button */}
+                <TouchableOpacity
+                  style={[styles.heartButton, isWatched && styles.heartButtonActive]}
+                  onPress={() => toggleWatchlist(item.id)}
+                  activeOpacity={0.8}
+                >
+                  <Heart
+                    size={16}
+                    color={isWatched ? '#F83758' : '#FFFFFF'}
+                    fill={isWatched ? '#F83758' : 'none'}
+                  />
+                </TouchableOpacity>
+
+                {/* Location Badge */}
+                {item.sellerCity && (
+                  <View style={styles.cityBadge}>
+                    <MapPin size={10} color="#FFFFFF" />
+                    <Text style={styles.cityText} numberOfLines={1}>
+                      {item.sellerCity}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Card Body */}
+              <View style={styles.cardBody}>
+                <Text
+                  style={[styles.cardTitle, isRtl && styles.cardTitleRtl]}
+                  numberOfLines={2}
+                >
+                  {isRtl && item.titleAr ? item.titleAr : item.title}
+                </Text>
+
+                {/* Bid Information */}
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceLabel}>{t.currentBid}</Text>
+                  <Text style={styles.priceValue}>
+                    {item.currentBidIqd.toLocaleString()} {t.currency}
+                  </Text>
+                </View>
+
+                {/* Card Footer: Bids Count & Tap Indicator */}
+                <View style={styles.cardFooter}>
+                  <View style={styles.bidsBadge}>
+                    <Gavel size={11} color="#64748B" />
+                    <Text style={styles.bidsBadgeText}>
+                      {item.bidsCount} {isRtl ? 'مزايدة' : 'bids'}
+                    </Text>
+                  </View>
+                  <View style={styles.viewRoomPill}>
+                    <Text style={styles.viewRoomText}>
+                      {isRtl ? 'المزاد' : 'Room'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Empty State */}
+      {filteredAuctions.length === 0 && (
+        <View style={styles.emptyState}>
+          <Sparkles size={36} color="#CBD5E1" />
+          <Text style={styles.emptyStateTitle}>
+            {isRtl ? 'لا توجد مزادات مطابقة' : 'No auctions found'}
+          </Text>
+          <Text style={styles.emptyStateSub}>
+            {isRtl
+              ? 'جرّب البحث عن كلمة أخرى أو تصفح كل الفئات'
+              : 'Try searching for something else or explore all categories'}
+          </Text>
           <TouchableOpacity
-            style={styles.heroCta}
-            onPress={() => setSelectedAuctionId(auctions[0]?.id || null)}
-            activeOpacity={0.85}
+            style={styles.resetButton}
+            onPress={() => setSelectedCategory('all')}
           >
-            <Text style={styles.heroCtaText}>{t.bidNow}</Text>
-            <ArrowRight size={14} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
-        <Image
-          source={{
-            uri: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80',
-          }}
-          style={styles.heroImage}
-        />
-      </View>
-
-      {/* 3. Deal of the Day (Blue Banner from Home page.jpg) */}
-      <View style={styles.dealSection}>
-        <View style={[styles.dealBar, isRtl && styles.dealBarRtl]}>
-          <View style={styles.dealInfo}>
-            <Text style={styles.dealTitle}>{t.dealOfTheDay}</Text>
-            <View style={styles.dealTimer}>
-              <Clock size={12} color="#FFFFFF" />
-              <Text style={styles.dealTimerText}>{timeLeft} {t.hoursRemaining}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.dealViewAll} activeOpacity={0.8}>
-            <Text style={styles.dealViewAllText}>{t.viewAll}</Text>
-            <ArrowRight size={12} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* 2-Column Auction Cards Grid */}
-        <View style={styles.gridContainer}>
-          {filteredAuctions.slice(0, 2).map((item) => (
-            <AuctionCard key={item.id} item={item} />
-          ))}
-        </View>
-      </View>
-
-      {/* 4. Special COD Guarantee Banner */}
-      <View style={styles.codBanner}>
-        <ShieldCheck size={28} color={AppTheme.colors.green} />
-        <View style={styles.codBannerContent}>
-          <Text style={styles.codBannerTitle}>
-            {isRtl ? 'ضمان زيدو: افحص السلعة قبل دفع الدينار' : '100% COD Inspection Guarantee'}
-          </Text>
-          <Text style={styles.codBannerSub}>
-            {isRtl ? 'لك كامل الحق في فتح الصندوق والتجربة عند الباب' : 'Open the parcel & test before paying'}
-          </Text>
-        </View>
-      </View>
-
-      {/* 5. Trending Products (Coral/Pink Banner from Home page.jpg) */}
-      <View style={styles.trendingSection}>
-        <View style={[styles.trendingBar, isRtl && styles.trendingBarRtl]}>
-          <View>
-            <Text style={styles.trendingTitle}>{t.trendingProducts}</Text>
-            <Text style={styles.trendingSub}>
-              {isRtl ? 'أقوى المزايدات نشاطاً في بغداد وأربيل' : 'High competition live rooms'}
+            <Text style={styles.resetButtonText}>
+              {isRtl ? 'عرض كل المزادات' : 'View all auctions'}
             </Text>
-          </View>
-
-          <TouchableOpacity style={styles.dealViewAll} activeOpacity={0.8}>
-            <Text style={styles.dealViewAllText}>{t.viewAll}</Text>
-            <ArrowRight size={12} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
+      )}
 
-        {/* 2-Column Auction Cards Grid */}
-        <View style={styles.gridContainer}>
-          {filteredAuctions.slice(2).map((item) => (
-            <AuctionCard key={item.id} item={item} />
-          ))}
-        </View>
-      </View>
-
-      <View style={{ height: 40 }} />
+      {/* Bottom Spacer */}
+      <View style={{ height: 28 }} />
     </ScrollView>
-  );
-};
-
-// Sub-component: 2-Column Auction Card (Matches Home page.jpg)
-const AuctionCard: React.FC<{ item: MobileAuctionItem }> = ({ item }) => {
-  const { language, setSelectedAuctionId, placeBid } = useAppStore();
-  const t = getTranslation(language);
-  const isRtl = language !== 'en';
-
-  const title = isRtl && item.titleAr ? item.titleAr : item.title;
-
-  return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => setSelectedAuctionId(item.id)}
-      activeOpacity={0.9}
-    >
-      {/* Product Image */}
-      <View style={styles.cardImageContainer}>
-        <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
-
-        {/* Live Pulse Badge */}
-        <View style={styles.liveBadge}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveBadgeText}>LIVE</Text>
-        </View>
-
-        {/* Discount Badge */}
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>-45%</Text>
-        </View>
-      </View>
-
-      {/* Card Details */}
-      <View style={styles.cardBody}>
-        <Text style={[styles.cardTitle, isRtl && styles.textRtl]} numberOfLines={2}>
-          {title}
-        </Text>
-
-        <Text style={[styles.cardSeller, isRtl && styles.textRtl]} numberOfLines={1}>
-          {item.sellerName} • {item.sellerCity}
-        </Text>
-
-        {/* Pricing */}
-        <View style={[styles.priceRow, isRtl && styles.priceRowRtl]}>
-          <Text style={styles.bidPrice}>
-            {item.currentBidIqd.toLocaleString()} د.ع
-          </Text>
-          <Text style={styles.retailPrice}>
-            ${item.retailPriceUsd}
-          </Text>
-        </View>
-
-        {/* Star Rating */}
-        <View style={[styles.ratingRow, isRtl && styles.ratingRowRtl]}>
-          <Star size={12} color={AppTheme.colors.star} fill={AppTheme.colors.star} />
-          <Text style={styles.ratingText}>{item.rating}</Text>
-          <Text style={styles.reviewCount}>({item.reviewCount})</Text>
-        </View>
-
-        {/* 1-Tap Fast Bid Button */}
-        <TouchableOpacity
-          style={styles.bidButton}
-          onPress={(e) => {
-            e.stopPropagation?.();
-            placeBid(item.id, item.currentBidIqd + item.incrementStepIqd);
-          }}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.bidButtonText}>{t.bidNow}</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppTheme.colors.canvas,
+    backgroundColor: '#F8FAFC',
+  },
+  guaranteeBanner: {
+    backgroundColor: '#ECFDF5',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  guaranteeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  guaranteeText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065F46',
+    lineHeight: 18,
   },
   categoriesSection: {
-    paddingVertical: 12,
-    backgroundColor: AppTheme.colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: AppTheme.colors.border,
+    paddingVertical: 8,
   },
   categoriesScroll: {
     paddingHorizontal: 16,
-    gap: 16,
+    gap: 8,
   },
   categoriesScrollRtl: {
     flexDirection: 'row-reverse',
   },
-  categoryItem: {
-    alignItems: 'center',
-    width: 68,
-  },
-  categoryCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  categoryEmoji: {
-    fontSize: 24,
-  },
-  categoryLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: AppTheme.colors.textPrimary,
-    textAlign: 'center',
-  },
-  heroBanner: {
-    margin: 16,
-    borderRadius: AppTheme.radius.lg,
-    backgroundColor: AppTheme.colors.primary,
+  categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    overflow: 'hidden',
-    padding: 16,
-  },
-  heroContent: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  heroBadge: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#FFE4E8',
-    marginBottom: 4,
-  },
-  heroHeadline: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    lineHeight: 22,
-    marginBottom: 4,
-  },
-  heroSub: {
-    fontSize: 11,
-    color: '#FFD3DC',
-    marginBottom: 12,
-  },
-  heroCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFFFFF22',
-    borderWidth: 1,
-    borderColor: '#FFFFFF66',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: AppTheme.radius.full,
-  },
-  heroCtaText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  heroImage: {
-    width: 110,
-    height: 110,
-    borderRadius: AppTheme.radius.md,
-  },
-  dealSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  dealBar: {
-    backgroundColor: AppTheme.colors.secondary,
-    borderRadius: AppTheme.radius.md,
+    paddingVertical: 8,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 6,
+  },
+  categoryPillActive: {
+    backgroundColor: AppTheme.colors.primary,
+    borderColor: AppTheme.colors.primary,
+  },
+  categoryIcon: {
+    fontSize: 14,
+  },
+  categoryPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  categoryPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  dealBarRtl: {
+  sectionHeaderRtl: {
     flexDirection: 'row-reverse',
   },
-  dealInfo: {
-    flexDirection: 'column',
+  titleWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  dealTitle: {
-    color: '#FFFFFF',
+  livePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
+  },
+  sectionTitle: {
+    fontSize: 17,
     fontWeight: '800',
-    fontSize: 14,
+    color: '#0F172A',
   },
-  dealTimer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
-  dealTimerText: {
-    color: '#FFFFFFCC',
-    fontSize: 11,
+  resultsCount: {
+    fontSize: 12,
     fontWeight: '600',
-  },
-  dealViewAll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#FFFFFF88',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: AppTheme.radius.sm,
-  },
-  dealViewAllText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
+    color: '#64748B',
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
+    gap: 12,
   },
   card: {
     width: CARD_WIDTH,
-    backgroundColor: AppTheme.colors.card,
-    borderRadius: AppTheme.radius.md,
-    borderWidth: 1,
-    borderColor: AppTheme.colors.border,
-    marginBottom: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  cardImageContainer: {
-    width: '100%',
-    height: 140,
-    backgroundColor: AppTheme.colors.surface,
+  imageContainer: {
     position: 'relative',
+    width: '100%',
+    height: CARD_WIDTH * 1.05,
+    backgroundColor: '#F1F5F9',
   },
   cardImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  liveBadge: {
+  countdownPill: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  countdownPillEnded: {
+    backgroundColor: 'rgba(100, 116, 139, 0.85)',
+  },
+  timerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+  },
+  timerDotEnded: {
+    backgroundColor: '#94A3B8',
+  },
+  countdownText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontVariant: ['tabular-nums'],
+  },
+  heartButton: {
     position: 'absolute',
     top: 8,
     right: 8,
-    flexDirection: 'row',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     alignItems: 'center',
-    gap: 3,
+    justifyContent: 'center',
+  },
+  heartButtonActive: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: AppTheme.radius.full,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
     elevation: 2,
   },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: AppTheme.colors.primary,
-  },
-  liveBadgeText: {
-    color: AppTheme.colors.primary,
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  discountBadge: {
+  cityBadge: {
     position: 'absolute',
-    bottom: 8,
+    bottom: 6,
     left: 8,
-    backgroundColor: AppTheme.colors.primary,
-    paddingHorizontal: 6,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 6,
+    borderRadius: 6,
   },
-  discountText: {
+  cityText: {
+    fontSize: 9,
+    fontWeight: '600',
     color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
   },
   cardBody: {
     padding: 10,
   },
   cardTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-    lineHeight: 16,
-    marginBottom: 2,
+    color: '#1E293B',
+    lineHeight: 18,
+    minHeight: 36,
   },
-  cardSeller: {
-    fontSize: 10,
-    color: AppTheme.colors.textMuted,
-    marginBottom: 6,
+  cardTitleRtl: {
+    textAlign: 'right',
   },
   priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-    marginBottom: 4,
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
-  priceRowRtl: {
-    flexDirection: 'row-reverse',
+  priceLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 2,
   },
-  bidPrice: {
-    fontSize: 13,
-    fontWeight: '900',
+  priceValue: {
+    fontSize: 15,
+    fontWeight: '800',
     color: AppTheme.colors.primary,
   },
-  retailPrice: {
-    fontSize: 11,
-    color: AppTheme.colors.textMuted,
-    textDecorationLine: 'line-through',
-  },
-  ratingRow: {
+  cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    marginBottom: 8,
-  },
-  ratingRowRtl: {
-    flexDirection: 'row-reverse',
-  },
-  ratingText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: AppTheme.colors.textPrimary,
-  },
-  reviewCount: {
-    fontSize: 10,
-    color: AppTheme.colors.textMuted,
-  },
-  bidButton: {
-    backgroundColor: AppTheme.colors.primary,
-    paddingVertical: 6,
-    borderRadius: AppTheme.radius.sm,
-    alignItems: 'center',
-  },
-  bidButtonText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  codBanner: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: AppTheme.colors.greenLight,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    borderRadius: AppTheme.radius.md,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  codBannerContent: {
-    flex: 1,
-  },
-  codBannerTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#065F46',
-  },
-  codBannerSub: {
-    fontSize: 11,
-    color: '#047857',
-    marginTop: 1,
-  },
-  trendingSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  trendingBar: {
-    backgroundColor: '#F83758',
-    borderRadius: AppTheme.radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  bidsBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 4,
   },
-  trendingBarRtl: {
-    flexDirection: 'row-reverse',
+  bidsBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
   },
-  trendingTitle: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 14,
+  viewRoomPill: {
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
-  trendingSub: {
-    color: '#FFE4E8',
+  viewRoomText: {
     fontSize: 10,
-    marginTop: 1,
+    fontWeight: '700',
+    color: '#475569',
   },
-  textRtl: {
-    textAlign: 'right',
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+  },
+  emptyStateTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginTop: 12,
+  },
+  emptyStateSub: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 18,
+  },
+  resetButton: {
+    marginTop: 16,
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  resetButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

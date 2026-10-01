@@ -42,7 +42,6 @@ export const CheckoutScreen: React.FC = () => {
   ];
 
   const totalIqd = wonOrders.reduce((acc, it) => acc + it.winningBidIqd, 0);
-  const totalUsd = wonOrders.reduce((acc, it) => acc + it.winningBidUsd, 0);
 
   const handleConfirmOrder = () => {
     if (!currentUser) {
@@ -101,7 +100,9 @@ export const CheckoutScreen: React.FC = () => {
         >
           <ArrowLeft size={20} color={AppTheme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>{t.checkout}</Text>
+        <Text style={styles.topBarTitle}>
+          {isRtl ? 'تأكيد التوصيل' : 'Delivery Checkout'}
+        </Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -196,7 +197,6 @@ export const CheckoutScreen: React.FC = () => {
                 <Text style={styles.orderPriceIqd}>
                   {item.winningBidIqd.toLocaleString()} د.ع
                 </Text>
-                <Text style={styles.orderPriceUsd}>${item.winningBidUsd}</Text>
               </View>
             </View>
           </View>
@@ -206,24 +206,30 @@ export const CheckoutScreen: React.FC = () => {
         <View style={styles.codGuaranteeBox}>
           <ShieldCheck size={22} color={AppTheme.colors.green} />
           <View style={styles.codGuaranteeContent}>
-            <Text style={styles.codGuaranteeTitle}>{t.codBadge}</Text>
-            <Text style={styles.codGuaranteeSub}>{t.deliveryWithin}</Text>
+            <Text style={styles.codGuaranteeTitle}>
+              {isRtl ? 'دفع عند الاستلام مع فحص السلعة' : 'Doorstep COD with Inspection'}
+            </Text>
+            <Text style={styles.codGuaranteeSub}>
+              {isRtl ? 'التوصيل خلال 24 - 48 ساعة لجميع المحافظات' : 'Delivery within 24-48 hours across Iraq'}
+            </Text>
           </View>
         </View>
 
         {/* Order Summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Order :</Text>
+            <Text style={styles.summaryLabel}>
+              {isRtl ? 'إجمالي الطلب:' : 'Total Order:'}
+            </Text>
             <Text style={styles.summaryValueIqd}>{totalIqd.toLocaleString()} د.ع</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Equivalent USD :</Text>
-            <Text style={styles.summaryValueUsd}>${totalUsd} USD</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee :</Text>
-            <Text style={styles.summaryFree}>مجاني (Free Doorstep Delivery)</Text>
+            <Text style={styles.summaryLabel}>
+              {isRtl ? 'أجور التوصيل:' : 'Delivery Fee:'}
+            </Text>
+            <Text style={styles.summaryFree}>
+              {isRtl ? 'مجاني (توصيل وفحص عند الباب)' : 'Free Doorstep Delivery'}
+            </Text>
           </View>
         </View>
 

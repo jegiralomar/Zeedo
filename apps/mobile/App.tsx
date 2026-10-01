@@ -6,7 +6,8 @@ import { Header } from './src/components/common/Header';
 import { BottomNav } from './src/components/common/BottomNav';
 import { HomeScreen } from './src/screens/buyer/HomeScreen';
 import { AuctionDetailScreen } from './src/screens/buyer/AuctionDetailScreen';
-import { CheckoutScreen } from './src/screens/buyer/CheckoutScreen';
+import { WatchlistScreen } from './src/screens/buyer/WatchlistScreen';
+import { BagScreen } from './src/screens/buyer/BagScreen';
 import { ProfileScreen } from './src/screens/buyer/ProfileScreen';
 import { MerchantHomeScreen } from './src/screens/merchant/MerchantHomeScreen';
 import { MerchantOrdersScreen } from './src/screens/merchant/MerchantOrdersScreen';
@@ -15,41 +16,52 @@ import { AuthModal } from './src/screens/auth/AuthModal';
 
 export default function App() {
   const {
-    activeScreen,
+    activeTab,
     selectedAuctionId,
     setSearchQuery,
     userRole,
+    merchantScreen,
   } = useAppStore();
 
   const renderScreen = () => {
+    // 1. Dedicated Full Auction Room Detail
     if (selectedAuctionId) {
       return <AuctionDetailScreen />;
     }
 
-    if (activeScreen === 'checkout' || activeScreen === 'won_lots') {
-      return <CheckoutScreen />;
-    }
-
-    if (activeScreen === 'profile') {
-      return <ProfileScreen />;
-    }
-
-    // Merchant Role Screens
+    // 2. Strict Merchant Role Screens
     if (userRole === 'merchant') {
-      if (activeScreen === 'merchant_orders') {
+      if (activeTab === 'profile') {
+        return <ProfileScreen />;
+      }
+      if (merchantScreen === 'orders') {
         return <MerchantOrdersScreen />;
       }
-      if (activeScreen === 'merchant_commissions') {
+      if (merchantScreen === 'ledger') {
         return <MerchantCommissionsScreen />;
       }
       return <MerchantHomeScreen />;
     }
 
-    // Default Buyer Home
+    // 3. Buyer 4-Tab Custom Screens
+    if (activeTab === 'watchlist') {
+      return <WatchlistScreen />;
+    }
+
+    if (activeTab === 'bag') {
+      return <BagScreen />;
+    }
+
+    if (activeTab === 'profile') {
+      return <ProfileScreen />;
+    }
+
+    // Default Tab: Auctions (المزادات)
     return <HomeScreen />;
   };
 
-  const showHeader = !selectedAuctionId && activeScreen !== 'checkout' && userRole !== 'merchant';
+  // Header is shown on main screens, hidden when in full auction room
+  const showHeader = !selectedAuctionId && userRole !== 'merchant';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -72,7 +84,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: AppTheme.colors.canvas,
+    backgroundColor: '#F8FAFC',
   },
   screenContainer: {
     flex: 1,
