@@ -131,29 +131,29 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* Stat Card 4: Pending KYC Approvals */}
+        {/* Stat Card 4: Verified Merchants */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Pending KYC Queue
+                Verified Merchants
               </span>
-              <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
-                <ShieldCheck className="w-4 h-4" />
+              <div className="p-2 rounded-xl bg-blue-50 text-[#4392F9] border border-blue-100">
+                <Store className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-extrabold text-slate-900 mt-2 font-mono flex items-center gap-2">
-              {pendingKycCount}{' '}
-              <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 font-sans">
-                Review Needed
+            <div className="text-2xl font-extrabold text-[#17223B] mt-2 font-mono flex items-center gap-2">
+              {sellers.length}{' '}
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-sans">
+                Active Store{sellers.length !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span className="text-slate-700 font-medium text-[11px]">Identity Moderation</span>
-            <Link href="/kyc" className="text-[11px] font-bold text-rose-600 hover:underline">
-              Review &rarr;
+            <span className="text-slate-700 font-medium text-[11px]">Merchant Network</span>
+            <Link href="/sellers" className="text-[11px] font-bold text-[#4392F9] hover:underline">
+              Merchants &rarr;
             </Link>
           </div>
         </div>

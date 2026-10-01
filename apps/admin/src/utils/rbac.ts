@@ -15,7 +15,6 @@ export const ROLE_PERMISSIONS: Record<StaffRole, RoleConfig> = {
       '/',
       '/auctions',
       '/buyers',
-      '/kyc',
       '/moderation',
       '/logistics',
       '/finance',
@@ -33,7 +32,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, RoleConfig> = {
     description: 'Full unconstrained platform control, seller provisioning, commission edits & team management.',
   },
   moderator: {
-    allowedRoutes: ['/moderation', '/kyc', '/buyers', '/cms', '/auctions', '/support'],
+    allowedRoutes: ['/moderation', '/buyers', '/cms', '/auctions', '/support'],
     defaultHub: '/moderation',
     roleLabel: 'Listing & KYC Moderator',
     badgeBg: 'bg-[#FFEDD5]',

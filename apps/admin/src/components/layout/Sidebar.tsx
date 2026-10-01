@@ -27,7 +27,7 @@ import {
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { users, auctions, currentUser, logoutStaff, tickets, syncUsersFromDb } = useAdminStore();
+  const { users, sellers, auctions, currentUser, logoutStaff, tickets, syncUsersFromDb } = useAdminStore();
 
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
@@ -109,13 +109,8 @@ export const Sidebar: React.FC = () => {
           label: 'Merchant Accounts',
           href: '/sellers',
           icon: Store,
-        },
-        {
-          label: 'Identity & KYC',
-          href: '/kyc',
-          icon: ShieldCheck,
-          badge: pendingKycCount > 0 ? pendingKycCount : null,
-          badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+          badge: sellers.length > 0 ? `${sellers.length}` : null,
+          badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
         },
         {
           label: 'Buyers Directory',

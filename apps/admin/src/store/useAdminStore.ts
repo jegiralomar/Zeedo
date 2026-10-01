@@ -807,7 +807,7 @@ export const useAdminStore = create<AdminStoreState>()(
                 phone: u.phone,
                 city: u.city || 'Erbil',
                 avatarUrl: u.avatarUrl,
-                kycStatus: u.kycStatus || 'pending',
+                kycStatus: u.kycStatus || 'verified',
                 rooftopPin: u.rooftopPin,
                 totalBids: u.totalBids || 0,
                 totalWins: u.totalWins || 0,

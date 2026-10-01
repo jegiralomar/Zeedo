@@ -8,7 +8,7 @@ async function ensureUsersTable(sql: any) {
       phone VARCHAR(32) UNIQUE NOT NULL,
       name VARCHAR(128) NOT NULL,
       city VARCHAR(64) DEFAULT 'Erbil',
-      kyc_status VARCHAR(32) DEFAULT 'pending',
+      kyc_status VARCHAR(32) DEFAULT 'verified',
       kyc_national_id VARCHAR(64),
       rooftop_landmark TEXT,
       rooftop_lat DOUBLE PRECISION,
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
 
     const cleanPhone = phone.trim();
     const userId = id || `usr-${Date.now()}`;
-    const effectiveKyc = kycStatus || (rooftopPin ? 'verified' : 'pending');
+    const effectiveKyc = kycStatus || 'verified';
     const lat = rooftopPin?.latitude || null;
     const lng = rooftopPin?.longitude || null;
     const landmarkText = rooftopLandmark || rooftopPin?.landmark || rooftopPin?.addressText || null;
