@@ -6,9 +6,14 @@ const ALLOWED_ORIGINS = [
   'https://www.zeedo.bid',
 ];
 
-// In development, also allow localhost
+// In development, also allow localhost and mobile dev bundler
 if (process.env.NODE_ENV !== 'production') {
-  ALLOWED_ORIGINS.push('http://localhost:3000', 'http://admin.localhost:3000');
+  ALLOWED_ORIGINS.push(
+    'http://localhost:3000',
+    'http://admin.localhost:3000',
+    'http://localhost:8081',
+    'http://localhost:8082'
+  );
 }
 
 function resolveOrigin(requestOrOrigin?: Request | string): string {

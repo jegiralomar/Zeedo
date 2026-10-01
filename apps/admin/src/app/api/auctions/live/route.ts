@@ -1,12 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { handleCorsOptions, corsHeaders } from '@/lib/cors';
 
-export async function GET() {
+export async function OPTIONS(request: NextRequest) {
+  return handleCorsOptions(request);
+}
+
+export async function GET(request: NextRequest) {
   try {
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
-      return NextResponse.json([]);
+      return NextResponse.json([], { headers: corsHeaders(request) });
     }
 
     const rows = await sql`
@@ -50,9 +55,9 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(formatted);
+    return NextResponse.json(formatted, { headers: corsHeaders(request) });
   } catch (error: any) {
     console.error('Error fetching live auctions:', error);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json([], { status: 500, headers: corsHeaders(request) });
   }
 }
