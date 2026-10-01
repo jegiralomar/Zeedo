@@ -161,6 +161,9 @@ export async function initDatabaseSchema() {
     await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_delivered_at TIMESTAMPTZ;`;
     await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_commission_refunded BOOLEAN DEFAULT FALSE;`;
     await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS order_notes TEXT;`;
+    await sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS is_test BOOLEAN DEFAULT FALSE;`;
+    await sql`ALTER TABLE sellers ADD COLUMN IF NOT EXISTS is_test BOOLEAN DEFAULT FALSE;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test BOOLEAN DEFAULT FALSE;`;
 
     // 7. Merchant Payment & Settlement Receipts Table
     await sql`
@@ -173,6 +176,7 @@ export async function initDatabaseSchema() {
         receipt_image_url TEXT NOT NULL,
         reference_note TEXT,
         status VARCHAR(32) DEFAULT 'pending_review',
+        is_test BOOLEAN DEFAULT FALSE,
         reviewed_by VARCHAR(128),
         reviewed_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ DEFAULT NOW()

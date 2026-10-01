@@ -22,6 +22,7 @@ import {
   ChevronRight,
   UserCheck,
   Settings,
+  FlaskConical,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -31,15 +32,23 @@ export const Sidebar: React.FC = () => {
 
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
+    setSearchQuery(typeof window !== 'undefined' ? window.location.search : '');
     syncUsersFromDb?.();
     const saved = localStorage.getItem('zeedo_admin_sidebar_collapsed');
     if (saved !== null) {
       setCollapsed(saved === 'true');
     }
-  }, [syncUsersFromDb]);
+
+    const handlePopState = () => {
+      setSearchQuery(window.location.search);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [syncUsersFromDb, pathname]);
 
   const toggleCollapsed = () => {
     const next = !collapsed;
@@ -137,6 +146,13 @@ export const Sidebar: React.FC = () => {
           href: '/settings',
           icon: Settings,
         },
+        {
+          label: 'Testing Sandbox',
+          href: '/settings?tab=sandbox',
+          icon: FlaskConical,
+          badge: 'TEST',
+          badgeColor: 'bg-amber-100 text-amber-800 border-amber-300 font-mono font-bold',
+        },
       ],
     },
   ];
@@ -213,13 +229,28 @@ export const Sidebar: React.FC = () => {
               )}
               <div className="space-y-0.5">
                 {section.items.map((item) => {
+                  const [baseHref, queryPart] = item.href.split('?');
                   const itemHref = pathPrefix
                     ? `${pathPrefix}${item.href === '/' ? '' : item.href}` || '/admin'
                     : item.href;
-                  const isActive =
-                    pathname === itemHref ||
-                    (item.href === '/' && (pathname === '/' || pathname === '/admin')) ||
-                    (item.href !== '/' && pathname.startsWith(itemHref));
+                  const targetBase = pathPrefix
+                    ? `${pathPrefix}${baseHref === '/' ? '' : baseHref}` || '/admin'
+                    : baseHref;
+
+                  let isActive = false;
+                  if (queryPart) {
+                    const matchesPath = pathname === targetBase || pathname.startsWith(targetBase);
+                    isActive = matchesPath && searchQuery.includes(queryPart);
+                  } else if (item.href === '/settings') {
+                    isActive =
+                      (pathname === targetBase || pathname.startsWith(targetBase)) &&
+                      !searchQuery.includes('tab=sandbox');
+                  } else {
+                    isActive =
+                      pathname === targetBase ||
+                      (item.href === '/' && (pathname === '/' || pathname === '/admin')) ||
+                      (item.href !== '/' && pathname.startsWith(targetBase));
+                  }
 
                   const IconComp = item.icon;
 
@@ -227,6 +258,13 @@ export const Sidebar: React.FC = () => {
                     <div key={item.href} className="relative group">
                       <Link
                         href={itemHref}
+                        onClick={() => {
+                          if (queryPart) {
+                            setSearchQuery(`?${queryPart}`);
+                          } else if (item.href === '/settings') {
+                            setSearchQuery('');
+                          }
+                        }}
                         className={`flex items-center rounded-xl text-xs font-semibold transition-all relative ${
                           collapsed
                             ? 'w-11 h-11 mx-auto justify-center'
