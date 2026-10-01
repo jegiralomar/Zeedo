@@ -23,8 +23,8 @@
       "package": "com.zeedo.auction"
     },
     "extra": {
-      "apiUrl": "https://zeedo.auction/api",
-      "wsUrl": "wss://zeedo.auction/ws"
+      "apiUrl": "https://zeedo.bid/api",
+      "wsUrl": "wss://zeedo.bid/ws"
     },
     "plugins": [
       "expo-asset"

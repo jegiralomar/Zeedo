@@ -2,7 +2,7 @@
 # ==============================================================================
 # ZEEDO Ultra-Lean VPS Auto-Provisioning Script
 # Deploys complete stack (Postgres, WebSocket Gateway, Next.js Web/API, Caddy SSL)
-# Tested on Ubuntu 22.04 / 24.04 LTS (Hetzner CX22/CPX21)
+# Tested on Ubuntu 22.04 / 24.04 LTS (Hostinger KVM 2 / KVM 1 / General Linux VPS)
 # ==============================================================================
 
 set -e

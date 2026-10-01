@@ -1,7 +1,7 @@
 # Caddyfile: Automatic SSL & WebSocket Reverse Proxy for Zeedo
 
-# 1. Main Marketplace Domain (https://zeedo.auction)
-{$DOMAIN:zeedo.auction} {
+# 1. Main Marketplace Domain (https://zeedo.bid, https://zeedo.auction)
+{$DOMAIN:zeedo.bid}, zeedo.bid, zeedo.auction {
     # WebSocket route upgrade
     handle /ws* {
         reverse_proxy websocket:8080
@@ -23,8 +23,8 @@
     encode zstd gzip
 }
 
-# 2. Operations Admin Domain (https://admin.zeedo.auction)
-{$ADMIN_DOMAIN:admin.zeedo.auction} {
+# 2. Operations Admin Domain (https://admin.zeedo.bid, https://admin.zeedo.auction)
+{$ADMIN_DOMAIN:admin.zeedo.bid}, admin.zeedo.bid, admin.zeedo.auction {
     handle /ws* {
         reverse_proxy websocket:8080
     }

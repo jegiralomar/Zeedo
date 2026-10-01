@@ -29,7 +29,7 @@ function resolveApiBaseUrl(): string {
   }
 
   // 3. Production Default
-  return 'https://zeedo.auction';
+  return 'https://zeedo.bid';
 }
 
 function resolveWsBaseUrl(): string {
@@ -56,7 +56,7 @@ function resolveWsBaseUrl(): string {
   }
 
   // 3. Production Default
-  return 'wss://zeedo.auction/ws';
+  return 'wss://zeedo.bid/ws';
 }
 
 export const API_BASE_URL = resolveApiBaseUrl();

@@ -52,7 +52,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-zeedo_db_secure_pass_2026}@db:5432/${POSTGRES_DB:-zeedodb}?sslmode=disable
       WS_GATEWAY_URL: http://websocket:8080
       WS_BROADCAST_SECRET: ${WS_BROADCAST_SECRET:-zeedo_internal_live_socket_key_9898}
-      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://zeedo.auction/ws}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://zeedo.bid/ws}
       SESSION_SECRET: ${SESSION_SECRET:-zeedo_production_session_jwt_secret_key_2026}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       META_WHATSAPP_TOKEN: ${META_WHATSAPP_TOKEN}
@@ -82,8 +82,8 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN: ${DOMAIN:-zeedo.auction}
-      ADMIN_DOMAIN: ${ADMIN_DOMAIN:-admin.zeedo.auction}
+      DOMAIN: ${DOMAIN:-zeedo.bid}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:-admin.zeedo.bid}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - zeedo_caddy_data:/data

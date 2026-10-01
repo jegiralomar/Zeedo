@@ -297,6 +297,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (
           (cleanId === 'zadmin9898' ||
             cleanId === 'zadmin' ||
+            cleanId === 'admin@zeedo.bid' ||
             cleanId === 'admin@zeedo.auction' ||
             cleanId === 'superadmin@zeedo.iq') &&
           password === 'ZEEDOA98'
