@@ -49,29 +49,29 @@ export const DashboardOverview: React.FC = () => {
       {/* TOP ROW: Stat Cards Grid (5-column responsive) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Stat Card 1: Platform Volume */}
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-2xl p-5 shadow-md shadow-blue-500/20 flex flex-col justify-between relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#17223B] via-[#243354] to-[#17223B] text-white rounded-2xl p-5 shadow-md shadow-slate-900/10 flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/20 text-white uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/10 text-[#F83758] uppercase tracking-wider border border-[#F83758]/30">
                 Gross Merchandise Value
               </span>
-              <Sparkles className="w-4 h-4 text-blue-200" />
+              <Sparkles className="w-4 h-4 text-[#F83758]" />
             </div>
-            <div className="text-xs text-blue-100 font-medium">Completed & In-Flight GMV</div>
+            <div className="text-xs text-slate-300 font-medium">Merchant COD Auction GMV</div>
             <div className="text-2xl font-black font-mono text-white tracking-tight mt-1">
-              {(totalCodVolume / 1000000).toFixed(1)}M <span className="text-sm font-sans font-bold text-blue-200">IQD</span>
+              {(totalCodVolume / 1000000).toFixed(1)}M <span className="text-sm font-sans font-bold text-[#F83758]">IQD</span>
             </div>
           </div>
 
           <Link
             href="/auctions"
-            className="relative z-10 mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-xs font-bold text-white hover:text-blue-100 transition-colors group"
+            className="relative z-10 mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-xs font-bold text-white hover:text-[#F83758] transition-colors group"
           >
             <span>Active Bids Center</span>
-            <ArrowRight className="w-4 h-4 text-blue-200 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 group-hover:text-[#F83758] transition-transform" />
           </Link>
 
-          <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-white/10 blur-md pointer-events-none" />
+          <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full bg-[#F83758]/10 blur-md pointer-events-none" />
         </div>
 
         {/* Stat Card 2: Active Auctions */}
@@ -158,28 +158,30 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* Stat Card 5: Listing Fee Revenue */}
+        {/* Stat Card 5: Platform Revenue & Fees */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Listing Fee Revenue
+                Platform Fees Retained
               </span>
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+              <div className="p-2 rounded-xl bg-rose-50 text-[#F83758] border border-rose-100">
                 <Coins className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl font-extrabold text-slate-900 mt-2 font-mono">
+            <div className="text-2xl font-extrabold text-[#17223B] mt-2 font-mono">
               {totalPlatformRetainedIqd.toLocaleString()}{' '}
-              <span className="text-xs font-bold text-slate-500 font-sans">IQD</span>
+              <span className="text-xs font-bold text-slate-400 font-sans">IQD</span>
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span className="text-slate-700 font-semibold text-[11px]">
-              {totalListingsCount} Total Listings
+              {totalListingsCount} Lots (1K Fee)
             </span>
-            <span className="text-[11px] font-mono text-slate-500">Retained Fees</span>
+            <Link href="/finance" className="text-[11px] font-bold text-[#F83758] hover:underline">
+              Ledger &rarr;
+            </Link>
           </div>
         </div>
       </div>
