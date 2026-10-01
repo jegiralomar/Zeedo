@@ -46,8 +46,8 @@ export const DashboardOverview: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* TOP ROW: Stat Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* TOP ROW: Stat Cards Grid (5-column responsive) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Stat Card 1: Platform Volume */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white rounded-2xl p-5 shadow-md shadow-blue-500/20 flex flex-col justify-between relative overflow-hidden">
           <div className="relative z-10 space-y-1.5">
@@ -101,7 +101,37 @@ export const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* Stat Card 3: Pending KYC Approvals */}
+        {/* Stat Card 3: Registered Buyers (PostgreSQL Synced) */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Registered Buyers
+              </span>
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 mt-2 font-mono flex items-center gap-2">
+              {users.length}{' '}
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200 font-sans">
+                Live DB
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span className="flex items-center gap-1 text-slate-700 font-medium text-[11px]">
+              <MapPin className="w-3.5 h-3.5 text-blue-600" />
+              <span>{verifiedPinCount} GPS Pinned</span>
+            </span>
+            <Link href="/buyers" className="text-[11px] font-bold text-indigo-600 hover:underline">
+              Directory &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* Stat Card 4: Pending KYC Approvals */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -121,17 +151,14 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span className="flex items-center gap-1 text-slate-700 font-medium text-[11px]">
-              <MapPin className="w-3.5 h-3.5 text-blue-600" />
-              <span>{verifiedPinCount} GPS Verified</span>
-            </span>
-            <Link href="/kyc" className="text-[11px] font-bold text-blue-600 hover:underline">
+            <span className="text-slate-700 font-medium text-[11px]">Identity Moderation</span>
+            <Link href="/kyc" className="text-[11px] font-bold text-rose-600 hover:underline">
               Review &rarr;
             </Link>
           </div>
         </div>
 
-        {/* Stat Card 4: Listing Fee Revenue */}
+        {/* Stat Card 5: Listing Fee Revenue */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -173,7 +200,7 @@ export const DashboardOverview: React.FC = () => {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Active Bids Card */}
             <Link
               href="/auctions"
@@ -191,6 +218,26 @@ export const DashboardOverview: React.FC = () => {
               </p>
               <div className="text-xs font-bold text-blue-600 font-mono pt-1">
                 {liveAuctionsCount} auctions active now &rarr;
+              </div>
+            </Link>
+
+            {/* Buyers Directory Card */}
+            <Link
+              href="/buyers"
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-2.5 group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold">
+                  <Users className="w-5 h-5" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+              </div>
+              <h3 className="font-extrabold text-base text-slate-900">Buyers Directory</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Registered Iraqi buyers with verified WhatsApp numbers and rooftop GPS delivery pins.
+              </p>
+              <div className="text-xs font-bold text-indigo-600 font-mono pt-1">
+                {users.length} registered buyers &rarr;
               </div>
             </Link>
 
@@ -231,6 +278,26 @@ export const DashboardOverview: React.FC = () => {
               </p>
               <div className="text-xs font-bold text-amber-700 font-mono pt-1">
                 {pendingModerationCount} listings in moderation queue &rarr;
+              </div>
+            </Link>
+
+            {/* Merchant Network Card */}
+            <Link
+              href="/sellers"
+              className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all space-y-2.5 group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center font-bold">
+                  <Store className="w-5 h-5" />
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+              </div>
+              <h3 className="font-extrabold text-base text-slate-900">Merchant Network</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Provision Iraqi merchants, configure commission rates, and manage auto-approve listing rules.
+              </p>
+              <div className="text-xs font-bold text-purple-700 font-mono pt-1">
+                {sellers.length} active merchant partners &rarr;
               </div>
             </Link>
 
