@@ -66,6 +66,7 @@ export const LocationModal: React.FC = () => {
           <LocationPickerStep
             isRtl={isRtl}
             onConfirm={handleConfirm}
+            onSkip={closeLocationSetup}
             isSaving={isSaving}
             initialLocation={currentUser?.deliveryLocation}
           />

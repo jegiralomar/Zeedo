@@ -9,8 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Linking,
 } from 'react-native';
-import { Phone, Lock, X, MessageSquare, ShieldCheck, MapPin } from 'lucide-react-native';
+import { Phone, Lock, X, MessageSquare, ShieldCheck, MapPin, Sparkles, ExternalLink } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
@@ -38,6 +39,7 @@ export const AuthModal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [receivedOtpCode, setReceivedOtpCode] = useState<string | null>(null);
   // Holds verified session until location is confirmed
   const [pendingSession, setPendingSession] = useState<{ token: string; user: MobileUser } | null>(null);
 
@@ -67,6 +69,9 @@ export const AuthModal: React.FC = () => {
 
       if (response.ok && data.isSuccess) {
         setIsOtpSent(true);
+        if (data.code) {
+          setReceivedOtpCode(data.code);
+        }
       } else {
         setErrorMessage(
           data.message ||
@@ -167,6 +172,8 @@ export const AuthModal: React.FC = () => {
       // Log in now that location has been pinned and confirmed
       loginWithSession(pendingSession.token, userWithLocation);
       await saveDeliveryLocation(loc, pendingSession.token);
+    } catch (_) {
+      // Best-effort location sync
     } finally {
       setIsSavingLocation(false);
       resetState();
@@ -174,7 +181,18 @@ export const AuthModal: React.FC = () => {
     }
   };
 
+  const handleSkipLocation = () => {
+    if (pendingSession) {
+      loginWithSession(pendingSession.token, pendingSession.user);
+    }
+    resetState();
+    closeAuthModal();
+  };
+
   const handleClose = () => {
+    if (pendingSession) {
+      loginWithSession(pendingSession.token, pendingSession.user);
+    }
     resetState();
     closeAuthModal();
   };
@@ -237,6 +255,7 @@ export const AuthModal: React.FC = () => {
             <LocationPickerStep
               isRtl={isRtl}
               onConfirm={handleLocationConfirm}
+              onSkip={handleSkipLocation}
               isSaving={isSavingLocation}
             />
           ) : (
@@ -311,15 +330,50 @@ export const AuthModal: React.FC = () => {
                   />
                 </View>
 
-                <TouchableOpacity
-                  onPress={handleSendOtp}
-                  disabled={isLoading}
-                  style={styles.resendButton}
-                >
-                  <Text style={styles.resendButtonText}>
-                    {isRtl ? 'إعادة إرسال الرمز؟' : 'Resend code?'}
-                  </Text>
-                </TouchableOpacity>
+                {receivedOtpCode ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setOtpCode(receivedOtpCode);
+                      setErrorMessage('');
+                    }}
+                    style={styles.devOtpBadge}
+                    activeOpacity={0.8}
+                  >
+                    <Sparkles size={14} color="#059669" />
+                    <Text style={styles.devOtpBadgeText}>
+                      {isRtl
+                        ? `رمز التحقق المستلم: ${receivedOtpCode} (اضغط للتعبئة التلقائية)`
+                        : `Received Code: ${receivedOtpCode} (Tap to auto-fill)`}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+
+                <View style={styles.otpActionsRow}>
+                  <TouchableOpacity
+                    onPress={handleSendOtp}
+                    disabled={isLoading}
+                    style={styles.resendButton}
+                  >
+                    <Text style={styles.resendButtonText}>
+                      {isRtl ? 'إعادة إرسال الرمز؟' : 'Resend code?'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() =>
+                      Linking.openURL(
+                        `https://wa.me/${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER.replace(/\D/g, '')}`
+                      )
+                    }
+                    style={styles.waChatBtn}
+                    activeOpacity={0.8}
+                  >
+                    <ExternalLink size={12} color="#059669" />
+                    <Text style={styles.waChatBtnText}>
+                      {isRtl ? 'فتح محادثة واتساب' : 'Open WhatsApp'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
 
@@ -584,5 +638,41 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#475569',
+  },
+  devOtpBadge: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  devOtpBadgeText: {
+    color: '#065F46',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  otpActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  waChatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  waChatBtnText: {
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '700',
   },
 });

@@ -4,47 +4,62 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  TextInput,
   ActivityIndicator,
   Platform,
-  Dimensions,
-  Alert,
+  ScrollView,
 } from 'react-native';
-import { MapPin, Navigation, CheckCircle2, ChevronRight } from 'lucide-react-native';
+import {
+  MapPin,
+  Navigation,
+  CheckCircle2,
+  ChevronRight,
+  Compass,
+  Building2,
+  Sparkles,
+} from 'lucide-react-native';
 import { AppTheme } from '../theme/colors';
 import { DeliveryLocation } from '../types';
 
-// ─── Conditional imports for native vs web ───────────────────────────────────
-let MapView: any = null;
-let Marker: any = null;
-let ExpoLocation: any = null;
+export const IRAQI_GOVERNORATES = [
+  { id: 'baghdad', nameAr: 'بغداد', nameEn: 'Baghdad', lat: 33.3152, lng: 44.3661 },
+  { id: 'erbil', nameAr: 'أربيل', nameEn: 'Erbil', lat: 36.1901, lng: 44.0091 },
+  { id: 'basra', nameAr: 'البصرة', nameEn: 'Basra', lat: 30.5085, lng: 47.7804 },
+  { id: 'sulaymaniyah', nameAr: 'السليمانية', nameEn: 'Sulaymaniyah', lat: 35.5612, lng: 45.4373 },
+  { id: 'najaf', nameAr: 'النجف الأشرف', nameEn: 'Najaf', lat: 31.9961, lng: 44.3317 },
+  { id: 'karbala', nameAr: 'كربلاء المقدسة', nameEn: 'Karbala', lat: 32.6160, lng: 44.0249 },
+  { id: 'duhok', nameAr: 'دهوك', nameEn: 'Duhok', lat: 36.8679, lng: 42.9885 },
+  { id: 'kirkuk', nameAr: 'كركوك', nameEn: 'Kirkuk', lat: 35.4681, lng: 44.3922 },
+  { id: 'nineveh', nameAr: 'نينوى (الموصل)', nameEn: 'Nineveh (Mosul)', lat: 36.3489, lng: 43.1577 },
+  { id: 'babil', nameAr: 'بابل (الحلة)', nameEn: 'Babil (Hillah)', lat: 32.4637, lng: 44.4305 },
+  { id: 'dhi_qar', nameAr: 'ذي قار (الناصرية)', nameEn: 'Dhi Qar (Nasiriyah)', lat: 31.0579, lng: 46.2573 },
+  { id: 'maysan', nameAr: 'ميسان (العمارة)', nameEn: 'Maysan (Amarah)', lat: 31.8414, lng: 47.1444 },
+  { id: 'anbar', nameAr: 'الأنبار (الرمادي)', nameEn: 'Anbar (Ramadi)', lat: 33.4234, lng: 43.2982 },
+  { id: 'diyala', nameAr: 'ديالى (بعقوبة)', nameEn: 'Diyala (Baqubah)', lat: 33.7463, lng: 44.6433 },
+  { id: 'wasit', nameAr: 'واسط (الكوت)', nameEn: 'Wasit (Kut)', lat: 32.5129, lng: 45.8183 },
+  { id: 'diwaniyah', nameAr: 'الديوانية (القادسية)', nameEn: 'Diwaniyah', lat: 31.9929, lng: 44.9248 },
+  { id: 'muthanna', nameAr: 'المثنى (السماوة)', nameEn: 'Muthanna (Samawah)', lat: 31.3120, lng: 45.2818 },
+  { id: 'salah_al_din', nameAr: 'صلاح الدين (تكريت)', nameEn: 'Salah al-Din (Tikrit)', lat: 34.6062, lng: 43.6783 },
+];
 
-if (Platform.OS !== 'web') {
-  try {
-    const maps = require('react-native-maps');
-    MapView = maps.default;
-    Marker = maps.Marker;
-    ExpoLocation = require('expo-location');
-  } catch (_) {}
-}
-
-// ─── Iraq bounds (Baghdad center as default) ─────────────────────────────────
-const BAGHDAD = { latitude: 33.3152, longitude: 44.3661 };
-const INITIAL_DELTA = { latitudeDelta: 0.05, longitudeDelta: 0.05 };
+const DEFAULT_CITY = IRAQI_GOVERNORATES[0]; // Baghdad
 
 interface LocationPickerStepProps {
   isRtl: boolean;
   onConfirm: (loc: DeliveryLocation) => void;
   isSaving: boolean;
   initialLocation?: DeliveryLocation;
+  onSkip?: () => void;
 }
 
-// ─── Reverse Geocoding via Nominatim (free, no API key) ──────────────────────
+// ─── Reverse Geocoding via Nominatim (Free, no API key required) ──────────────
 async function reverseGeocode(lat: number, lng: number): Promise<{ address: string; city: string }> {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ar`,
-      { headers: { 'User-Agent': 'ZeedoApp/1.0' } }
+      { headers: { 'User-Agent': 'ZeedoBidApp/1.0 (support@zeedo.auction)' } }
     );
+    if (!res.ok) throw new Error('Reverse geocode error');
     const data = await res.json();
     const addr = data.address || {};
     const city =
@@ -53,11 +68,11 @@ async function reverseGeocode(lat: number, lng: number): Promise<{ address: stri
     const address = neighbourhood ? `${neighbourhood}، ${city}` : city;
     return { address, city };
   } catch (_) {
-    return { address: 'العراق', city: 'العراق' };
+    return { address: '', city: 'العراق' };
   }
 }
 
-// ─── Web Fallback Map (using Leaflet via WebView-like iframe) ─────────────────
+// ─── Web Leaflet Map (Browser Only) ──────────────────────────────────────────
 function WebMapFallback({
   pin,
   onTap,
@@ -65,9 +80,9 @@ function WebMapFallback({
   pin: { lat: number; lng: number } | null;
   onTap: (lat: number, lng: number) => void;
 }) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const pinLat = pin?.lat ?? BAGHDAD.latitude;
-  const pinLng = pin?.lng ?? BAGHDAD.longitude;
+  const iframeRef = useRef<any>(null);
+  const pinLat = pin?.lat ?? DEFAULT_CITY.lat;
+  const pinLng = pin?.lng ?? DEFAULT_CITY.lng;
 
   const html = `<!DOCTYPE html>
 <html><head>
@@ -79,16 +94,16 @@ function WebMapFallback({
 </head><body>
 <div id="map"></div>
 <script>
-  var map = L.map('map').setView([${pinLat},${pinLng}], 14);
+  var map = L.map('map').setView([${pinLat},${pinLng}], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'© OpenStreetMap'
   }).addTo(map);
 
   var pinIcon = L.divIcon({
     className: '',
-    html: '<div style="width:32px;height:32px;background:#7C3AED;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',
-    iconSize:[32,32],
-    iconAnchor:[16,32]
+    html: '<div style="width:28px;height:28px;background:#F83758;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);"></div>',
+    iconSize:[28,28],
+    iconAnchor:[14,28]
   });
 
   var marker = L.marker([${pinLat},${pinLng}], {icon: pinIcon, draggable: false}).addTo(map);
@@ -106,8 +121,10 @@ function WebMapFallback({
         onTap(e.data.lat, e.data.lng);
       }
     };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('message', handler);
+      return () => window.removeEventListener('message', handler);
+    }
   }, [onTap]);
 
   return (
@@ -126,217 +143,295 @@ export const LocationPickerStep: React.FC<LocationPickerStepProps> = ({
   onConfirm,
   isSaving,
   initialLocation,
+  onSkip,
 }) => {
-  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(
-    initialLocation ? { lat: initialLocation.lat, lng: initialLocation.lng } : null
+  const [selectedCity, setSelectedCity] = useState(
+    initialLocation?.city || DEFAULT_CITY.nameAr
   );
-  const [region, setRegion] = useState({
-    latitude: initialLocation?.lat ?? BAGHDAD.latitude,
-    longitude: initialLocation?.lng ?? BAGHDAD.longitude,
-    ...INITIAL_DELTA,
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
+    lat: initialLocation?.lat ?? DEFAULT_CITY.lat,
+    lng: initialLocation?.lng ?? DEFAULT_CITY.lng,
   });
-  const [geocodedAddress, setGeocodedAddress] = useState<{ address: string; city: string } | null>(
-    initialLocation
-      ? { address: initialLocation.address, city: initialLocation.city }
-      : null
+  const [detailedAddress, setDetailedAddress] = useState(
+    initialLocation?.address || ''
   );
-  const [isGeocoding, setIsGeocoding] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
-  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [gpsSuccess, setGpsSuccess] = useState(Boolean(initialLocation?.lat));
+  const [gpsStatusText, setGpsStatusText] = useState('');
 
-  // Auto-detect GPS on mount only if no initial location
-  useEffect(() => {
-    if (!initialLocation) {
-      autoDetectLocation();
-    }
-  }, []);
-
-  const autoDetectLocation = async () => {
+  // Auto-detect GPS coordinates safely on mobile/web
+  const handleAutoDetectGps = async () => {
     setIsLocating(true);
+    setGpsStatusText(isRtl ? 'جاري الاتصال بالقمر الصناعي...' : 'Connecting to GPS...');
+
     try {
       if (Platform.OS === 'web') {
-        if (!navigator.geolocation) return;
-        await new Promise<void>((resolve) => {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const { latitude: lat, longitude: lng } = pos.coords;
-              setRegion({ latitude: lat, longitude: lng, ...INITIAL_DELTA });
-              placePinAt(lat, lng);
-              resolve();
-            },
-            () => resolve(),
-            { timeout: 8000 }
-          );
-        });
-      } else if (ExpoLocation) {
-        const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const pos = await ExpoLocation.getCurrentPositionAsync({ accuracy: ExpoLocation.Accuracy.Balanced });
-          const { latitude: lat, longitude: lng } = pos.coords;
-          setRegion({ latitude: lat, longitude: lng, ...INITIAL_DELTA });
-          placePinAt(lat, lng);
+        if (!navigator.geolocation) {
+          setGpsStatusText(isRtl ? 'GPS غير مدعوم في هذا المتصفح' : 'Geolocation not supported');
+          setIsLocating(false);
+          return;
         }
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const { latitude: lat, longitude: lng } = pos.coords;
+            setCoords({ lat, lng });
+            setGpsSuccess(true);
+            const res = await reverseGeocode(lat, lng);
+            if (res.city && res.city !== 'العراق') setSelectedCity(res.city);
+            if (res.address) setDetailedAddress(res.address);
+            setGpsStatusText(isRtl ? 'تم تحديد موقعك بدقة عالية' : 'GPS location pinned');
+            setIsLocating(false);
+          },
+          (err) => {
+            setGpsStatusText(isRtl ? 'تعذر جلب إحداثيات GPS' : 'GPS signal unavailable');
+            setIsLocating(false);
+          },
+          { timeout: 10000, enableHighAccuracy: true }
+        );
+      } else {
+        // Native Expo Location
+        let expoLoc: any = null;
+        try {
+          expoLoc = require('expo-location');
+        } catch (_) {}
+
+        if (expoLoc && expoLoc.requestForegroundPermissionsAsync) {
+          const { status } = await expoLoc.requestForegroundPermissionsAsync();
+          if (status === 'granted') {
+            const pos = await expoLoc.getCurrentPositionAsync({
+              accuracy: expoLoc.Accuracy?.Balanced ?? 3,
+            });
+            const { latitude: lat, longitude: lng } = pos.coords;
+            setCoords({ lat, lng });
+            setGpsSuccess(true);
+            const res = await reverseGeocode(lat, lng);
+            if (res.city && res.city !== 'العراق') setSelectedCity(res.city);
+            if (res.address) setDetailedAddress(res.address);
+            setGpsStatusText(isRtl ? 'تم تحديد موقعك بدقة عالية' : 'GPS location pinned');
+          } else {
+            setGpsStatusText(
+              isRtl
+                ? 'يرجى تفعيل صلاحية الموقع من الإعدادات'
+                : 'Location permission not granted'
+            );
+          }
+        }
+        setIsLocating(false);
       }
-    } catch (_) {
-      // Fallback to Baghdad
-    } finally {
+    } catch (e: any) {
+      setGpsStatusText(isRtl ? 'تعذر جلب إحداثيات GPS' : 'GPS signal unavailable');
       setIsLocating(false);
     }
   };
 
-  const placePinAt = (lat: number, lng: number) => {
-    setPin({ lat, lng });
-    setGeocodedAddress(null);
-
-    // Debounce reverse geocoding
-    if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
-    geocodeTimer.current = setTimeout(async () => {
-      setIsGeocoding(true);
-      const result = await reverseGeocode(lat, lng);
-      setGeocodedAddress(result);
-      setIsGeocoding(false);
-    }, 600);
-  };
-
-  const handleMapPress = (e: any) => {
-    const coord = e?.nativeEvent?.coordinate;
-    if (coord) {
-      placePinAt(coord.latitude, coord.longitude);
-      setRegion({ latitude: coord.latitude, longitude: coord.longitude, ...INITIAL_DELTA });
-    }
-  };
-
-  const handleWebTap = (lat: number, lng: number) => {
-    placePinAt(lat, lng);
+  const handleSelectGovernorate = (gov: typeof IRAQI_GOVERNORATES[0]) => {
+    setSelectedCity(isRtl ? gov.nameAr : gov.nameEn);
+    setCoords({ lat: gov.lat, lng: gov.lng });
   };
 
   const handleConfirm = () => {
-    if (!pin || !geocodedAddress) return;
+    const finalCity = selectedCity.trim() || 'بغداد';
+    const finalAddress = detailedAddress.trim() || (isRtl ? `توصيل مباشر - ${finalCity}` : `Direct Delivery - ${finalCity}`);
     onConfirm({
-      lat: pin.lat,
-      lng: pin.lng,
-      address: geocodedAddress.address,
-      city: geocodedAddress.city,
+      lat: coords.lat,
+      lng: coords.lng,
+      city: finalCity,
+      address: finalAddress,
     });
   };
 
-  const canConfirm = pin && geocodedAddress && !isGeocoding && !isSaving;
-
   return (
-    <View style={styles.container}>
-      {/* Header */}
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* 1. Header Banner */}
       <View style={styles.headerRow}>
         <View style={styles.iconBadge}>
-          <MapPin size={20} color="#FFFFFF" />
+          <MapPin size={22} color="#FFFFFF" />
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.title, isRtl && styles.rtl]}>
-            {isRtl ? 'حدد عنوان التوصيل' : 'Set Delivery Address'}
+            {isRtl ? 'حدد عنوان استلام المزايدة' : 'Set Doorstep Delivery Address'}
           </Text>
           <Text style={[styles.subtitle, isRtl && styles.rtl]}>
             {isRtl
-              ? 'اضغط على الخريطة لتحديد موقعك بدقة'
-              : 'Tap the map to pin your exact location'}
+              ? 'تصلك السلع إلى باب منزلك مع ميزة الفحص والمعاينة قبل الدفع'
+              : 'Direct doorstep delivery with inspection before payment'}
           </Text>
         </View>
       </View>
 
-      {/* Map */}
-      <View style={styles.mapWrapper}>
-        {isLocating && (
-          <View style={styles.locatingOverlay}>
-            <ActivityIndicator color={AppTheme.colors.primary} size="small" />
-            <Text style={styles.locatingText}>
-              {isRtl ? 'جاري تحديد موقعك...' : 'Detecting your location...'}
+      {/* 2. GPS Auto-Pin Card */}
+      <View style={styles.gpsCard}>
+        <View style={styles.gpsCardTop}>
+          <View style={styles.gpsBeaconRow}>
+            <View style={[styles.beaconDot, gpsSuccess && styles.beaconDotActive]} />
+            <Text style={styles.beaconText}>
+              {gpsSuccess
+                ? `${coords.lat.toFixed(4)}° N, ${coords.lng.toFixed(4)}° E`
+                : (isRtl ? 'نظام تحديد المواقع GPS' : 'GPS Satellite Navigation')}
             </Text>
           </View>
-        )}
-
-        {Platform.OS === 'web' ? (
-          <WebMapFallback pin={pin} onTap={handleWebTap} />
-        ) : MapView ? (
-          <MapView
-            style={styles.map}
-            region={region}
-            onPress={handleMapPress}
-            showsUserLocation
-            showsMyLocationButton={false}
-          >
-            {pin && (
-              <Marker
-                coordinate={{ latitude: pin.lat, longitude: pin.lng }}
-                pinColor={AppTheme.colors.primary}
-              />
-            )}
-          </MapView>
-        ) : (
-          <View style={styles.mapUnavailable}>
-            <MapPin size={32} color="#94A3B8" />
-            <Text style={styles.mapUnavailableText}>Map unavailable</Text>
+          <View style={styles.badgeCity}>
+            <Building2 size={12} color="#059669" />
+            <Text style={styles.badgeCityText}>{selectedCity}</Text>
           </View>
-        )}
+        </View>
 
-        {/* GPS Button */}
-        <TouchableOpacity style={styles.gpsBtn} onPress={autoDetectLocation} disabled={isLocating}>
-          <Navigation size={18} color={AppTheme.colors.primary} />
+        {gpsStatusText ? (
+          <Text style={[styles.gpsStatusNotice, isRtl && styles.rtl]}>
+            {gpsStatusText}
+          </Text>
+        ) : null}
+
+        <TouchableOpacity
+          style={[styles.gpsAutoBtn, isLocating && styles.gpsAutoBtnDisabled]}
+          onPress={handleAutoDetectGps}
+          disabled={isLocating}
+          activeOpacity={0.85}
+        >
+          {isLocating ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <View style={styles.gpsAutoBtnContent}>
+              <Navigation size={18} color="#FFFFFF" />
+              <Text style={styles.gpsAutoBtnText}>
+                {isRtl
+                  ? '📍 تحديد موقعي الحالي تلقائياً عبر GPS'
+                  : '📍 Auto-Pin Current Location via GPS'}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
-      {/* Address Label */}
-      <View style={styles.addressBox}>
-        {!pin ? (
-          <Text style={[styles.addressPlaceholder, isRtl && styles.rtl]}>
-            {isRtl ? '👆 اضغط على الخريطة لتحديد موقعك' : '👆 Tap on the map to place your pin'}
+      {/* 3. Web Interactive Leaflet Map (Browser Only) */}
+      {Platform.OS === 'web' && (
+        <View style={styles.webMapWrapper}>
+          <WebMapFallback
+            pin={coords}
+            onTap={(lat, lng) => {
+              setCoords({ lat, lng });
+              setGpsSuccess(true);
+              reverseGeocode(lat, lng).then((r) => {
+                if (r.city && r.city !== 'العراق') setSelectedCity(r.city);
+                if (r.address) setDetailedAddress(r.address);
+              });
+            }}
+          />
+        </View>
+      )}
+
+      {/* 4. Governorate / City Quick Chips */}
+      <View style={styles.sectionBlock}>
+        <View style={[styles.sectionHeaderRow, isRtl && styles.sectionHeaderRowRtl]}>
+          <Compass size={16} color={AppTheme.colors.primary} />
+          <Text style={styles.sectionLabel}>
+            {isRtl ? 'اختر المحافظة / المدينة' : 'Select Governorate'}
           </Text>
-        ) : isGeocoding ? (
-          <View style={styles.geocodingRow}>
-            <ActivityIndicator size="small" color={AppTheme.colors.primary} />
-            <Text style={styles.geocodingText}>
-              {isRtl ? 'جاري تحديد العنوان...' : 'Looking up address...'}
-            </Text>
-          </View>
-        ) : geocodedAddress ? (
-          <View style={[styles.geocodedRow, isRtl && styles.geocodedRowRtl]}>
-            <CheckCircle2 size={16} color="#059669" />
-            <View style={styles.geocodedTexts}>
-              <Text style={[styles.geocodedAddress, isRtl && styles.rtl]}>
-                {geocodedAddress.address}
-              </Text>
-              <Text style={[styles.geocodedCity, isRtl && styles.rtl]}>
-                {geocodedAddress.city}
-              </Text>
-            </View>
-          </View>
-        ) : null}
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.chipsScroll, isRtl && styles.chipsScrollRtl]}
+        >
+          {IRAQI_GOVERNORATES.map((gov) => {
+            const isSelected = selectedCity.includes(gov.nameAr) || selectedCity.includes(gov.nameEn);
+            return (
+              <TouchableOpacity
+                key={gov.id}
+                onPress={() => handleSelectGovernorate(gov)}
+                style={[styles.cityChip, isSelected && styles.cityChipActive]}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.cityChipText, isSelected && styles.cityChipTextActive]}>
+                  {isRtl ? gov.nameAr : gov.nameEn}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
-      {/* Confirm Button */}
-      <TouchableOpacity
-        style={[styles.confirmBtn, !canConfirm && styles.confirmBtnDisabled]}
-        onPress={handleConfirm}
-        disabled={!canConfirm}
-        activeOpacity={0.88}
-      >
-        {isSaving ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <View style={styles.confirmBtnInner}>
-            <Text style={styles.confirmBtnText}>
-              {isRtl ? 'تأكيد الموقع والدخول' : 'Confirm Location & Enter'}
+      {/* 5. Detailed Street / Landmark Address Input */}
+      <View style={styles.sectionBlock}>
+        <Text style={[styles.sectionLabel, isRtl && styles.rtl]}>
+          {isRtl ? 'المنطقة، الشارع وأقرب نقطة دالة' : 'District, Street & Landmark'}
+        </Text>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            value={detailedAddress}
+            onChangeText={setDetailedAddress}
+            placeholder={
+              isRtl
+                ? 'مثال: المنصور، شارع 14 رمضان، قرب صيدلية...'
+                : 'e.g. Mansour, 14th Ramadan St, near...'
+            }
+            placeholderTextColor="#94A3B8"
+            style={[styles.textInput, isRtl && styles.rtl]}
+            multiline
+            numberOfLines={2}
+          />
+        </View>
+      </View>
+
+      {/* 6. Guarantee Assurance Notice */}
+      <View style={styles.assuranceBox}>
+        <CheckCircle2 size={16} color="#059669" />
+        <Text style={styles.assuranceText}>
+          {isRtl
+            ? 'مندوب زيدو يقوم بتسليم الشحنة لعنوانك مباشرة مع إتاحة الفحص عند الباب'
+            : 'Courier delivers straight to your doorstep with full inspection rights'}
+        </Text>
+      </View>
+
+      {/* 7. Action Buttons: Confirm & Skip */}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={[styles.confirmBtn, isSaving && styles.confirmBtnDisabled]}
+          onPress={handleConfirm}
+          disabled={isSaving}
+          activeOpacity={0.88}
+        >
+          {isSaving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <View style={styles.confirmBtnInner}>
+              <Text style={styles.confirmBtnText}>
+                {isRtl ? 'تأكيد العنوان والدخول' : 'Confirm Address & Enter'}
+              </Text>
+              <ChevronRight size={18} color="#FFFFFF" />
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {onSkip && (
+          <TouchableOpacity
+            style={styles.skipBtn}
+            onPress={onSkip}
+            disabled={isSaving}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.skipBtnText}>
+              {isRtl ? 'تخطي الآن والمتابعة لاحقاً' : 'Skip for now'}
             </Text>
-            <ChevronRight size={18} color="#FFFFFF" />
-          </View>
+          </TouchableOpacity>
         )}
-      </TouchableOpacity>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+  },
+  container: {
+    paddingBottom: 24,
     gap: 14,
   },
   headerRow: {
@@ -345,8 +440,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconBadge: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 14,
     backgroundColor: AppTheme.colors.primary,
     alignItems: 'center',
@@ -370,123 +465,177 @@ const styles = StyleSheet.create({
   rtl: {
     textAlign: 'right',
   },
-  mapWrapper: {
-    height: 220,
+  gpsCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    padding: 14,
+    gap: 10,
+  },
+  gpsCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  gpsBeaconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  beaconDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F59E0B',
+  },
+  beaconDotActive: {
+    backgroundColor: '#10B981',
+  },
+  beaconText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#E2E8F0',
+    letterSpacing: 0.5,
+  },
+  badgeCity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeCityText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#059669',
+  },
+  gpsStatusNotice: {
+    fontSize: 11,
+    color: '#38BDF8',
+    fontWeight: '600',
+  },
+  gpsAutoBtn: {
+    backgroundColor: AppTheme.colors.primary,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gpsAutoBtnDisabled: {
+    opacity: 0.65,
+  },
+  gpsAutoBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  gpsAutoBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  webMapWrapper: {
+    height: 180,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#F1F5F9',
-    position: 'relative',
   },
-  map: {
-    flex: 1,
-  },
-  locatingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.75)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  sectionBlock: {
     gap: 8,
-    zIndex: 10,
   },
-  locatingText: {
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionHeaderRowRtl: {
+    flexDirection: 'row-reverse',
+  },
+  sectionLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#334155',
+  },
+  chipsScroll: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 2,
+  },
+  chipsScrollRtl: {
+    flexDirection: 'row-reverse',
+  },
+  cityChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  cityChipActive: {
+    backgroundColor: AppTheme.colors.primaryLight,
+    borderColor: AppTheme.colors.primary,
+  },
+  cityChipText: {
+    fontSize: 12,
+    fontWeight: '700',
     color: '#475569',
   },
-  gpsBtn: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-    zIndex: 5,
+  cityChipTextActive: {
+    color: AppTheme.colors.primary,
+    fontWeight: '800',
   },
-  mapUnavailable: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  mapUnavailableText: {
-    fontSize: 13,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  addressBox: {
-    minHeight: 52,
+  inputWrapper: {
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  addressPlaceholder: {
+  textInput: {
     fontSize: 13,
-    color: '#94A3B8',
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  geocodingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  geocodingText: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  geocodedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  geocodedRowRtl: {
-    flexDirection: 'row-reverse',
-  },
-  geocodedTexts: {
-    flex: 1,
-  },
-  geocodedAddress: {
-    fontSize: 14,
-    fontWeight: '700',
     color: '#0F172A',
-  },
-  geocodedCity: {
-    fontSize: 12,
-    color: '#059669',
     fontWeight: '600',
-    marginTop: 2,
+    minHeight: 46,
+  },
+  assuranceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ECFDF5',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  assuranceText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#065F46',
+    lineHeight: 16,
+  },
+  actionsContainer: {
+    gap: 8,
+    marginTop: 4,
   },
   confirmBtn: {
     backgroundColor: AppTheme.colors.primary,
-    height: 52,
+    height: 50,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: AppTheme.colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
   },
   confirmBtnDisabled: {
-    opacity: 0.45,
+    opacity: 0.5,
   },
   confirmBtnInner: {
     flexDirection: 'row',
@@ -497,5 +646,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
+  },
+  skipBtn: {
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
   },
 });
