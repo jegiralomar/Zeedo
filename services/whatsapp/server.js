@@ -160,18 +160,18 @@ async function initWhatsApp() {
     browser: Browsers.macOS('Chrome'),
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
-    markOnlineOnConnect: false,
-    retryRequestDelayMs: 500,
+    markOnlineOnConnect: true,
+    retryRequestDelayMs: 250,
     maxMsgRetryCount: 5,
     msgRetryCounterCache: retryCounterCache,
     getMessage: async (key) => {
+      logger.info(`[RETRY-REQUEST] WhatsApp requested retry for message ID: ${key?.id}`);
       if (key?.id && messageStore.has(key.id)) {
         const msg = messageStore.get(key.id);
+        logger.info(`[RETRY-REQUEST] Successfully served stored message for ID: ${key.id}`);
         return typeof msg === 'string' ? { conversation: msg } : msg;
       }
-      // CRITICAL FIX: Return empty proto object instead of undefined.
-      // Returning undefined causes a terminal failure in the retry handshake, locking
-      // messages in "Waiting for this message. This may take a while".
+      logger.warn(`[RETRY-REQUEST] Message ID not found in store, returning empty proto: ${key?.id}`);
       return proto.Message.fromObject({});
     }
   });
@@ -229,6 +229,9 @@ async function initWhatsApp() {
       currentQrRaw = null;
       connectedPhone = sock?.user?.id?.split(':')[0] || 'Unknown';
       logger.info(`✅ WhatsApp Gateway successfully CONNECTED as: +${connectedPhone}`);
+      try {
+        await sock.sendPresenceUpdate('available');
+      } catch (_) {}
     }
   });
 }
