@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { orderStatus, notes, adminName } = body;

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { jsonResponse, handleCorsOptions, safeParseJson } from '@/lib/cors';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function OPTIONS(request: Request) {
   return handleCorsOptions(request);
@@ -78,6 +79,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return jsonResponse({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 }, request);
+    }
+
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
@@ -131,6 +137,11 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return jsonResponse({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 }, request);
+    }
+
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
@@ -189,6 +200,11 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return jsonResponse({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 }, request);
+    }
+
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {

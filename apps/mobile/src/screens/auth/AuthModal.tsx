@@ -61,7 +61,6 @@ export const AuthModal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [receivedOtpCode, setReceivedOtpCode] = useState<string | null>(null);
 
   // Profile Setup State (Step 2)
   const [fullName, setFullName] = useState('');
@@ -130,9 +129,6 @@ export const AuthModal: React.FC = () => {
       if (response.ok && data.isSuccess) {
         setIsOtpSent(true);
         setStep('otp');
-        if (data.code) {
-          setReceivedOtpCode(data.code);
-        }
       } else {
         setErrorMessage(
           data.message ||
@@ -682,23 +678,7 @@ export const AuthModal: React.FC = () => {
                       />
                     </View>
 
-                    {receivedOtpCode ? (
-                      <TouchableOpacity
-                        onPress={() => {
-                          setOtpCode(receivedOtpCode);
-                          setErrorMessage('');
-                        }}
-                        style={styles.devOtpBadge}
-                        activeOpacity={0.8}
-                      >
-                        <Sparkles size={14} color="#059669" />
-                        <Text style={styles.devOtpBadgeText}>
-                          {isRtl
-                            ? `رمز التحقق المستلم: ${receivedOtpCode} (اضغط للتعبئة التلقائية)`
-                            : `Received Code: ${receivedOtpCode} (Tap to auto-fill)`}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : null}
+
 
                     <View style={styles.otpActionsRow}>
                       <TouchableOpacity

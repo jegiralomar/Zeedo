@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
-import { useAdminStore } from '@/store/useAdminStore';
+import { useAdminStore, getAdminAuthHeaders } from '@/store/useAdminStore';
 import { TestingSandboxTab } from '@/components/settings/TestingSandboxTab';
 import {
   DollarSign,
@@ -146,7 +146,10 @@ function SettingsContent() {
     }
     setClearingWaSessions(true);
     try {
-      const res = await fetch('/api/whatsapp/clear-sessions', { method: 'POST' });
+      const res = await fetch('/api/whatsapp/clear-sessions', {
+        method: 'POST',
+        headers: getAdminAuthHeaders(),
+      });
       const data = await res.json();
       if (data.isSuccess) {
         addToast('success', data.message || 'Corrupted session keys cleared successfully.');

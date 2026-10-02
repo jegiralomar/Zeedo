@@ -30,11 +30,40 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'products';
+    const rawFolder = (formData.get('folder') as string) || 'products';
+    const folder = rawFolder.replace(/[^a-zA-Z0-9_-]/g, '') || 'products';
 
     if (!file) {
       return NextResponse.json(
         { success: false, error: 'No file provided in form data' },
+        { status: 400 }
+      );
+    }
+
+    // Max 15MB file size limit
+    const MAX_SIZE = 15 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File size exceeds maximum allowed limit of 15MB' },
+        { status: 400 }
+      );
+    }
+
+    // MIME type whitelist
+    const ALLOWED_TYPES = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/avif',
+      'image/heic',
+      'image/heif',
+      'application/pdf',
+    ];
+    const mime = file.type?.toLowerCase() || 'image/webp';
+    if (!ALLOWED_TYPES.includes(mime)) {
+      return NextResponse.json(
+        { success: false, error: `Disallowed file type: ${mime}. Allowed: ${ALLOWED_TYPES.join(', ')}` },
         { status: 400 }
       );
     }
@@ -44,7 +73,7 @@ export async function POST(request: Request) {
 
     const result = await uploadMedia(buffer, {
       filename: file.name,
-      contentType: file.type || 'image/webp',
+      contentType: mime,
       folder,
     });
 

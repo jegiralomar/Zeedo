@@ -1,69 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const auth = searchParams.get('auth');
-  const identifier = searchParams.get('identifier')?.trim() || '';
-  const password = searchParams.get('password')?.trim() || '';
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json({ success: false, error: 'Unauthorized: Admin authentication required' }, { status: 401 });
+  }
 
   try {
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
       return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 503 });
-    }
-
-    // Authenticate merchant
-    if (auth === 'true') {
-      if (!identifier) {
-        return NextResponse.json({ success: false, error: 'Identifier is required' }, { status: 400 });
-      }
-
-      const rows = await sql`
-        SELECT * FROM sellers 
-        WHERE (LOWER(username) = LOWER(${identifier}) OR REPLACE(phone, ' ', '') = REPLACE(${identifier}, ' ', ''))
-        LIMIT 1
-      `;
-
-      if (rows.length === 0) {
-        return NextResponse.json({ success: false, error: 'Merchant not found' }, { status: 404 });
-      }
-
-      const seller = rows[0];
-      if (seller.password && seller.password !== password) {
-        return NextResponse.json({ success: false, error: 'Incorrect password' }, { status: 401 });
-      }
-
-      let coords = seller.pickup_coordinates;
-      if (typeof coords === 'string') {
-        try { coords = JSON.parse(coords); } catch { coords = null; }
-      }
-      if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
-        coords = { lat: 36.1911, lng: 44.0092 };
-      }
-
-      return NextResponse.json({
-        success: true,
-        seller: {
-          id: seller.id,
-          storeName: seller.store_name,
-          ownerName: seller.owner_name,
-          phone: seller.phone,
-          city: seller.city,
-          commissionRate: Number(seller.commission_rate),
-          auto_approve_listings: Boolean(seller.auto_approve_listings),
-          pickupAddress: seller.pickup_address,
-          pickupCoordinates: coords,
-          status: seller.status,
-          totalListings: Number(seller.total_listings),
-          completedSales: Number(seller.completed_sales),
-          totalCodVolumeIqd: Number(seller.total_cod_volume_iqd),
-          rating: Number(seller.rating),
-          username: seller.username,
-          createdAt: seller.created_at,
-        },
-      });
     }
 
     // List sellers
@@ -104,6 +53,14 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Admin authentication required to provision merchants' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
     const {
@@ -200,6 +157,14 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized: Admin authentication required to update merchants' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { id, commissionRate, auto_approve_listings, status } = body;

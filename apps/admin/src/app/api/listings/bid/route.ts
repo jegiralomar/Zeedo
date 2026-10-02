@@ -80,16 +80,42 @@ export async function POST(request: Request) {
     }
 
     const currentBid = Number(auction.current_bid_iqd || 1000);
-
-    // Dynamic increment step based on price tier
-    let step = 1000;
-    if (currentBid >= 200000) step = 3000;
-    else if (currentBid >= 100000) step = 2000;
-
-    const newBid = currentBid + step;
     const now = new Date();
     const currentEnd = new Date(auction.end_time || auction.auction_ends_at || now.getTime() + 24 * 3600 * 1000);
     const diffSecs = (currentEnd.getTime() - now.getTime()) / 1000;
+
+    // Check if auction already concluded
+    if (diffSecs <= 0) {
+      return respond(
+        { success: false, error: 'Auction has already ended' },
+        { status: 400 }
+      );
+    }
+
+    // Dynamic minimum increment step based on price tier
+    let minStep = Number(auction.increment_step_iqd || 1000);
+    if (currentBid >= 200000 && minStep < 3000) minStep = 3000;
+    else if (currentBid >= 100000 && minStep < 2000) minStep = 2000;
+
+    let newBid = currentBid + minStep;
+    const requestedAmount = Number(body.amountIqd || body.amount || 0);
+
+    // Support client chosen increment amount (e.g. +10,000 chip)
+    if (requestedAmount > 0) {
+      if (requestedAmount <= currentBid) {
+        return respond(
+          { success: false, error: `Bid must be strictly higher than current bid of ${currentBid.toLocaleString()} IQD` },
+          { status: 400 }
+        );
+      }
+      if (requestedAmount < currentBid + minStep) {
+        return respond(
+          { success: false, error: `Minimum increment is ${minStep.toLocaleString()} IQD. Next minimum bid is ${(currentBid + minStep).toLocaleString()} IQD` },
+          { status: 400 }
+        );
+      }
+      newBid = requestedAmount;
+    }
 
     // Anti-Sniping Soft-Close (≤ 60s resets by 60 seconds)
     let newEndTime = currentEnd;
@@ -129,13 +155,9 @@ export async function POST(request: Request) {
       city: bidderCity,
     };
 
-    // 2. Persist to Neon Postgres
-    await sql`
-      INSERT INTO bids (id, auction_id, bidder_id, bidder_name, bidder_city, amount_iqd, is_anti_sniping_extension, created_at)
-      VALUES (${bidId}, ${auctionId}, ${newRecord.bidderId}, ${bidderName}, ${bidderCity}, ${newBid}, ${diffSecs <= 60}, NOW())
-    `;
-
-    await sql`
+    // 2. Atomic Optimistic Concurrency Update on auctions table:
+    // Guarantees no two simultaneous bids can overwrite each other at the same price
+    const updateResult = await sql`
       UPDATE auctions SET
         current_bid_iqd = ${newBid},
         total_bids = COALESCE(total_bids, 0) + 1,
@@ -143,7 +165,21 @@ export async function POST(request: Request) {
         auction_ends_at = ${newEndTime.toISOString()},
         highest_bidder = ${JSON.stringify(highestBidderObj)}::jsonb,
         bids_history = ${JSON.stringify(updatedHistory)}::jsonb
-      WHERE id = ${auctionId}
+      WHERE id = ${auctionId} AND current_bid_iqd = ${currentBid}
+      RETURNING id;
+    `;
+
+    if (updateResult.length === 0) {
+      return respond(
+        { success: false, error: 'Outbid! Another buyer placed a bid just before you. Please refresh and try again.' },
+        { status: 409 }
+      );
+    }
+
+    // Persist to bids audit table after successful atomic auction update
+    await sql`
+      INSERT INTO bids (id, auction_id, bidder_id, bidder_name, bidder_city, amount_iqd, is_anti_sniping_extension, created_at)
+      VALUES (${bidId}, ${auctionId}, ${newRecord.bidderId}, ${bidderName}, ${bidderCity}, ${newBid}, ${diffSecs <= 60}, NOW())
     `;
 
     // 2.5 Update or Upsert bidder in users table so total_bids increments and bidder shows in Admin directory
@@ -226,7 +262,7 @@ export async function POST(request: Request) {
       auction: {
         id: auctionId,
         currentBidIqd: newBid,
-        incrementStepIqd: step,
+        incrementStepIqd: minStep,
         totalBids: broadcastPayload.totalBids,
         auctionEndsAt: newEndTime.toISOString(),
         highestBidder: highestBidderObj,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -21,6 +22,12 @@ export async function GET(request: Request) {
         ORDER BY updated_at DESC
       `;
     } else {
+      // Unfiltered query exposes all customer tickets across the platform — require admin auth
+      const auth = await verifyAdminRequest(request);
+      if (!auth.isValid) {
+        return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 });
+      }
+
       rows = await sql`
         SELECT * FROM support_tickets
         ORDER BY updated_at DESC
@@ -151,6 +158,11 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, status, priority } = body;
 

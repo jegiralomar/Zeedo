@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { sendWhatsAppCustomMessage } from '@/lib/whatsapp';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { sellerId, phone } = body;
 

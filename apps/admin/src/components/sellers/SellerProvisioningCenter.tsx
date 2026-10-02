@@ -137,9 +137,13 @@ export const SellerProvisioningCenter: React.FC = () => {
       password: cleanPassword,
     });
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('zeedo_admin_session') : '';
     fetch('/api/sellers', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         storeName,
         ownerName,

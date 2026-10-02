@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAdminStore } from '@/store/useAdminStore';
+import { useAdminStore, getAdminAuthHeaders } from '@/store/useAdminStore';
 import {
   Megaphone,
   Image as ImageIcon,
@@ -127,7 +127,7 @@ export const MarketingCmsCenter: React.FC = () => {
     try {
       const res = await fetch('/api/cms/banners', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(),
         body: JSON.stringify({
           titleAr: titleAr || titleEn,
           titleEn: titleEn || titleAr,
@@ -163,7 +163,7 @@ export const MarketingCmsCenter: React.FC = () => {
     try {
       const res = await fetch('/api/cms/banners', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(),
         body: JSON.stringify({
           id: banner.id,
           is_active: !banner.isActive,
@@ -184,7 +184,10 @@ export const MarketingCmsCenter: React.FC = () => {
   const handleDeleteBanner = async (id: string) => {
     if (!confirm('Are you sure you want to remove this banner?')) return;
     try {
-      const res = await fetch(`/api/cms/banners?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/cms/banners?id=${id}`, {
+        method: 'DELETE',
+        headers: getAdminAuthHeaders(),
+      });
       if (res.ok) {
         setDbBanners((prev) => prev.filter((b) => b.id !== id));
         addToast('info', 'Banner removed');

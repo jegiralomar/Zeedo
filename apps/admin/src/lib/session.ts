@@ -54,12 +54,15 @@ export function verifySessionToken(token: string): SessionPayload | null {
     .update(payloadB64)
     .digest('base64url');
 
-  // Constant-time comparison to prevent timing attacks
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-    return null;
-  }
-
   try {
+    const sigBuf = Buffer.from(signature);
+    const expBuf = Buffer.from(expectedSignature);
+
+    // Constant-time comparison to prevent timing attacks; check length first to prevent Node.js RangeError
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return null;
+    }
+
     const payload: SessionPayload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
     if (Date.now() > payload.expiresAt) {
       return null; // Expired session
@@ -69,3 +72,60 @@ export function verifySessionToken(token: string): SessionPayload | null {
     return null;
   }
 }
+
+const ADMIN_ROLES = new Set(['super_admin', 'operations', 'moderator', 'finance', 'staff']);
+
+/**
+ * Validates whether an incoming HTTP request is made by an authorized staff/admin member.
+ * Checks for:
+ * 1. Bearer session token with admin role
+ * 2. Or 'x-admin-token' / 'x-admin-secret' header matching SESSION_SECRET
+ */
+export interface AdminAuthResult {
+  isAuthorized: boolean;
+  isValid: boolean;
+  admin?: SessionPayload;
+  error?: string;
+}
+
+export function verifyAdminRequest(req: Request): AdminAuthResult {
+  try {
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const adminHeader = req.headers.get('x-admin-token') || req.headers.get('x-admin-secret') || '';
+
+    // Check internal secret bypass
+    if (adminHeader && adminHeader === SESSION_SECRET) {
+      return {
+        isAuthorized: true,
+        isValid: true,
+        admin: {
+          userId: 'system-internal',
+          phone: '+964000000000',
+          role: 'super_admin',
+          name: 'System Admin',
+          issuedAt: Date.now(),
+          expiresAt: Date.now() + 3600000,
+        },
+      };
+    }
+
+    if (!token) {
+      return { isAuthorized: false, isValid: false, error: 'Missing admin authorization token' };
+    }
+
+    const session = verifySessionToken(token);
+    if (!session) {
+      return { isAuthorized: false, isValid: false, error: 'Invalid or expired session token' };
+    }
+
+    if (ADMIN_ROLES.has(session.role)) {
+      return { isAuthorized: true, isValid: true, admin: session };
+    }
+
+    return { isAuthorized: false, isValid: false, error: 'Insufficient permissions for admin role' };
+  } catch (err: any) {
+    return { isAuthorized: false, isValid: false, error: err?.message || 'Admin authentication error' };
+  }
+}
+

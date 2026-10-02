@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { normalizeIraqiPhone } from '@/lib/whatsapp';
+import { verifyAdminRequest } from '@/lib/session';
 
 function mapUserRow(r: any) {
   let parsedPin = undefined;
@@ -38,6 +39,11 @@ function mapUserRow(r: any) {
 }
 
 export async function GET(request: Request) {
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json({ success: false, error: 'Unauthorized: Admin authentication required' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const role = searchParams.get('role');
 
@@ -129,6 +135,11 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json({ success: false, error: 'Unauthorized: Admin authentication required' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { id, isBlocked, rooftopLandmark } = body;

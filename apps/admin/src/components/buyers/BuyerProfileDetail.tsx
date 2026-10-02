@@ -47,9 +47,13 @@ export const BuyerProfileDetail: React.FC<Props> = ({ buyer, onBack }) => {
     setIsToggling(true);
     const nextBlocked = !isBlocked;
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('zeedo_admin_session') : '';
       await fetch('/api/users', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ id: buyer.id, isBlocked: nextBlocked }),
       });
       setIsBlocked(nextBlocked);

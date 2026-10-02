@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -44,6 +45,13 @@ export async function POST(request: Request) {
 
     if (!ticketId || !message?.trim()) {
       return NextResponse.json({ success: false, error: 'ticketId and non-empty message are required' }, { status: 400 });
+    }
+
+    if (senderType === 'admin') {
+      const auth = await verifyAdminRequest(request);
+      if (!auth.isValid) {
+        return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin message dispatch' }, { status: 401 });
+      }
     }
 
     await initDatabaseSchema();

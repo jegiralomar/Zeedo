@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { broadcastLiveEvent } from '@/lib/realtime';
 import { sendAuctionWonAlert, sendMerchantSettlementAlert } from '@/lib/whatsappAlerts';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
@@ -202,6 +203,15 @@ export async function POST(request: Request) {
         concludedCount: results.length,
         concludedAuctions: results,
       });
+    }
+
+    // All manual moderation/control actions require authorized staff/admin
+    const adminAuth = verifyAdminRequest(request);
+    if (!adminAuth.isAuthorized) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Admin authentication required' },
+        { status: 401 }
+      );
     }
 
     if (!auctionId) {

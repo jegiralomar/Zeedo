@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { ListingAuction } from '@/types';
+import { verifyAdminRequest } from '@/lib/session';
 
 function formatAuctionRow(r: any): ListingAuction {
   const titles = typeof r.titles === 'string' ? JSON.parse(r.titles) : (r.titles || {});
@@ -91,6 +92,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 });
+    }
+
     const body = await request.json();
     const {
       id,
@@ -185,6 +191,11 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const auth = await verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized admin access' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { id, status, rejectionReason, multilingual } = body;
 

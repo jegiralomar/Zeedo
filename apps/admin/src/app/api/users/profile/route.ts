@@ -13,34 +13,21 @@ export async function PATCH(req: NextRequest) {
     const authHeader = req.headers.get('authorization') || '';
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
-    let userId: string | null = null;
-    let phone: string | null = null;
-
-    if (token) {
-      const session = verifySessionToken(token);
-      if (session) {
-        userId = session.userId;
-        phone = session.phone;
-      }
+    if (!token) {
+      return jsonResponse({ success: false, error: 'Unauthorized: Session token required' }, { status: 401 }, req);
     }
 
-    const body = await safeParseJson<{
-      name?: string;
-      gender?: 'male' | 'female';
-      avatar?: string;
-      city?: string;
-      deliveryAddress?: string;
-      deliveryLat?: number;
-      deliveryLng?: number;
-      phone?: string;
-      id?: string;
-    }>(req);
+    const session = verifySessionToken(token);
+    if (!session) {
+      return jsonResponse({ success: false, error: 'Unauthorized: Invalid or expired session' }, { status: 401 }, req);
+    }
 
-    userId = userId || body.id || null;
-    phone = phone || body.phone || null;
-    const cleanPhone = phone ? normalizeIraqiPhone(phone) : null;
-    const effectiveUserId = userId || (cleanPhone ? `usr-${cleanPhone.replace(/\D/g, '')}` : `usr-${Date.now()}`);
+    const userId = session.userId;
+    const phone = session.phone;
+    const cleanPhone = normalizeIraqiPhone(phone);
+    const effectiveUserId = userId;
 
+    const body = await safeParseJson<any>(req);
     const name = body.name?.trim() || null;
     const gender = body.gender || null;
     const avatar = body.avatar || null;

@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { verifyAdminRequest } from '@/lib/session';
 
-export async function POST() {
+export async function POST(request: Request) {
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json({ success: false, error: 'Unauthorized: Admin authentication required' }, { status: 401 });
+  }
+
   try {
     await initDatabaseSchema();
     const sql = getDb();

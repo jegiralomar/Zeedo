@@ -37,6 +37,17 @@ import {
   INITIAL_RECEIPTS,
 } from '../data/mockData';
 
+export function getAdminAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('zeedo_admin_session');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 interface ToastNotification {
   id: string;
   type: 'success' | 'warning' | 'info' | 'error';
@@ -230,7 +241,7 @@ export const useAdminStore = create<AdminStoreState>()(
 
         fetch('/api/support/tickets', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAdminAuthHeaders(),
           body: JSON.stringify({ id, status }),
         }).catch((e) => console.warn('Failed to update ticket status in DB:', e));
 
@@ -291,7 +302,7 @@ export const useAdminStore = create<AdminStoreState>()(
 
         fetch('/api/support/messages', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAdminAuthHeaders(),
           body: JSON.stringify({
             ticketId,
             senderType: 'admin',
@@ -649,7 +660,7 @@ export const useAdminStore = create<AdminStoreState>()(
         try {
           await fetch('/api/sellers', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({ id: sellerId, commissionRate }),
           });
         } catch (e) {
@@ -712,7 +723,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify(newListing),
           }).catch((err) => console.warn('Failed to sync listing to Postgres:', err));
         }
@@ -754,7 +765,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({ id: listingId, status: 'live' }),
           }).catch((err) => console.warn('Failed to sync approval to Postgres:', err));
         }
@@ -829,7 +840,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({ id: listingId, status: 'rejected', rejectionReason: reason }),
           }).catch((err) => console.warn('Failed to sync rejection to Postgres:', err));
         }
@@ -847,7 +858,7 @@ export const useAdminStore = create<AdminStoreState>()(
       syncUsersFromDb: async () => {
         if (typeof window === 'undefined') return;
         try {
-          const res = await fetch('/api/users');
+          const res = await fetch('/api/users', { headers: getAdminAuthHeaders() });
           if (res.ok) {
             const data = await res.json();
             if (data.success && Array.isArray(data.users) && data.users.length > 0) {
@@ -885,7 +896,7 @@ export const useAdminStore = create<AdminStoreState>()(
       syncTicketsFromDb: async () => {
         if (typeof window === 'undefined') return;
         try {
-          const res = await fetch('/api/support/tickets');
+          const res = await fetch('/api/support/tickets', { headers: getAdminAuthHeaders() });
           if (res.ok) {
             const data = await res.json();
             if (data.success && Array.isArray(data.tickets) && data.tickets.length > 0) {
@@ -940,7 +951,7 @@ export const useAdminStore = create<AdminStoreState>()(
       fetchTicketMessages: async (ticketId: string) => {
         if (typeof window === 'undefined' || !ticketId) return;
         try {
-          const res = await fetch(`/api/support/messages?ticketId=${ticketId}`);
+          const res = await fetch(`/api/support/messages?ticketId=${ticketId}`, { headers: getAdminAuthHeaders() });
           if (res.ok) {
             const data = await res.json();
             if (data.success && Array.isArray(data.messages)) {
@@ -991,7 +1002,7 @@ export const useAdminStore = create<AdminStoreState>()(
       syncSellersFromDb: async () => {
         if (typeof window === 'undefined') return;
         try {
-          const res = await fetch('/api/sellers');
+          const res = await fetch('/api/sellers', { headers: getAdminAuthHeaders() });
           if (res.ok) {
             const data = await res.json();
             if (data.success && Array.isArray(data.sellers) && data.sellers.length > 0) {
@@ -1029,7 +1040,7 @@ export const useAdminStore = create<AdminStoreState>()(
           if (target) {
             fetch('/api/listings', {
               method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
+              headers: getAdminAuthHeaders(),
               body: JSON.stringify({ id: listingId, multilingual: target.multilingual }),
             }).catch((err) => console.warn('Failed to sync multilingual update to Postgres:', err));
           }
@@ -1066,7 +1077,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify(relisted),
           }).catch((err) => console.warn('Failed to sync relisted auction to Postgres:', err));
         }
@@ -1194,7 +1205,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings/control', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               auctionId,
               action: 'anti_sniping_reset',
@@ -1233,7 +1244,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings/control', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               auctionId,
               action: 'extend_timer',
@@ -1268,7 +1279,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings/control', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               auctionId,
               action: 'toggle_pause',
@@ -1300,7 +1311,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings/control', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               auctionId,
               action: 'pause',
@@ -1333,7 +1344,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings/control', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               auctionId,
               action: 'force_end',
@@ -1400,7 +1411,7 @@ export const useAdminStore = create<AdminStoreState>()(
         if (typeof window !== 'undefined') {
           fetch('/api/listings/control', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               auctionId,
               action: 'void_bid',
@@ -1801,7 +1812,7 @@ export const useAdminStore = create<AdminStoreState>()(
 
       fetchReceipts: async () => {
         try {
-          const res = await fetch('/api/sellers/receipts');
+          const res = await fetch('/api/sellers/receipts', { headers: getAdminAuthHeaders() });
           if (res.ok) {
             const data = await res.json();
             if (data.success && Array.isArray(data.receipts)) {
@@ -1818,7 +1829,7 @@ export const useAdminStore = create<AdminStoreState>()(
           const staff = get().currentUser;
           const res = await fetch(`/api/sellers/receipts/${id}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               status,
               reviewedBy: staff?.name || 'Admin',
@@ -1851,7 +1862,7 @@ export const useAdminStore = create<AdminStoreState>()(
         try {
           const res = await fetch('/api/sellers/send-credentials', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({ sellerId }),
           });
           const data = await res.json();
@@ -1873,7 +1884,7 @@ export const useAdminStore = create<AdminStoreState>()(
           const staff = get().currentUser;
           const res = await fetch(`/api/sellers/orders/${auctionId}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAdminAuthHeaders(),
             body: JSON.stringify({
               orderStatus,
               notes,
