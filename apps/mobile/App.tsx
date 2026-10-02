@@ -29,12 +29,35 @@ export default function App() {
     setMerchantScreen,
     hydrate,
     isHydrated,
+    currentUser,
+    sessionToken,
+    openAuthModal,
   } = useAppStore();
 
   // Load persisted session + intro state from AsyncStorage on first mount
   useEffect(() => {
     hydrate();
   }, []);
+
+  // Check if authenticated user has incomplete profile wizard steps
+  useEffect(() => {
+    if (isHydrated && currentUser && sessionToken) {
+      const hasDelivery = Boolean(
+        currentUser.deliveryLocation?.address ||
+          (currentUser.city && currentUser.city !== 'العراق' && currentUser.city !== 'Erbil')
+      );
+      const hasValidName = Boolean(
+        currentUser.name &&
+          currentUser.name !== 'مشترك جديد' &&
+          currentUser.name !== 'مشترك زيدو'
+      );
+      const hasGender = Boolean(currentUser.gender);
+
+      if (!hasValidName || !hasGender || !hasDelivery) {
+        openAuthModal();
+      }
+    }
+  }, [isHydrated, currentUser, sessionToken]);
 
   // Wait for AsyncStorage hydration before rendering to avoid flicker
   if (!isHydrated) {

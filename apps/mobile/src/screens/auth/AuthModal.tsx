@@ -43,6 +43,8 @@ export const AuthModal: React.FC = () => {
     loginWithSession,
     saveDeliveryLocation,
     updateUserProfile,
+    currentUser,
+    sessionToken,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -67,6 +69,36 @@ export const AuthModal: React.FC = () => {
 
   // Holds verified session across steps
   const [pendingSession, setPendingSession] = useState<{ token: string; user: MobileUser } | null>(null);
+
+  // If user opened with incomplete profile, resume directly at the missing step
+  React.useEffect(() => {
+    if (isAuthModalOpen && currentUser && sessionToken) {
+      const hasDelivery = Boolean(
+        currentUser.deliveryLocation?.address ||
+          (currentUser.city && currentUser.city !== 'العراق' && currentUser.city !== 'Erbil')
+      );
+      const hasValidName = Boolean(
+        currentUser.name &&
+          currentUser.name !== 'مشترك جديد' &&
+          currentUser.name !== 'مشترك زيدو'
+      );
+      const hasGender = Boolean(currentUser.gender);
+
+      if (!hasValidName || !hasGender) {
+        setPendingSession({ token: sessionToken, user: currentUser });
+        setFullName(hasValidName ? currentUser.name : '');
+        setGender(currentUser.gender || 'male');
+        setAvatarUri(currentUser.avatar || null);
+        setStep('profile');
+      } else if (!hasDelivery) {
+        setPendingSession({ token: sessionToken, user: currentUser });
+        setFullName(currentUser.name);
+        setGender(currentUser.gender || 'male');
+        setAvatarUri(currentUser.avatar || null);
+        setStep('location');
+      }
+    }
+  }, [isAuthModalOpen, currentUser, sessionToken]);
 
   // 1. Dispatch Real WhatsApp OTP from Zeedo Baileys Gateway (+964 750 881 3641)
   const handleSendOtp = async () => {
@@ -169,22 +201,25 @@ export const AuthModal: React.FC = () => {
 
         setPendingSession({ token, user });
 
-        // Authenticate immediately in background store
-        loginWithSession(token, user);
-
+        const hasDeliveryAddress = Boolean(
+          data.user?.deliveryLocation?.address ||
+            (data.user?.city && data.user.city !== 'العراق' && data.user.city !== 'Erbil')
+        );
         const isExistingFullUser = Boolean(
           data.user?.name &&
             data.user.name !== 'مشترك جديد' &&
             data.user.name !== 'مشترك زيدو' &&
-            data.user?.gender
+            data.user?.gender &&
+            hasDeliveryAddress
         );
 
         if (isExistingFullUser) {
-          // Returning user with full profile: close modal cleanly
+          // Returning user with full profile: complete session & unlock app
+          loginWithSession(token, user);
           resetState();
           closeAuthModal();
         } else {
-          // New user or incomplete profile: prompt for Name, Gender & optional Avatar
+          // New or incomplete user: advance to Step 2 wizard without closing modal
           setStep('profile');
         }
       } else {
@@ -267,11 +302,18 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  // 4. Save Profile & Advance to Location (Step 3)
-  const handleSaveProfileAndNext = async () => {
+  // 4. Save Profile & Advance to Location (Step 3) - Wizard Flow
+  const handleSaveProfileAndNext = () => {
     if (!pendingSession) return;
 
-    const trimmedName = fullName.trim() || (isRtl ? 'مشترك زيدو' : 'Zeedo Member');
+    const trimmedName = fullName.trim();
+    if (!trimmedName) {
+      setErrorMessage(
+        isRtl ? 'يرجى إدخال اسمك الكامل للمتابعة' : 'Please enter your full name to continue'
+      );
+      return;
+    }
+
     const finalAvatar = uploadedAvatarUrl || avatarUri || undefined;
     const updatedUser: MobileUser = {
       ...pendingSession.user,
@@ -281,61 +323,62 @@ export const AuthModal: React.FC = () => {
     };
 
     setPendingSession({ token: pendingSession.token, user: updatedUser });
+    setErrorMessage('');
 
-    // Update in store and server
-    loginWithSession(pendingSession.token, updatedUser);
-    updateUserProfile(
-      { name: trimmedName, gender, avatar: finalAvatar },
-      pendingSession.token
-    );
-
-    // Proceed to Step 3: Location
+    // Advance to Step 3: Delivery Location (Keep modal open)
     setStep('location');
   };
 
-  // 5. Skip Profile Step
-  const handleSkipProfile = () => {
-    if (pendingSession) {
-      loginWithSession(pendingSession.token, pendingSession.user);
-    }
-    setStep('location');
-  };
-
-  // 6. Confirm Location (Step 3)
+  // 5. Confirm Location (Step 3) - Finalize Wizard & Unlock App
   const handleLocationConfirm = async (loc: DeliveryLocation) => {
     if (!pendingSession) return;
     setIsSavingLocation(true);
+    setErrorMessage('');
     try {
-      const userWithLocation: MobileUser = {
+      const fullUser: MobileUser = {
         ...pendingSession.user,
         city: loc.city,
         deliveryLocation: loc,
       };
-      loginWithSession(pendingSession.token, userWithLocation);
-      await saveDeliveryLocation(loc, pendingSession.token);
-    } catch (_) {
-      // Best-effort
-    } finally {
-      setIsSavingLocation(false);
+
+      // 1. Sync full profile & delivery address to PostgreSQL
+      await updateUserProfile(
+        {
+          name: fullUser.name,
+          gender: fullUser.gender,
+          avatar: fullUser.avatar,
+          city: loc.city,
+          deliveryLocation: loc,
+        },
+        pendingSession.token
+      );
+
+      // 2. Complete authentication in background store & close modal
+      loginWithSession(pendingSession.token, fullUser);
       resetState();
       closeAuthModal();
+    } catch (err: any) {
+      console.warn('Error completing registration wizard:', err);
+      if (pendingSession) {
+        loginWithSession(pendingSession.token, {
+          ...pendingSession.user,
+          city: loc.city,
+          deliveryLocation: loc,
+        });
+      }
+      resetState();
+      closeAuthModal();
+    } finally {
+      setIsSavingLocation(false);
     }
-  };
-
-  const handleSkipLocation = () => {
-    if (pendingSession) {
-      loginWithSession(pendingSession.token, pendingSession.user);
-    }
-    resetState();
-    closeAuthModal();
   };
 
   const handleClose = () => {
-    if (pendingSession) {
-      loginWithSession(pendingSession.token, pendingSession.user);
+    // Only allow dismissal during Phone/OTP step before wizard starts
+    if (step === 'phone' || step === 'otp') {
+      resetState();
+      closeAuthModal();
     }
-    resetState();
-    closeAuthModal();
   };
 
   const resetState = () => {
@@ -385,7 +428,11 @@ export const AuthModal: React.FC = () => {
       visible={isAuthModalOpen}
       animationType="slide"
       transparent={true}
-      onRequestClose={handleClose}
+      onRequestClose={() => {
+        if (step === 'phone' || step === 'otp') {
+          handleClose();
+        }
+      }}
     >
       <View style={styles.overlay}>
         <View
@@ -416,9 +463,11 @@ export const AuthModal: React.FC = () => {
               {(step === 'phone' || step === 'otp') && stepDots}
             </View>
 
-            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
-              <X size={20} color={AppTheme.colors.textMuted} />
-            </TouchableOpacity>
+            {step === 'phone' || step === 'otp' ? (
+              <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                <X size={20} color={AppTheme.colors.textMuted} />
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           {/* ───────────────────────────────────────────────────────────────── */}
@@ -539,7 +588,8 @@ export const AuthModal: React.FC = () => {
               <View style={styles.profileActions}>
                 <TouchableOpacity
                   onPress={handleSaveProfileAndNext}
-                  style={styles.submitBtn}
+                  style={[styles.submitBtn, !fullName.trim() && styles.submitBtnDisabled]}
+                  disabled={!fullName.trim()}
                   activeOpacity={0.88}
                 >
                   <View style={styles.btnContent}>
@@ -548,16 +598,6 @@ export const AuthModal: React.FC = () => {
                     </Text>
                     <ChevronRight size={18} color="#FFFFFF" />
                   </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleSkipProfile}
-                  style={styles.skipBtn}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.skipBtnText}>
-                    {isRtl ? 'تخطي الآن والمتابعة' : 'Skip for now'}
-                  </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -568,7 +608,6 @@ export const AuthModal: React.FC = () => {
             <LocationPickerStep
               isRtl={isRtl}
               onConfirm={handleLocationConfirm}
-              onSkip={handleSkipLocation}
               isSaving={isSavingLocation}
             />
           ) : (
