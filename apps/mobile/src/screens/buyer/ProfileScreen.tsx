@@ -81,127 +81,59 @@ export const ProfileScreen: React.FC = () => {
     return (
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.guestScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcoming Brand Hero Card */}
-        <View style={styles.guestHeroCard}>
-          <View style={styles.brandIconBadge}>
-            <Text style={styles.brandLetter}>Z</Text>
-          </View>
-
-          <Text style={[styles.guestTitle, isRtl && styles.textRtl]}>
-            {isRtl ? 'حسابك في زيدو' : 'Your Zeedo Account'}
-          </Text>
-
-          <Text style={[styles.guestSubtitle, isRtl && styles.textRtl]}>
-            {isRtl
-              ? 'سجّل دخولك الآن للمزايدة على السلع الحصرية، متابعة مزاداتك الفائزة، وضمان التوصيل لباب منزلك مع ميزة الفحص قبل الدفع'
-              : 'Sign in to place live bids, track your orders, and inspect lots at your doorstep before paying.'}
-          </Text>
-
+        <View style={styles.guestCard}>
+          {/* 1. Primary Sign In / Register Action */}
           <TouchableOpacity
-            style={styles.primaryAuthBtn}
+            style={styles.guestAuthBtn}
             onPress={openAuthModal}
             activeOpacity={0.88}
           >
             <View style={styles.primaryAuthBtnInner}>
-              <User size={18} color="#FFFFFF" />
-              <Text style={styles.primaryAuthBtnText}>
-                {isRtl ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Register'}
+              <User size={20} color="#FFFFFF" />
+              <Text style={styles.guestAuthBtnText}>
+                {isRtl ? 'تسجيل الدخول / إنشاء حساب' : 'Sign Up / Log In'}
               </Text>
-              <Sparkles size={16} color="#FFE4E8" />
+              <Sparkles size={18} color="#FFE4E8" />
             </View>
           </TouchableOpacity>
-        </View>
 
-        {/* 4-Dialect Language Switcher */}
-        <View style={styles.section}>
-          <View style={[styles.sectionTitleRow, isRtl && styles.sectionTitleRowRtl]}>
-            <Globe size={18} color={AppTheme.colors.primary} />
-            <Text style={styles.sectionTitle}>{t.language}</Text>
-          </View>
+          {/* 2. 4-Dialect Language Switcher */}
+          <View style={styles.guestLangSection}>
+            <View style={[styles.sectionTitleRow, isRtl && styles.sectionTitleRowRtl]}>
+              <Globe size={18} color={AppTheme.colors.primary} />
+              <Text style={styles.sectionTitle}>{t.language}</Text>
+            </View>
 
-          <View style={styles.langGrid}>
-            {languages.map((item) => (
-              <TouchableOpacity
-                key={item.code}
-                onPress={() => setLanguage(item.code)}
-                style={[
-                  styles.langButton,
-                  language === item.code && styles.langButtonActive,
-                ]}
-                activeOpacity={0.8}
-              >
-                <Text
+            <View style={styles.langGrid}>
+              {languages.map((item) => (
+                <TouchableOpacity
+                  key={item.code}
+                  onPress={() => setLanguage(item.code)}
                   style={[
-                    styles.langButtonText,
-                    language === item.code && styles.langButtonTextActive,
+                    styles.langButton,
+                    language === item.code && styles.langButtonActive,
                   ]}
+                  activeOpacity={0.8}
                 >
-                  {item.label}
-                </Text>
-                <Text style={styles.langSub}>{item.sub}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Inspection Guarantee Footnote */}
-        <View style={styles.trustSection}>
-          <View style={styles.trustRow}>
-            <ShieldCheck size={20} color="#10B981" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.trustTitle}>
-                {isRtl ? 'ضمان الفحص عند الباب' : 'Doorstep Inspection Policy'}
-              </Text>
-              <Text style={styles.trustBody}>
-                {isRtl
-                  ? 'في زيدو، افحص السلعة وتأكد من سلامتها أمام المندوب قبل دفع دينار واحد.'
-                  : 'Inspect your items at your doorstep before paying cash on delivery.'}
-              </Text>
+                  <Text
+                    style={[
+                      styles.langButtonText,
+                      language === item.code && styles.langButtonTextActive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  <Text style={styles.langSub}>{item.sub}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         </View>
 
-        {/* Direct WhatsApp Support */}
-        <TouchableOpacity
-          style={styles.whatsappCard}
-          onPress={handleOpenWhatsApp}
-          activeOpacity={0.85}
-        >
-          <View style={styles.whatsappIconCircle}>
-            <MessageCircle size={22} color="#FFFFFF" />
-          </View>
-          <View style={styles.whatsappContent}>
-            <Text style={styles.whatsappTitle}>
-              {isRtl ? 'خدمة العملاء عبر واتساب' : 'Direct WhatsApp Support'}
-            </Text>
-            <Text style={styles.whatsappSub}>
-              {isRtl
-                ? 'فريق الدعم متاح لمساعدتك في أي استفسار'
-                : 'Support team available 24/7'}
-            </Text>
-          </View>
-          <ChevronRight size={18} color="#64748B" />
-        </TouchableOpacity>
-
-        {/* Bidding Terms */}
-        <View style={styles.menuCard}>
-          <View style={styles.menuItem}>
-            <FileText size={18} color="#64748B" />
-            <View style={styles.menuTextContent}>
-              <Text style={styles.menuTitle}>
-                {isRtl ? 'شروط وأحكام المزايدة في العراق' : 'Bidding Terms & Rules'}
-              </Text>
-              <Text style={styles.menuSub}>
-                {isRtl ? 'نظام المزايدة العادل وتمديد الدقيقة الأخيرة' : 'Fair Bidding & Soft-Close Rules'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Extra Bottom Padding for Floating Pill BottomNav */}
+        {/* Space for Floating Pill BottomNav */}
         <View style={{ height: 88 }} />
       </ScrollView>
     );
@@ -478,79 +410,49 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   // Guest View
-  guestHeroCard: {
+  guestScrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  guestCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 24,
-    alignItems: 'center',
+    padding: 20,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  brandIconBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: AppTheme.colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    shadowColor: AppTheme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  brandLetter: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '900',
-  },
-  guestTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#0F172A',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  guestSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-    paddingHorizontal: 8,
-  },
-  primaryAuthBtn: {
+  guestAuthBtn: {
     backgroundColor: AppTheme.colors.primary,
     width: '100%',
-    height: 52,
-    borderRadius: 16,
+    height: 56,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: AppTheme.colors.primary,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.32,
+    shadowRadius: 12,
+    elevation: 5,
+    marginBottom: 16,
+  },
+  guestAuthBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  guestLangSection: {
+    marginTop: 6,
   },
   primaryAuthBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  primaryAuthBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  textRtl: {
-    textAlign: 'center',
   },
   // Logged In View
   headerCard: {

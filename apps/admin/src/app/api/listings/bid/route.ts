@@ -3,6 +3,7 @@ import { broadcastLiveEvent } from '@/lib/realtime';
 import { sendOutbidAlert } from '@/lib/whatsappAlerts';
 import { normalizeIraqiPhone } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse } from '@/lib/cors';
+import { verifySessionToken } from '@/lib/session';
 
 export async function OPTIONS(request: Request) {
   return handleCorsOptions(request);
@@ -11,12 +12,29 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   const respond = (data: any, init?: ResponseInit) => jsonResponse(data, init, request);
   try {
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
     const body = await request.json();
     const auctionId = body.auctionId || body.id;
-    const bidderId = body.bidderId || body.userId || `usr-${Date.now()}`;
-    const bidderName = body.bidderName || body.userName || 'Authorized Buyer';
-    const bidderPhone = body.bidderPhone || body.phone || '+964 750 000 0000';
-    const bidderCity = body.bidderCity || body.city || 'Erbil';
+
+    let bidderId = body.bidderId || body.userId;
+    let bidderPhone = body.bidderPhone || body.phone;
+    let bidderName = body.bidderName || body.userName || 'Authorized Buyer';
+    let bidderCity = body.bidderCity || body.city || 'العراق';
+
+    // Verify session token if provided
+    if (token) {
+      const session = verifySessionToken(token);
+      if (session) {
+        bidderId = session.userId || bidderId;
+        bidderPhone = session.phone || bidderPhone;
+      }
+    }
+
+    bidderId = bidderId || `usr-${Date.now()}`;
+    bidderPhone = bidderPhone || '+964 750 000 0000';
+
     if (!auctionId) {
       return respond({ success: false, error: 'auctionId is required' }, { status: 400 });
     }
@@ -122,6 +140,7 @@ export async function POST(request: Request) {
         current_bid_iqd = ${newBid},
         total_bids = COALESCE(total_bids, 0) + 1,
         end_time = ${newEndTime.toISOString()},
+        auction_ends_at = ${newEndTime.toISOString()},
         highest_bidder = ${JSON.stringify(highestBidderObj)}::jsonb,
         bids_history = ${JSON.stringify(updatedHistory)}::jsonb
       WHERE id = ${auctionId}

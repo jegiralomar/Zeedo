@@ -172,8 +172,21 @@ export const AuthModal: React.FC = () => {
         // Authenticate immediately in background store
         loginWithSession(token, user);
 
-        // Advance to Step 2: Profile Setup (Name, Gender, Avatar)
-        setStep('profile');
+        const isExistingFullUser = Boolean(
+          data.user?.name &&
+            data.user.name !== 'مشترك جديد' &&
+            data.user.name !== 'مشترك زيدو' &&
+            data.user?.gender
+        );
+
+        if (isExistingFullUser) {
+          // Returning user with full profile: close modal cleanly
+          resetState();
+          closeAuthModal();
+        } else {
+          // New user or incomplete profile: prompt for Name, Gender & optional Avatar
+          setStep('profile');
+        }
       } else {
         setErrorMessage(
           data.message ||

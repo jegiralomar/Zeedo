@@ -111,15 +111,13 @@ export const useAppStore = create<AppState>((set, get) => ({
    */
   hydrate: async () => {
     try {
-      const [savedUser, savedToken, seenIntro] = await AsyncStorage.multiGet([
-        STORAGE_KEYS.USER,
-        STORAGE_KEYS.SESSION_TOKEN,
-        STORAGE_KEYS.HAS_SEEN_INTRO,
+      const [userJson, token, seenIntro] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.USER),
+        AsyncStorage.getItem(STORAGE_KEYS.SESSION_TOKEN),
+        AsyncStorage.getItem(STORAGE_KEYS.HAS_SEEN_INTRO),
       ]);
 
-      const userJson = savedUser[1];
-      const token = savedToken[1];
-      const introSeen = seenIntro[1] === 'true';
+      const introSeen = seenIntro === 'true';
 
       if (userJson && token) {
         try {
@@ -136,7 +134,10 @@ export const useAppStore = create<AppState>((set, get) => ({
           return;
         } catch {
           // Corrupted JSON — clear it
-          await AsyncStorage.multiRemove([STORAGE_KEYS.USER, STORAGE_KEYS.SESSION_TOKEN]);
+          await Promise.all([
+            AsyncStorage.removeItem(STORAGE_KEYS.USER),
+            AsyncStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN),
+          ]);
         }
       }
 
@@ -151,9 +152,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loginWithSession: (token, user) => {
     // Persist to AsyncStorage (works on both native APK and web)
-    AsyncStorage.multiSet([
-      [STORAGE_KEYS.SESSION_TOKEN, token],
-      [STORAGE_KEYS.USER, JSON.stringify(user)],
+    Promise.all([
+      AsyncStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, token),
+      AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user)),
     ]).catch(() => {});
 
     set({
@@ -169,7 +170,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   logout: () => {
-    AsyncStorage.multiRemove([STORAGE_KEYS.SESSION_TOKEN, STORAGE_KEYS.USER]).catch(() => {});
+    Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN),
+      AsyncStorage.removeItem(STORAGE_KEYS.USER),
+    ]).catch(() => {});
     set({
       currentUser: null,
       sessionToken: null,
@@ -332,7 +336,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Real Bidding Submission
   placeBid: async (auctionId, amountIqd) => {
-    const { currentUser, openAuthModal, auctions, myBids } = get();
+    const { currentUser, openAuthModal, auctions, myBids, sessionToken } = get();
 
     if (!currentUser) {
       openAuthModal();
@@ -340,9 +344,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (sessionToken) {
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
+
       const response = await fetch(ZEEDO_CONFIG.ENDPOINTS.PLACE_BID, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           auctionId,
           bidderId: currentUser.id,
