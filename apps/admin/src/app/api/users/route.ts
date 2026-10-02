@@ -2,42 +2,6 @@ import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { normalizeIraqiPhone } from '@/lib/whatsapp';
 
-async function ensureUsersTable(sql: any) {
-  await sql`
-    CREATE TABLE IF NOT EXISTS users (
-      id VARCHAR(64) PRIMARY KEY,
-      phone VARCHAR(32) UNIQUE NOT NULL,
-      name VARCHAR(128) NOT NULL,
-      gender VARCHAR(20),
-      avatar TEXT,
-      city VARCHAR(64) DEFAULT 'Erbil',
-      kyc_status VARCHAR(32) DEFAULT 'verified',
-      kyc_national_id VARCHAR(64),
-      rooftop_landmark TEXT,
-      rooftop_lat DOUBLE PRECISION,
-      rooftop_lng DOUBLE PRECISION,
-      rooftop_pin TEXT,
-      total_bids INT DEFAULT 0,
-      total_wins INT DEFAULT 0,
-      total_spent_iqd BIGINT DEFAULT 0,
-      role VARCHAR(32) DEFAULT 'buyer',
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-  `;
-  try {
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lat DOUBLE PRECISION;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lng DOUBLE PRECISION;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin TEXT;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_bids INT DEFAULT 0;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_wins INT DEFAULT 0;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_spent_iqd BIGINT DEFAULT 0;`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(32) DEFAULT 'buyer';`;
-    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`;
-  } catch {}
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -48,7 +12,6 @@ export async function GET(request: Request) {
     await initDatabaseSchema();
     const sql = getDb();
     if (sql) {
-      await ensureUsersTable(sql);
       let rows;
       if (role) {
         rows = await sql`SELECT * FROM users WHERE role = ${role} ORDER BY created_at DESC`;
@@ -130,7 +93,6 @@ export async function POST(request: Request) {
     await initDatabaseSchema();
     const sql = getDb();
     if (sql) {
-      await ensureUsersTable(sql);
       const rows = await sql`
         INSERT INTO users (
           id, phone, name, gender, avatar, city, role, kyc_status, rooftop_landmark, rooftop_lat, rooftop_lng, rooftop_pin, created_at, updated_at

@@ -1,0 +1,15 @@
+{
+  "name": "zeedo-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zeedo Live Bidding Platform - Monorepo Workspace",
+  "scripts": {
+    "start": "npm run --prefix apps/mobile start",
+    "mobile": "npm run --prefix apps/mobile start",
+    "mobile:web": "npm run --prefix apps/mobile web",
+    "mobile:android": "npm run --prefix apps/mobile android",
+    "build:apk": "npm run --prefix apps/mobile build:apk",
+    "admin": "npm run --prefix apps/admin dev",
+    "admin:build": "npm run --prefix apps/admin build"
+  }
+}

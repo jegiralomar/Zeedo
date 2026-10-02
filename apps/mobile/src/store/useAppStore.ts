@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   LanguageCode,
   UserRole,
@@ -11,6 +12,13 @@ import {
 import { ZEEDO_CONFIG } from '../config/api';
 
 export type BuyerTab = 'auctions' | 'watchlist' | 'bag' | 'profile';
+
+// Storage keys
+const STORAGE_KEYS = {
+  SESSION_TOKEN: 'zeedo_session_token',
+  USER: 'zeedo_user',
+  HAS_SEEN_INTRO: 'zeedo_has_seen_intro',
+};
 
 interface AppState {
   // Localization
@@ -30,6 +38,10 @@ interface AppState {
   closeAuthModal: () => void;
   loginWithSession: (token: string, user: MobileUser) => void;
   logout: () => void;
+
+  // Hydration (load saved session from AsyncStorage on app start)
+  hydrate: () => Promise<void>;
+  isHydrated: boolean;
 
   // Location & Profile Setup
   isLocationSetupOpen: boolean;
@@ -53,6 +65,7 @@ interface AppState {
   // Auctions Catalog (Live from Server)
   auctions: MobileAuctionItem[];
   isLoadingAuctions: boolean;
+  auctionsFetchError: boolean;
   fetchAuctions: () => Promise<void>;
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
@@ -76,54 +89,73 @@ interface AppState {
   addWonOrder: (order: WonLotOrder) => void;
 }
 
-const getInitialIntroSeen = () => {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage.getItem('zeedo_has_seen_intro') === 'true';
-  }
-  return false;
-};
-
-const getInitialSession = (): { user: MobileUser | null; token: string | null } => {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try {
-      const savedUser = window.localStorage.getItem('zeedo_user');
-      const savedToken = window.localStorage.getItem('zeedo_session_token');
-      if (savedUser && savedToken) {
-        return { user: JSON.parse(savedUser), token: savedToken };
-      }
-    } catch (_err) {
-      // Ignored
-    }
-  }
-  return { user: null, token: null };
-};
-
-const initialSession = getInitialSession();
-
 export const useAppStore = create<AppState>((set, get) => ({
   language: 'ar',
   setLanguage: (lang) => set({ language: lang }),
 
-  hasSeenIntro: getInitialIntroSeen(),
+  hasSeenIntro: false,
   completeIntro: () => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('zeedo_has_seen_intro', 'true');
-    }
+    AsyncStorage.setItem(STORAGE_KEYS.HAS_SEEN_INTRO, 'true').catch(() => {});
     set({ hasSeenIntro: true });
   },
 
-  currentUser: initialSession.user,
-  sessionToken: initialSession.token,
-  userRole: initialSession.user ? initialSession.user.role : 'guest',
+  currentUser: null,
+  sessionToken: null,
+  userRole: 'guest',
   isAuthModalOpen: false,
+  isHydrated: false,
+
+  /**
+   * Hydrate store from AsyncStorage — must be called once on app mount.
+   * Replaces the old synchronous localStorage initialization pattern.
+   */
+  hydrate: async () => {
+    try {
+      const [savedUser, savedToken, seenIntro] = await AsyncStorage.multiGet([
+        STORAGE_KEYS.USER,
+        STORAGE_KEYS.SESSION_TOKEN,
+        STORAGE_KEYS.HAS_SEEN_INTRO,
+      ]);
+
+      const userJson = savedUser[1];
+      const token = savedToken[1];
+      const introSeen = seenIntro[1] === 'true';
+
+      if (userJson && token) {
+        try {
+          const user: MobileUser = JSON.parse(userJson);
+          set({
+            currentUser: user,
+            sessionToken: token,
+            userRole: user.role,
+            hasSeenIntro: introSeen,
+            isHydrated: true,
+          });
+          // Silently refresh won orders in background
+          get().fetchWonOrders().catch(() => {});
+          return;
+        } catch {
+          // Corrupted JSON — clear it
+          await AsyncStorage.multiRemove([STORAGE_KEYS.USER, STORAGE_KEYS.SESSION_TOKEN]);
+        }
+      }
+
+      set({ hasSeenIntro: introSeen, isHydrated: true });
+    } catch {
+      set({ isHydrated: true });
+    }
+  },
+
   openAuthModal: () => set({ isAuthModalOpen: true }),
   closeAuthModal: () => set({ isAuthModalOpen: false }),
 
   loginWithSession: (token, user) => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('zeedo_session_token', token);
-      window.localStorage.setItem('zeedo_user', JSON.stringify(user));
-    }
+    // Persist to AsyncStorage (works on both native APK and web)
+    AsyncStorage.multiSet([
+      [STORAGE_KEYS.SESSION_TOKEN, token],
+      [STORAGE_KEYS.USER, JSON.stringify(user)],
+    ]).catch(() => {});
+
     set({
       currentUser: user,
       sessionToken: token,
@@ -131,13 +163,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       isAuthModalOpen: false,
       activeTab: 'auctions',
     });
+
+    // Fetch won orders for the newly logged-in user
+    get().fetchWonOrders().catch(() => {});
   },
 
   logout: () => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem('zeedo_session_token');
-      window.localStorage.removeItem('zeedo_user');
-    }
+    AsyncStorage.multiRemove([STORAGE_KEYS.SESSION_TOKEN, STORAGE_KEYS.USER]).catch(() => {});
     set({
       currentUser: null,
       sessionToken: null,
@@ -159,9 +191,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const updatedUser = { ...currentUser, deliveryLocation: loc, city: loc.city };
 
     // Persist locally first
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('zeedo_user', JSON.stringify(updatedUser));
-    }
+    AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser)).catch(() => {});
     set({ currentUser: updatedUser, isLocationSetupOpen: false });
 
     // Sync to server (non-blocking)
@@ -190,9 +220,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const updatedUser = { ...currentUser, ...updates };
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('zeedo_user', JSON.stringify(updatedUser));
-    }
+    AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser)).catch(() => {});
     set({ currentUser: updatedUser });
 
     const effectiveToken = token || sessionToken;
@@ -238,12 +266,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   merchantScreen: 'dashboard',
   setMerchantScreen: (s) => set({ merchantScreen: s }),
 
-  // 100% Clean Slate: Live Auctions from Production Server
+  // Live Auctions from Production Server
   auctions: [],
   isLoadingAuctions: false,
+  auctionsFetchError: false,
 
   fetchAuctions: async () => {
-    set({ isLoadingAuctions: true });
+    set({ isLoadingAuctions: true, auctionsFetchError: false });
     try {
       const res = await fetch(ZEEDO_CONFIG.ENDPOINTS.LIVE_AUCTIONS);
       if (res.ok) {
@@ -270,11 +299,13 @@ export const useAppStore = create<AppState>((set, get) => ({
             condition: 'New',
             bidsHistory: Array.isArray(item.bidsHistory) ? item.bidsHistory : [],
           }));
-          set({ auctions: mapped });
+          set({ auctions: mapped, auctionsFetchError: false });
         }
+      } else {
+        set({ auctionsFetchError: true });
       }
     } catch (_err) {
-      // Quietly handle network latency/offline mode in production
+      set({ auctionsFetchError: true });
     } finally {
       set({ isLoadingAuctions: false });
     }
@@ -285,7 +316,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
 
-  // Watchlist (Clean initial array)
+  // Watchlist
   watchlistIds: [],
   toggleWatchlist: (id) => {
     const { watchlistIds } = get();
@@ -296,7 +327,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Active Bids (Clean initial array)
+  // Active Bids
   myBids: [],
 
   // Real Bidding Submission
@@ -331,28 +362,34 @@ export const useAppStore = create<AppState>((set, get) => ({
         };
       }
 
-      // Optimistically update local auction and leading status
+      // Use the server-authoritative bid amount and step — not the client-computed one
+      const serverBidIqd = resData.auction?.currentBidIqd ?? amountIqd;
+      const serverStep = resData.auction?.incrementStepIqd;
+      const serverEndsAt = resData.auction?.auctionEndsAt;
+
       const updatedAuctions = auctions.map((it) => {
         if (it.id !== auctionId) return it;
         const newRecord: BidRecord = {
-          bidId: `b-${Date.now()}`,
+          bidId: resData.bid?.bidId || `b-${Date.now()}`,
           bidderId: currentUser.id,
           bidderName: currentUser.name,
-          amountIqd,
+          amountIqd: serverBidIqd,
           timestamp: new Date().toLocaleTimeString(),
         };
 
         return {
           ...it,
-          currentBidIqd: amountIqd,
+          currentBidIqd: serverBidIqd,
           bidsCount: it.bidsCount + 1,
-          endsAt: resData.newEndTime || it.endsAt,
+          endsAt: serverEndsAt || it.endsAt,
+          // Update increment step if server sends a new tier-based step
+          ...(serverStep ? { incrementStepIqd: serverStep } : {}),
           bidsHistory: [newRecord, ...(it.bidsHistory || [])].slice(0, 30),
         };
       });
 
       const updatedMyBids = [
-        { auctionId, amountIqd, isLeading: true },
+        { auctionId, amountIqd: serverBidIqd, isLeading: true },
         ...myBids.filter((b) => b.auctionId !== auctionId),
       ];
 
@@ -377,11 +414,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchWonOrders: async () => {
     set({ isLoadingWonOrders: true });
     try {
-      const user = get().currentUser;
-      const url = user?.id
-        ? `${ZEEDO_CONFIG.ENDPOINTS.WON_ORDERS}?userId=${encodeURIComponent(user.id)}`
+      const { currentUser, sessionToken } = get();
+      const url = currentUser?.id
+        ? `${ZEEDO_CONFIG.ENDPOINTS.WON_ORDERS}?userId=${encodeURIComponent(currentUser.id)}`
         : ZEEDO_CONFIG.ENDPOINTS.WON_ORDERS;
-      const res = await fetch(url);
+
+      const headers: Record<string, string> = {};
+      if (sessionToken) {
+        headers['Authorization'] = `Bearer ${sessionToken}`;
+      }
+
+      const res = await fetch(url, { headers });
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.wonOrders)) {

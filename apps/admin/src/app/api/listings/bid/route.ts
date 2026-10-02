@@ -17,7 +17,6 @@ export async function POST(request: Request) {
     const bidderName = body.bidderName || body.userName || 'Authorized Buyer';
     const bidderPhone = body.bidderPhone || body.phone || '+964 750 000 0000';
     const bidderCity = body.bidderCity || body.city || 'Erbil';
-
     if (!auctionId) {
       return respond({ success: false, error: 'auctionId is required' }, { status: 400 });
     }
@@ -185,10 +184,16 @@ export async function POST(request: Request) {
       }).catch(() => {});
 
       if (previousHighestBidder.phone) {
+        // Parse real item title from multilingual JSONB
+        const titlesObj = auction.titles
+          ? (typeof auction.titles === 'string' ? JSON.parse(auction.titles) : auction.titles)
+          : {};
+        const itemTitle = titlesObj.ar || titlesObj.en || titlesObj.ckb || 'سلعة المزاد';
+
         sendOutbidAlert({
           buyerPhone: previousHighestBidder.phone,
           buyerName: previousHighestBidder.name || 'عزيزنا المزايد',
-          auctionTitle: auction.title || 'سلعة المزاد',
+          auctionTitle: itemTitle,
           newBidAmountUsd: Math.round(newBid / 1510),
           newBidAmountIqd: newBid,
           auctionId,
@@ -202,6 +207,7 @@ export async function POST(request: Request) {
       auction: {
         id: auctionId,
         currentBidIqd: newBid,
+        incrementStepIqd: step,
         totalBids: broadcastPayload.totalBids,
         auctionEndsAt: newEndTime.toISOString(),
         highestBidder: highestBidderObj,

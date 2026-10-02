@@ -9,7 +9,7 @@ import {
   Dimensions,
   RefreshControl,
 } from 'react-native';
-import { Heart, ShieldCheck, MapPin, Gavel, Sparkles } from 'lucide-react-native';
+import { Heart, ShieldCheck, MapPin, Gavel, Sparkles, WifiOff } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
@@ -25,6 +25,7 @@ export const HomeScreen: React.FC = () => {
     auctions,
     fetchAuctions,
     isLoadingAuctions,
+    auctionsFetchError,
     setSelectedAuctionId,
     searchQuery,
     selectedCategory,
@@ -153,6 +154,20 @@ export const HomeScreen: React.FC = () => {
       </View>
 
       {/* 4. High-Urgency 2-Column Live Auction Grid */}
+      {auctionsFetchError && auctions.length === 0 ? (
+        <View style={styles.errorContainer}>
+          <WifiOff size={40} color="#94A3B8" />
+          <Text style={styles.errorTitle}>
+            {isRtl ? 'تعذر تحميل المزادات' : 'Could not load auctions'}
+          </Text>
+          <Text style={styles.errorSub}>
+            {isRtl ? 'تحقق من اتصالك بالإنترنت' : 'Check your internet connection'}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchAuctions} activeOpacity={0.8}>
+            <Text style={styles.retryText}>{isRtl ? 'إعادة المحاولة' : 'Retry'}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
       <View style={styles.gridContainer}>
         {filteredAuctions.map((item) => {
           const isWatched = watchlistIds.includes(item.id);
@@ -236,6 +251,7 @@ export const HomeScreen: React.FC = () => {
           );
         })}
       </View>
+      )}
 
       {/* Empty State */}
       {filteredAuctions.length === 0 && (
@@ -572,6 +588,36 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 64,
+    paddingHorizontal: 24,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginTop: 12,
+  },
+  errorSub: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: AppTheme.colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryText: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
   },

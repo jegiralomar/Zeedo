@@ -47,6 +47,12 @@ export async function POST(request: Request) {
 
       for (const auc of expiredAuctions) {
         const cleanId = (auc.id || '').replace(/^auc-/, '');
+
+        // Parse multilingual titles JSONB to get real item name
+        const titlesObj = auc.titles
+          ? (typeof auc.titles === 'string' ? JSON.parse(auc.titles) : auc.titles)
+          : {};
+        const itemTitle = titlesObj.ar || titlesObj.en || titlesObj.ckb || 'سلعة المزاد';
         const packageAwbId = `AWB-IQ-${dateStr}-${cleanId}`;
 
         let highestBidderObj: any = null;
@@ -95,6 +101,21 @@ export async function POST(request: Request) {
               try { itemImg = JSON.parse(auc.image_urls)[0] || ''; } catch { itemImg = auc.image_urls; }
             }
 
+            // Try to fetch delivery address from users table
+            let deliveryAddress = '';
+            let deliveryCity = highestBidderObj.city || 'Erbil';
+            try {
+              const userRows = await sql`
+                SELECT rooftop_landmark, city FROM users
+                WHERE id = ${highestBidderObj.id} OR phone = ${highestBidderObj.phone || ''}
+                LIMIT 1
+              `;
+              if (userRows[0]) {
+                deliveryAddress = userRows[0].rooftop_landmark || '';
+                deliveryCity = userRows[0].city || deliveryCity;
+              }
+            } catch {}
+
             await sql`
               INSERT INTO won_orders (
                 id, auction_id, winner_id, seller_id, winning_bid_iqd,
@@ -102,8 +123,8 @@ export async function POST(request: Request) {
                 delivery_phone, awb_number, cod_status, created_at, updated_at
               ) VALUES (
                 ${'ord-' + auc.id}, ${auc.id}, ${highestBidderObj.id}, ${auc.seller_id || 'sel-01'},
-                ${finalBidIqd}, ${auc.title || 'Auction Lot'}, ${itemImg || ''},
-                ${highestBidderObj.address || ''}, ${highestBidderObj.city || 'Erbil'},
+                ${finalBidIqd}, ${itemTitle}, ${itemImg || ''},
+                ${deliveryAddress}, ${deliveryCity},
                 ${highestBidderObj.phone || ''}, ${packageAwbId}, 'ready_for_dispatch', NOW(), NOW()
               ) ON CONFLICT (id) DO UPDATE SET cod_status = EXCLUDED.cod_status
             `;
@@ -127,7 +148,7 @@ export async function POST(request: Request) {
             sendAuctionWonAlert({
               buyerPhone: highestBidderObj.phone,
               buyerName: highestBidderObj.name || 'الفائز الكريم',
-              auctionTitle: auc.title || 'سلعة المزاد',
+              auctionTitle: itemTitle,
               finalPriceUsd: Math.round(finalBidIqd / 1510),
               finalPriceIqd: finalBidIqd,
               city: highestBidderObj.city || 'بغداد',
@@ -138,7 +159,7 @@ export async function POST(request: Request) {
 
         results.push({
           id: auc.id,
-          title: auc.title,
+          title: itemTitle,
           packageAwbId,
           finalBidIqd,
           winner: highestBidderObj?.name || 'No bids',
@@ -274,6 +295,12 @@ export async function POST(request: Request) {
         highestBidderObj = null;
       }
 
+      // Parse real item title from multilingual JSONB
+      const titlesObj = auction.titles
+        ? (typeof auction.titles === 'string' ? JSON.parse(auction.titles) : auction.titles)
+        : {};
+      const itemTitle = titlesObj.ar || titlesObj.en || titlesObj.ckb || 'سلعة المزاد';
+
       const finalBidIqd = Number(auction.current_bid_iqd || 1000);
 
       await sql`
@@ -320,7 +347,7 @@ export async function POST(request: Request) {
           sendAuctionWonAlert({
             buyerPhone: highestBidderObj.phone,
             buyerName: highestBidderObj.name || 'الفائز الكريم',
-            auctionTitle: auction.title || 'سلعة المزاد',
+            auctionTitle: itemTitle,
             finalPriceUsd: Math.round(finalBidIqd / 1510),
             finalPriceIqd: finalBidIqd,
             city: highestBidderObj.city || 'بغداد',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, StatusBar, Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from './src/store/useAppStore';
@@ -27,7 +27,23 @@ export default function App() {
     userRole,
     merchantScreen,
     setMerchantScreen,
+    hydrate,
+    isHydrated,
   } = useAppStore();
+
+  // Load persisted session + intro state from AsyncStorage on first mount
+  useEffect(() => {
+    hydrate();
+  }, []);
+
+  // Wait for AsyncStorage hydration before rendering to avoid flicker
+  if (!isHydrated) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.safeArea} />
+      </SafeAreaProvider>
+    );
+  }
 
   // If first-time user, display the Language Picker & Intro Carousel
   if (!hasSeenIntro) {
