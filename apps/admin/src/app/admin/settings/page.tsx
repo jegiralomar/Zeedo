@@ -87,7 +87,7 @@ function SettingsContent() {
     try {
       const res = await fetch('/api/exchange-rate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders(),
         body: JSON.stringify({ rate: rateNum }),
       });
       const data = await res.json();
@@ -126,7 +126,7 @@ function SettingsContent() {
 
   const fetchQrCode = async () => {
     try {
-      const res = await fetch('/api/whatsapp/qr');
+      const res = await fetch('/api/whatsapp/qr', { headers: getAdminAuthHeaders() });
       if (res.ok) {
         const data = await res.json();
         if (data?.qr) {

@@ -71,8 +71,14 @@ export default function App() {
         return true;
       }
 
-      // 4. If auth modal is open and user profile is complete, close modal
+      // 4. If auth modal is open:
       if (isAuthModalOpen) {
+        // If user is a guest (not logged in), dismiss modal
+        if (!currentUser || !sessionToken) {
+          closeAuthModal();
+          return true;
+        }
+
         const hasDelivery = Boolean(
           currentUser?.deliveryLocation?.address ||
             (currentUser?.city && currentUser?.city !== 'العراق' && currentUser?.city !== 'Erbil')
@@ -86,6 +92,8 @@ export default function App() {
           closeAuthModal();
           return true;
         }
+        // In the middle of mandatory profile completion: absorb press to prevent app exit
+        return true;
       }
 
       // 5. If on another buyer tab (watchlist, bag, profile), navigate back to main 'auctions' tab
@@ -121,6 +129,7 @@ export default function App() {
     isAuthModalOpen,
     closeAuthModal,
     currentUser,
+    sessionToken,
     activeTab,
     setActiveTab,
     language,

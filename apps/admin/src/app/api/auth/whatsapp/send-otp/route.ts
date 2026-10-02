@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { sendWhatsAppOtp } from '@/lib/whatsapp';
+import { sendWhatsAppOtp, normalizeIraqiPhone } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
 
 // In-memory OTP rate limiter: max 3 requests per phone per 10 minutes
@@ -26,13 +26,18 @@ export async function OPTIONS(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await safeParseJson<{ phoneNumber?: string; phone?: string }>(req);
-    const phoneNumber = body.phoneNumber || body.phone;
+    const phoneNumber = (body.phoneNumber || body.phone || '').trim();
 
     if (!phoneNumber) {
       return jsonResponse({ isSuccess: false, message: 'Phone number is required' }, { status: 400 }, req);
     }
 
-    if (isRateLimited(phoneNumber)) {
+    const normalizedPhone = normalizeIraqiPhone(phoneNumber);
+    if (!normalizedPhone || normalizedPhone.length < 10) {
+      return jsonResponse({ isSuccess: false, message: 'Invalid phone number format' }, { status: 400 }, req);
+    }
+
+    if (isRateLimited(normalizedPhone)) {
       return jsonResponse(
         { isSuccess: false, message: 'Too many OTP requests. Please wait 10 minutes before trying again.' },
         { status: 429 },
@@ -40,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await sendWhatsAppOtp(phoneNumber);
+    const result = await sendWhatsAppOtp(normalizedPhone);
     return jsonResponse(result, undefined, req);
   } catch (error) {
     console.error('Error sending WhatsApp OTP:', error);

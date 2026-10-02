@@ -33,7 +33,9 @@ const otpStore = new Map<string, StoredOtpSession>();
  * Normalizes Iraqi phone numbers to standard E.164 format (+9647XXXXXXXXX)
  */
 export function normalizeIraqiPhone(rawPhone: string): string {
+  if (!rawPhone || typeof rawPhone !== 'string') return '';
   const digits = rawPhone.replace(/\D/g, '');
+  if (!digits) return '';
 
   if (digits.startsWith('00964')) {
     return `+${digits.substring(2)}`;
@@ -47,7 +49,7 @@ export function normalizeIraqiPhone(rawPhone: string): string {
   if (digits.startsWith('7')) {
     return `+964${digits}`;
   }
-  return digits.length > 0 ? `+${digits}` : '+9647501928844';
+  return `+${digits}`;
 }
 
 /**

@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/session';
 
 // Root /api/settings — redirects to api-status for convenience
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.isValid) {
+    return NextResponse.json({ success: false, error: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
   const geminiKey = process.env.GEMINI_API_KEY || '';
   const apiMode = process.env.ZEEDO_API_MODE || 'sandbox';
 
@@ -30,6 +36,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await request.json();
     // In a real system you'd persist these to Vercel env via API.
     // For now, acknowledge the update and return current config.

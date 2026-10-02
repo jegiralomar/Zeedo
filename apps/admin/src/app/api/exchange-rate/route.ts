@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, message: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await req.json();
     const newRate = Number(body.rate);
 

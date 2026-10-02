@@ -2,11 +2,17 @@ import { NextResponse } from 'next/server';
 import { INITIAL_TICKETS } from '@/data/mockData';
 import { SupportTicket } from '@/types';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { verifyAdminRequest } from '@/lib/session';
 
 // In-memory fallback
 let serverTickets: SupportTicket[] = [...INITIAL_TICKETS];
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.isValid) {
+    return NextResponse.json({ success: false, error: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
   const sql = getDb();
   if (sql) {
     try {

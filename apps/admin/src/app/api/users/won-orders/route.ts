@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { normalizeIraqiPhone } from '@/lib/whatsapp';
 import { jsonResponse, handleCorsOptions, safeParseJson } from '@/lib/cors';
+import { verifySessionToken, verifyAdminRequest } from '@/lib/session';
 
 export async function OPTIONS(request: Request) {
   return handleCorsOptions(request);
@@ -9,6 +10,16 @@ export async function OPTIONS(request: Request) {
 
 export async function GET(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    const adminAuth = verifyAdminRequest(request);
+    const userSession = token ? verifySessionToken(token) : null;
+
+    if (!adminAuth.isValid && !userSession) {
+      return jsonResponse({ success: false, error: 'Unauthorized: Valid session required' }, { status: 401 }, request);
+    }
+
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
@@ -16,27 +27,38 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const requestedUserId = searchParams.get('userId');
     const sellerId = searchParams.get('sellerId');
 
     let rows;
-    if (userId) {
-      rows = await sql`
-        SELECT * FROM won_orders
-        WHERE winner_id = ${userId}
-        ORDER BY created_at DESC
-      `;
-    } else if (sellerId) {
-      rows = await sql`
-        SELECT * FROM won_orders
-        WHERE seller_id = ${sellerId}
-        ORDER BY created_at DESC
-      `;
+    if (adminAuth.isValid) {
+      // Admin can query any user or seller, or list latest
+      if (requestedUserId) {
+        rows = await sql`
+          SELECT * FROM won_orders
+          WHERE winner_id = ${requestedUserId}
+          ORDER BY created_at DESC
+        `;
+      } else if (sellerId) {
+        rows = await sql`
+          SELECT * FROM won_orders
+          WHERE seller_id = ${sellerId}
+          ORDER BY created_at DESC
+        `;
+      } else {
+        rows = await sql`
+          SELECT * FROM won_orders
+          ORDER BY created_at DESC
+          LIMIT 100
+        `;
+      }
     } else {
+      // Normal user: strictly scoped to own session identity (prevents IDOR)
+      const canonicalPhone = normalizeIraqiPhone(userSession!.phone);
       rows = await sql`
         SELECT * FROM won_orders
+        WHERE winner_id = ${userSession!.userId} OR delivery_phone = ${canonicalPhone}
         ORDER BY created_at DESC
-        LIMIT 100
       `;
     }
 
@@ -62,6 +84,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const adminAuth = verifyAdminRequest(request);
+    if (!adminAuth.isValid) {
+      return jsonResponse({ success: false, error: 'Unauthorized: Admin authorization required to create orders' }, { status: 401 }, request);
+    }
+
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
@@ -148,6 +175,16 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    const adminAuth = verifyAdminRequest(request);
+    const userSession = token ? verifySessionToken(token) : null;
+
+    if (!adminAuth.isValid && !userSession) {
+      return jsonResponse({ success: false, error: 'Unauthorized' }, { status: 401 }, request);
+    }
+
     await initDatabaseSchema();
     const sql = getDb();
     if (!sql) {
@@ -160,13 +197,38 @@ export async function PATCH(request: NextRequest) {
       return jsonResponse({ success: false, error: 'orderId is required' }, { status: 400 }, request);
     }
 
-    await sql`
-      UPDATE won_orders SET
-        cod_status = COALESCE(${codStatus ?? null}, cod_status),
-        delivery_address = COALESCE(${deliveryAddress ?? null}, delivery_address),
-        updated_at = NOW()
-      WHERE id = ${orderId}
-    `;
+    if (adminAuth.isValid) {
+      // Admin can update COD status and address
+      await sql`
+        UPDATE won_orders SET
+          cod_status = COALESCE(${codStatus ?? null}, cod_status),
+          delivery_address = COALESCE(${deliveryAddress ?? null}, delivery_address),
+          updated_at = NOW()
+        WHERE id = ${orderId}
+      `;
+    } else {
+      // Buyer can only update their own order's delivery address while pending dispatch
+      const canonicalPhone = normalizeIraqiPhone(userSession!.phone);
+      const existing = await sql`
+        SELECT * FROM won_orders
+        WHERE id = ${orderId} AND (winner_id = ${userSession!.userId} OR delivery_phone = ${canonicalPhone})
+        LIMIT 1
+      `;
+      if (existing.length === 0) {
+        return jsonResponse({ success: false, error: 'Order not found or permission denied' }, { status: 404 }, request);
+      }
+
+      if (existing[0].cod_status !== 'ready_for_dispatch' && existing[0].cod_status !== 'pending_confirmation') {
+        return jsonResponse({ success: false, error: 'Cannot change delivery address after order has been dispatched' }, { status: 400 }, request);
+      }
+
+      await sql`
+        UPDATE won_orders SET
+          delivery_address = COALESCE(${deliveryAddress ?? null}, delivery_address),
+          updated_at = NOW()
+        WHERE id = ${orderId}
+      `;
+    }
 
     return jsonResponse({ success: true, updated: orderId }, {}, request);
   } catch (err: any) {

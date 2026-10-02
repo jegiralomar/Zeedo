@@ -6,9 +6,15 @@ import {
   sendMerchantSettlementAlert,
   sendWhatsAppMessage,
 } from '@/lib/whatsappAlerts';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
+    const auth = verifyAdminRequest(request);
+    if (!auth.isValid) {
+      return NextResponse.json({ success: false, error: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { type, payload } = body;
 

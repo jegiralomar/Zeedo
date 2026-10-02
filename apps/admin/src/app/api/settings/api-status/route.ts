@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
 import { initDatabaseSchema, getSetting, setSetting } from '@/lib/db';
 import { testR2Connection } from '@/lib/storage';
+import { verifyAdminRequest } from '@/lib/session';
 
 export async function OPTIONS() {
   return handleCorsOptions();
@@ -22,7 +23,12 @@ async function resolveConfig(dbKey: string, envKey: string, fallback = ''): Prom
   return process.env[envKey] || fallback;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = verifyAdminRequest(req);
+  if (!auth.isValid) {
+    return jsonResponse({ success: false, error: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
   const [
     geminiKey,
     mode,
@@ -90,6 +96,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = verifyAdminRequest(req);
+    if (!auth.isValid) {
+      return jsonResponse({ success: false, error: auth.error || 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await safeParseJson<{
       action?: string;
       geminiApiKey?: string;

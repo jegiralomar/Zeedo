@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  const auth = verifyAdminRequest(req);
+  if (!auth.isValid) {
+    return new NextResponse('Unauthorized: Admin access required', { status: 401 });
+  }
+
   const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001';
 
   try {

@@ -4,14 +4,71 @@ import { scrapeUniversalProduct } from '@/lib/universalScraper';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 45;
 
+function isPrivateOrLocalUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Check protocol
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return true;
+    }
+
+    // Check localhost & local / container service hostnames
+    if (
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal') ||
+      hostname === 'whatsapp-gateway' ||
+      hostname === 'zeedo_db' ||
+      hostname === 'zeedo_web' ||
+      hostname === 'zeedo_websocket' ||
+      hostname === 'web'
+    ) {
+      return true;
+    }
+
+    // Check IPv4 addresses (private, loopback, link-local)
+    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const match = hostname.match(ipv4Regex);
+    if (match) {
+      const [_, a, b] = match.map(Number);
+      if (a === 127) return true; // loopback
+      if (a === 10) return true; // 10.0.0.0/8
+      if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+      if (a === 192 && b === 168) return true; // 192.168.0.0/16
+      if (a === 169 && b === 254) return true; // link-local (cloud metadata)
+      if (a === 0) return true; // 0.0.0.0
+    }
+
+    // Check IPv6 addresses
+    if (
+      hostname === '[::1]' ||
+      hostname === '::1' ||
+      hostname === '[::]' ||
+      hostname === '::' ||
+      hostname.startsWith('fe80:') ||
+      hostname.startsWith('fc00:') ||
+      hostname.startsWith('fd00:')
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const targetUrl = (body.url || '').trim();
 
-    if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) {
+    if (!targetUrl || !/^https?:\/\//i.test(targetUrl) || isPrivateOrLocalUrl(targetUrl)) {
       return NextResponse.json(
-        { success: false, message: 'Invalid or missing product URL' },
+        { success: false, message: 'Invalid or prohibited product URL' },
         { status: 400 }
       );
     }

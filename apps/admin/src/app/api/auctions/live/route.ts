@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
 
     const rows = await sql`
       SELECT * FROM auctions 
-      WHERE status = 'live' 
+      WHERE status = 'live'
+        AND (end_time IS NULL OR end_time > NOW())
       ORDER BY created_at DESC
     `;
 
