@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Gavel, Heart, ShoppingBag, User, LayoutDashboard, Package, Receipt, Store } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
@@ -24,81 +24,177 @@ export const BottomNav: React.FC = () => {
   // Strict Merchant Dock if logged in as merchant
   if (userRole === 'merchant') {
     return (
-      <View style={styles.container}>
+      <View style={styles.floatingWrapper} pointerEvents="box-none">
+        <View style={styles.pillContainer}>
+          <TouchableOpacity
+            onPress={() => {
+              setMerchantScreen('dashboard');
+              setActiveTab('auctions');
+            }}
+            style={[styles.tabItem, merchantScreen === 'dashboard' && styles.tabItemActive]}
+            activeOpacity={0.75}
+          >
+            <LayoutDashboard
+              size={20}
+              color={merchantScreen === 'dashboard' ? AppTheme.colors.primary : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                merchantScreen === 'dashboard' && styles.tabLabelActive,
+              ]}
+            >
+              {language === 'en' ? 'Dashboard' : 'الرئيسية'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setMerchantScreen('orders');
+              setActiveTab('auctions');
+            }}
+            style={[styles.tabItem, merchantScreen === 'orders' && styles.tabItemActive]}
+            activeOpacity={0.75}
+          >
+            <Package
+              size={20}
+              color={merchantScreen === 'orders' ? AppTheme.colors.primary : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                merchantScreen === 'orders' && styles.tabLabelActive,
+              ]}
+            >
+              {language === 'en' ? 'COD Orders' : 'الطلبات'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              setMerchantScreen('ledger');
+              setActiveTab('auctions');
+            }}
+            style={[styles.tabItem, merchantScreen === 'ledger' && styles.tabItemActive]}
+            activeOpacity={0.75}
+          >
+            <Receipt
+              size={20}
+              color={merchantScreen === 'ledger' ? AppTheme.colors.primary : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                merchantScreen === 'ledger' && styles.tabLabelActive,
+              ]}
+            >
+              {language === 'en' ? 'Commissions' : 'العمولات'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('profile')}
+            style={[styles.tabItem, activeTab === 'profile' && styles.tabItemActive]}
+            activeOpacity={0.75}
+          >
+            <Store
+              size={20}
+              color={activeTab === 'profile' ? AppTheme.colors.primary : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.tabLabel,
+                activeTab === 'profile' && styles.tabLabelActive,
+              ]}
+            >
+              {language === 'en' ? 'Store' : 'المتجر'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Pure Buyer 4-Tab Custom Dock (Auctions, Watchlist, Bag, Profile)
+  return (
+    <View style={styles.floatingWrapper} pointerEvents="box-none">
+      <View style={styles.pillContainer}>
+        {/* 1. Auctions / المزادات */}
         <TouchableOpacity
-          onPress={() => {
-            setMerchantScreen('dashboard');
-            setActiveTab('auctions');
-          }}
-          style={styles.tabItem}
-          activeOpacity={0.7}
+          onPress={() => setActiveTab('auctions')}
+          style={[styles.tabItem, activeTab === 'auctions' && styles.tabItemActive]}
+          activeOpacity={0.75}
         >
-          <LayoutDashboard
-            size={22}
-            color={merchantScreen === 'dashboard' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          <Gavel
+            size={20}
+            color={activeTab === 'auctions' ? AppTheme.colors.primary : '#64748B'}
           />
           <Text
             style={[
               styles.tabLabel,
-              merchantScreen === 'dashboard' && styles.tabLabelActive,
+              activeTab === 'auctions' && styles.tabLabelActive,
             ]}
           >
-            {language === 'en' ? 'Dashboard' : 'لوحة التحكم'}
+            {t.auctionsTab}
           </Text>
         </TouchableOpacity>
 
+        {/* 2. Watchlist / المفضلة */}
         <TouchableOpacity
-          onPress={() => {
-            setMerchantScreen('orders');
-            setActiveTab('auctions');
-          }}
-          style={styles.tabItem}
-          activeOpacity={0.7}
+          onPress={() => setActiveTab('watchlist')}
+          style={[styles.tabItem, activeTab === 'watchlist' && styles.tabItemActive]}
+          activeOpacity={0.75}
         >
-          <Package
-            size={22}
-            color={merchantScreen === 'orders' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          <Heart
+            size={20}
+            color={activeTab === 'watchlist' ? AppTheme.colors.primary : '#64748B'}
           />
           <Text
             style={[
               styles.tabLabel,
-              merchantScreen === 'orders' && styles.tabLabelActive,
+              activeTab === 'watchlist' && styles.tabLabelActive,
             ]}
           >
-            {language === 'en' ? 'COD Orders' : 'طلبات COD'}
+            {t.watchlistTab}
           </Text>
         </TouchableOpacity>
 
+        {/* 3. My Bag / حقيبتي (Won Lots + Active Bids) */}
         <TouchableOpacity
-          onPress={() => {
-            setMerchantScreen('ledger');
-            setActiveTab('auctions');
-          }}
-          style={styles.tabItem}
-          activeOpacity={0.7}
+          onPress={() => setActiveTab('bag')}
+          style={[styles.tabItem, activeTab === 'bag' && styles.tabItemActive]}
+          activeOpacity={0.75}
         >
-          <Receipt
-            size={22}
-            color={merchantScreen === 'ledger' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-          />
+          <View style={styles.iconWithBadge}>
+            <ShoppingBag
+              size={20}
+              color={activeTab === 'bag' ? AppTheme.colors.primary : '#64748B'}
+            />
+            {bagCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{bagCount}</Text>
+              </View>
+            )}
+          </View>
           <Text
             style={[
               styles.tabLabel,
-              merchantScreen === 'ledger' && styles.tabLabelActive,
+              activeTab === 'bag' && styles.tabLabelActive,
             ]}
           >
-            {language === 'en' ? 'Commissions' : 'العمولات'}
+            {t.bagTab}
           </Text>
         </TouchableOpacity>
 
+        {/* 4. Profile / حسابي */}
         <TouchableOpacity
           onPress={() => setActiveTab('profile')}
-          style={styles.tabItem}
-          activeOpacity={0.7}
+          style={[styles.tabItem, activeTab === 'profile' && styles.tabItemActive]}
+          activeOpacity={0.75}
         >
-          <Store
-            size={22}
-            color={activeTab === 'profile' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
+          <User
+            size={20}
+            color={activeTab === 'profile' ? AppTheme.colors.primary : '#64748B'}
           />
           <Text
             style={[
@@ -106,112 +202,49 @@ export const BottomNav: React.FC = () => {
               activeTab === 'profile' && styles.tabLabelActive,
             ]}
           >
-            {language === 'en' ? 'Store' : 'حساب المتجر'}
+            {t.profileTab}
           </Text>
         </TouchableOpacity>
       </View>
-    );
-  }
-
-  // Pure Buyer 4-Tab Custom Dock (Auctions, Watchlist, Bag, Profile)
-  return (
-    <View style={styles.container}>
-      {/* 1. Auctions / المزادات */}
-      <TouchableOpacity
-        onPress={() => setActiveTab('auctions')}
-        style={styles.tabItem}
-        activeOpacity={0.7}
-      >
-        <Gavel
-          size={22}
-          color={activeTab === 'auctions' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-        />
-        <Text
-          style={[
-            styles.tabLabel,
-            activeTab === 'auctions' && styles.tabLabelActive,
-          ]}
-        >
-          {t.auctionsTab}
-        </Text>
-      </TouchableOpacity>
-
-      {/* 2. Watchlist / المفضلة */}
-      <TouchableOpacity
-        onPress={() => setActiveTab('watchlist')}
-        style={styles.tabItem}
-        activeOpacity={0.7}
-      >
-        <Heart
-          size={22}
-          color={activeTab === 'watchlist' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-        />
-        <Text style={[styles.tabLabel, activeTab === 'watchlist' && styles.tabLabelActive]}>
-          {t.watchlistTab}
-        </Text>
-      </TouchableOpacity>
-
-      {/* 3. My Bag / حقيبتي (Won Lots + Active Bids) */}
-      <TouchableOpacity
-        onPress={() => setActiveTab('bag')}
-        style={styles.tabItem}
-        activeOpacity={0.7}
-      >
-        <View style={styles.iconWithBadge}>
-          <ShoppingBag
-            size={22}
-            color={activeTab === 'bag' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-          />
-          {bagCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{bagCount}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={[styles.tabLabel, activeTab === 'bag' && styles.tabLabelActive]}>
-          {t.bagTab}
-        </Text>
-      </TouchableOpacity>
-
-      {/* 4. Profile / حسابي */}
-      <TouchableOpacity
-        onPress={() => setActiveTab('profile')}
-        style={styles.tabItem}
-        activeOpacity={0.7}
-      >
-        <User
-          size={22}
-          color={activeTab === 'profile' ? AppTheme.colors.primary : AppTheme.colors.textMuted}
-        />
-        <Text style={[styles.tabLabel, activeTab === 'profile' && styles.tabLabelActive]}>
-          {t.profileTab}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  floatingWrapper: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 24 : 16,
+    left: 14,
+    right: 14,
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  pillContainer: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    height: 62,
+    height: 60,
     backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingBottom: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 6,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 10,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
+    borderRadius: 20,
+  },
+  tabItemActive: {
+    backgroundColor: '#FFE4E8',
   },
   iconWithBadge: {
     position: 'relative',
@@ -220,31 +253,31 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -4,
+    top: -5,
     right: -10,
     backgroundColor: AppTheme.colors.primary,
     borderRadius: 9,
-    minWidth: 18,
-    height: 18,
+    minWidth: 16,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '600',
-    color: AppTheme.colors.textMuted,
-    marginTop: 3,
+    color: '#64748B',
+    marginTop: 2,
   },
   tabLabelActive: {
     color: AppTheme.colors.primary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });

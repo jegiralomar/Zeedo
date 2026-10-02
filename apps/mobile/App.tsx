@@ -13,6 +13,7 @@ import { ProfileScreen } from './src/screens/buyer/ProfileScreen';
 import { MerchantHomeScreen } from './src/screens/merchant/MerchantHomeScreen';
 import { MerchantOrdersScreen } from './src/screens/merchant/MerchantOrdersScreen';
 import { MerchantCommissionsScreen } from './src/screens/merchant/MerchantCommissionsScreen';
+import { CreateAuctionScreen } from './src/screens/merchant/CreateAuctionScreen';
 import { AuthModal } from './src/screens/auth/AuthModal';
 import { LocationModal } from './src/components/LocationModal';
 import { IntroCarouselScreen } from './src/screens/intro/IntroCarouselScreen';
@@ -25,6 +26,7 @@ export default function App() {
     setSearchQuery,
     userRole,
     merchantScreen,
+    setMerchantScreen,
   } = useAppStore();
 
   // If first-time user, display the Language Picker & Intro Carousel
@@ -55,6 +57,9 @@ export default function App() {
       }
       if (merchantScreen === 'ledger') {
         return <MerchantCommissionsScreen />;
+      }
+      if (merchantScreen === 'create_auction') {
+        return <CreateAuctionScreen onBack={() => setMerchantScreen('dashboard')} />;
       }
       return <MerchantHomeScreen />;
     }
@@ -99,11 +104,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    position: 'relative',
   },
   screenContainer: {
     flex: 1,

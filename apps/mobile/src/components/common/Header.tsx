@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: AppTheme.colors.card,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: 8,
+    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: AppTheme.colors.border,
   },
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   topBarRtl: {
     flexDirection: 'row-reverse',

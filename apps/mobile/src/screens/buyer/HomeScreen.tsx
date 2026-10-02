@@ -14,6 +14,7 @@ import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 import { MobileAuctionItem } from '../../types';
+import { BannerCarousel } from '../../components/BannerCarousel';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
@@ -105,7 +106,14 @@ export const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 2. Category Filter Pills */}
+      {/* 2. Marketing & Promotional CMS Banners Carousel */}
+      <BannerCarousel
+        language={language}
+        onSelectAuction={(auctionId) => setSelectedAuctionId(auctionId)}
+        onSelectCategory={(categoryId) => setSelectedCategory(categoryId)}
+      />
+
+      {/* 3. Category Filter Pills */}
       <View style={styles.categoriesSection}>
         <ScrollView
           horizontal
@@ -269,8 +277,8 @@ export const HomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Bottom Spacer */}
-      <View style={{ height: 28 }} />
+      {/* Bottom Spacer for Floating Nav */}
+      <View style={{ height: 96 }} />
     </ScrollView>
   );
 };

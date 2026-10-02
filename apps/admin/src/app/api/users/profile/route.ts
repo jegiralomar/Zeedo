@@ -24,6 +24,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await safeParseJson<{
+      name?: string;
+      gender?: 'male' | 'female';
+      avatar?: string;
       city?: string;
       deliveryAddress?: string;
       deliveryLat?: number;
@@ -35,7 +38,10 @@ export async function PATCH(req: NextRequest) {
     userId = userId || body.id || null;
     phone = phone || body.phone || null;
 
-    const city = body.city || 'العراق';
+    const name = body.name || null;
+    const gender = body.gender || null;
+    const avatar = body.avatar || null;
+    const city = body.city || null;
     const address = body.deliveryAddress || '';
     const lat = body.deliveryLat ?? null;
     const lng = body.deliveryLng ?? null;
@@ -43,7 +49,7 @@ export async function PATCH(req: NextRequest) {
     const pinObj = lat && lng ? {
       latitude: lat,
       longitude: lng,
-      city,
+      city: city || 'العراق',
       addressText: address,
       landmark: address,
     } : null;
@@ -58,14 +64,19 @@ export async function PATCH(req: NextRequest) {
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lat DOUBLE PRECISION;`;
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lng DOUBLE PRECISION;`;
         await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin TEXT;`;
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`;
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`;
       } catch {}
 
       let rows: any[] = [];
       if (userId) {
         rows = await sql`
           UPDATE users SET
+            name = COALESCE(${name}, name),
+            gender = COALESCE(${gender}, gender),
+            avatar = COALESCE(${avatar}, avatar),
             city = COALESCE(${city}, city),
-            rooftop_landmark = COALESCE(${address}, rooftop_landmark),
+            rooftop_landmark = COALESCE(${address ? address : null}, rooftop_landmark),
             rooftop_lat = COALESCE(${lat}, rooftop_lat),
             rooftop_lng = COALESCE(${lng}, rooftop_lng),
             rooftop_pin = COALESCE(${pinText}, rooftop_pin)
@@ -75,8 +86,11 @@ export async function PATCH(req: NextRequest) {
       } else if (phone) {
         rows = await sql`
           UPDATE users SET
+            name = COALESCE(${name}, name),
+            gender = COALESCE(${gender}, gender),
+            avatar = COALESCE(${avatar}, avatar),
             city = COALESCE(${city}, city),
-            rooftop_landmark = COALESCE(${address}, rooftop_landmark),
+            rooftop_landmark = COALESCE(${address ? address : null}, rooftop_landmark),
             rooftop_lat = COALESCE(${lat}, rooftop_lat),
             rooftop_lng = COALESCE(${lng}, rooftop_lng),
             rooftop_pin = COALESCE(${pinText}, rooftop_pin)
@@ -92,12 +106,14 @@ export async function PATCH(req: NextRequest) {
           id: u.id,
           phone: u.phone,
           name: u.name,
+          gender: u.gender,
+          avatar: u.avatar,
           city: u.city,
           deliveryLocation: lat && lng ? {
             lat,
             lng,
             address,
-            city,
+            city: u.city,
           } : undefined,
         } : null,
         source: 'postgres',
@@ -109,8 +125,11 @@ export async function PATCH(req: NextRequest) {
       user: {
         id: userId,
         phone,
-        city,
-        deliveryLocation: lat && lng ? { lat, lng, address, city } : undefined,
+        name: name || undefined,
+        gender: gender || undefined,
+        avatar: avatar || undefined,
+        city: city || 'العراق',
+        deliveryLocation: lat && lng ? { lat, lng, address, city: city || 'العراق' } : undefined,
       },
       source: 'memory_fallback',
     }, undefined, req);

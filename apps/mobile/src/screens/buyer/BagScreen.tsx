@@ -48,6 +48,8 @@ export const BagScreen: React.FC = () => {
   const {
     language,
     wonOrders,
+    isLoadingWonOrders,
+    fetchWonOrders,
     myBids,
     auctions,
     setSelectedAuctionId,
@@ -62,6 +64,10 @@ export const BagScreen: React.FC = () => {
   const [addressDetails, setAddressDetails] = useState('');
   const [phoneRecipient, setPhoneRecipient] = useState('');
   const [orderConfirmed, setOrderConfirmed] = useState(false);
+
+  React.useEffect(() => {
+    fetchWonOrders();
+  }, []);
 
   const handleConfirmDelivery = (orderId: string) => {
     setOrderConfirmed(true);
@@ -389,7 +395,7 @@ export const BagScreen: React.FC = () => {
           </View>
         )}
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 96 }} />
       </ScrollView>
     </View>
   );

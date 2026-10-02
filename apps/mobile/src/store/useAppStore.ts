@@ -31,11 +31,12 @@ interface AppState {
   loginWithSession: (token: string, user: MobileUser) => void;
   logout: () => void;
 
-  // Location Setup (Step 3 of auth flow)
+  // Location & Profile Setup
   isLocationSetupOpen: boolean;
   openLocationSetup: () => void;
   closeLocationSetup: () => void;
   saveDeliveryLocation: (loc: DeliveryLocation, sessionToken: string) => Promise<void>;
+  updateUserProfile: (updates: Partial<MobileUser>, sessionToken?: string) => Promise<void>;
 
   // Active Tab & Full Screen Selection
   activeTab: BuyerTab;
@@ -46,8 +47,8 @@ interface AppState {
   setSelectedAuctionId: (id: string | null) => void;
 
   // Merchant Sub-Screens
-  merchantScreen: 'dashboard' | 'orders' | 'ledger';
-  setMerchantScreen: (s: 'dashboard' | 'orders' | 'ledger') => void;
+  merchantScreen: 'dashboard' | 'orders' | 'ledger' | 'create_auction';
+  setMerchantScreen: (s: 'dashboard' | 'orders' | 'ledger' | 'create_auction') => void;
 
   // Auctions Catalog (Live from Server)
   auctions: MobileAuctionItem[];
@@ -65,9 +66,13 @@ interface AppState {
   // Real-Time Bids & Activity
   placeBid: (auctionId: string, amountIqd: number) => Promise<{ success: boolean; message?: string }>;
   myBids: { auctionId: string; amountIqd: number; isLeading: boolean }[];
+  // Patch a single auction from a WS event (keeps the list fresh without a full refetch)
+  patchAuction: (auctionId: string, updates: Partial<import('../types').MobileAuctionItem>) => void;
 
   // Won Items & COD Orders
   wonOrders: WonLotOrder[];
+  isLoadingWonOrders: boolean;
+  fetchWonOrders: () => Promise<void>;
   addWonOrder: (order: WonLotOrder) => void;
 }
 
@@ -176,6 +181,42 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
     } catch (_) {
       // Server sync is best-effort; location is already saved locally
+    }
+  },
+
+  updateUserProfile: async (updates, token) => {
+    const { currentUser, sessionToken } = get();
+    if (!currentUser) return;
+
+    const updatedUser = { ...currentUser, ...updates };
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('zeedo_user', JSON.stringify(updatedUser));
+    }
+    set({ currentUser: updatedUser });
+
+    const effectiveToken = token || sessionToken;
+    if (effectiveToken) {
+      try {
+        await fetch(ZEEDO_CONFIG.ENDPOINTS.PATCH_PROFILE, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${effectiveToken}`,
+          },
+          body: JSON.stringify({
+            name: updates.name,
+            gender: updates.gender,
+            avatar: updates.avatar,
+            city: updates.city,
+            deliveryAddress: updates.deliveryLocation?.address,
+            deliveryLat: updates.deliveryLocation?.lat,
+            deliveryLng: updates.deliveryLocation?.lng,
+          }),
+        });
+      } catch (_) {
+        // Best-effort
+      }
     }
   },
 
@@ -322,7 +363,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Won Items & COD Orders (Clean initial array)
+  // Patch a single auction live (called by WS hook)
+  patchAuction: (auctionId, updates) =>
+    set((state) => ({
+      auctions: state.auctions.map((a) =>
+        a.id === auctionId ? { ...a, ...updates } : a
+      ),
+    })),
+
+  // Won Items & COD Orders
   wonOrders: [],
+  isLoadingWonOrders: false,
+  fetchWonOrders: async () => {
+    set({ isLoadingWonOrders: true });
+    try {
+      const user = get().currentUser;
+      const url = user?.id
+        ? `${ZEEDO_CONFIG.ENDPOINTS.WON_ORDERS}?userId=${encodeURIComponent(user.id)}`
+        : ZEEDO_CONFIG.ENDPOINTS.WON_ORDERS;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.wonOrders)) {
+          set({ wonOrders: data.wonOrders, isLoadingWonOrders: false });
+          return;
+        }
+      }
+    } catch {
+      // Keep existing state on network error
+    }
+    set({ isLoadingWonOrders: false });
+  },
   addWonOrder: (order) => set((state) => ({ wonOrders: [order, ...state.wonOrders] })),
 }));

@@ -162,7 +162,7 @@ export const WatchlistScreen: React.FC = () => {
         </View>
       )}
 
-      <View style={{ height: 28 }} />
+      <View style={{ height: 96 }} />
     </ScrollView>
   );
 };

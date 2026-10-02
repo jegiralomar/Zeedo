@@ -15,6 +15,8 @@ export interface MobileUser {
   phone: string;
   city: string;
   role: UserRole;
+  gender?: 'male' | 'female';
+  avatar?: string;
   storeName?: string;
   commissionRate?: number;
   kycStatus?: 'unsubmitted' | 'pending' | 'verified' | 'rejected';
