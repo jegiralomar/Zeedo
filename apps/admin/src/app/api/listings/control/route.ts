@@ -46,14 +46,11 @@ export async function POST(request: Request) {
       const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
 
       for (const auc of expiredAuctions) {
-        const cleanId = (auc.id || '').replace(/^auc-/, '');
-
         // Parse multilingual titles JSONB to get real item name
         const titlesObj = auc.titles
           ? (typeof auc.titles === 'string' ? JSON.parse(auc.titles) : auc.titles)
           : {};
         const itemTitle = titlesObj.ar || titlesObj.en || titlesObj.ckb || 'سلعة المزاد';
-        const packageAwbId = `AWB-IQ-${dateStr}-${cleanId}`;
 
         let highestBidderObj: any = null;
         try {
@@ -67,20 +64,53 @@ export async function POST(request: Request) {
 
         const finalBidIqd = Number(auc.current_bid_iqd || auc.starting_price_iqd || 1000);
 
+        // --- Commission auto-calculation ---
+        // Fetch merchant's per-seller commission rate from the sellers table
+        let commissionRate = 0.10; // default fallback
+        try {
+          const sellerRows = await sql`SELECT commission_rate FROM sellers WHERE id = ${auc.seller_id} LIMIT 1`;
+          if (sellerRows[0]) {
+            commissionRate = Number(sellerRows[0].commission_rate || 0.10);
+          }
+        } catch {}
+
+        const FLAT_POSTING_FEE_IQD = 1000;
+        const zeedoCommissionIqd = Math.round(finalBidIqd * commissionRate);
+        const merchantPayoutIqd = finalBidIqd - zeedoCommissionIqd - FLAT_POSTING_FEE_IQD;
+
         await sql`
           UPDATE auctions SET
-            status = 'completed',
-            cod_status = 'ready_for_dispatch',
-            package_awb_id = ${packageAwbId}
+            status = 'completed'
           WHERE id = ${auc.id}
-        `;
+        `.catch(() => {});
+
+        // Write commission entry to merchant payouts ledger
+        if (auc.seller_id && finalBidIqd > 1000) {
+          await sql`
+            INSERT INTO merchant_payouts_ledger (
+              id, seller_id, type, amount_iqd, auction_id, notes, created_by, created_at
+            ) VALUES (
+              ${'ledger-' + auc.id + '-' + Date.now()},
+              ${auc.seller_id},
+              'sale_completed',
+              ${merchantPayoutIqd},
+              ${auc.id},
+              ${'Zeedo commission: ' + (commissionRate * 100).toFixed(0) + '% (' + zeedoCommissionIqd.toLocaleString() + ' IQD) + 1,000 IQD flat fee. Merchant payout: ' + merchantPayoutIqd.toLocaleString() + ' IQD'},
+              'system',
+              NOW()
+            ) ON CONFLICT DO NOTHING
+          `.catch((e: any) => console.warn('Ledger insert failed:', e));
+        }
 
         const endData = {
           auctionId: auc.id,
           status: 'completed',
           highestBidder: highestBidderObj,
           currentBidIqd: finalBidIqd,
-          packageAwbId,
+          zeedoCommissionIqd,
+          flatPostingFeeIqd: FLAT_POSTING_FEE_IQD,
+          merchantPayoutIqd,
+          commissionRate,
           concludedAt: now.toISOString(),
           operatorName: operatorName || 'Zeedo Background Auto-Conclude Daemon',
         };
@@ -120,13 +150,13 @@ export async function POST(request: Request) {
               INSERT INTO won_orders (
                 id, auction_id, winner_id, seller_id, winning_bid_iqd,
                 item_title, item_image, delivery_address, delivery_city,
-                delivery_phone, awb_number, cod_status, created_at, updated_at
+                delivery_phone, cod_status, created_at, updated_at
               ) VALUES (
                 ${'ord-' + auc.id}, ${auc.id}, ${highestBidderObj.id}, ${auc.seller_id || 'sel-01'},
                 ${finalBidIqd}, ${itemTitle}, ${itemImg || ''},
                 ${deliveryAddress}, ${deliveryCity},
-                ${highestBidderObj.phone || ''}, ${packageAwbId}, 'ready_for_dispatch', NOW(), NOW()
-              ) ON CONFLICT (id) DO UPDATE SET cod_status = EXCLUDED.cod_status
+                ${highestBidderObj.phone || ''}, 'ready_for_dispatch', NOW(), NOW()
+              ) ON CONFLICT (id) DO NOTHING
             `;
           } catch (orderErr) {
             console.warn('Could not persist won_orders row:', orderErr);
@@ -137,10 +167,9 @@ export async function POST(request: Request) {
             event: 'OUTBID_ALERT',
             data: {
               auctionId: auc.id,
-              auctionTitle: auc.title || 'Auction Lot',
+              auctionTitle: itemTitle,
               isWinner: true,
               wonPriceIqd: finalBidIqd,
-              packageAwbId,
             },
           }).catch(() => {});
 
@@ -160,8 +189,9 @@ export async function POST(request: Request) {
         results.push({
           id: auc.id,
           title: itemTitle,
-          packageAwbId,
           finalBidIqd,
+          zeedoCommissionIqd,
+          merchantPayoutIqd,
           winner: highestBidderObj?.name || 'No bids',
         });
       }

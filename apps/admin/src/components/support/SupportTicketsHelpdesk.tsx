@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdminStore } from '@/store/useAdminStore';
 import { TicketStatus, SupportTicket, TicketCategory, TicketPriority } from '@/types';
 import {
@@ -36,11 +36,25 @@ export const SupportTicketsHelpdesk: React.FC = () => {
     currentUser,
     users,
     auctions,
+    syncTicketsFromDb,
+    fetchTicketMessages,
   } = useAdminStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | TicketStatus>('all');
   const [replyText, setReplyText] = useState('');
+
+  // Sync tickets from PostgreSQL on mount and periodically
+  useEffect(() => {
+    syncTicketsFromDb?.();
+    const interval = setInterval(() => {
+      syncTicketsFromDb?.();
+      if (selectedTicketId) {
+        fetchTicketMessages?.(selectedTicketId);
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [syncTicketsFromDb, fetchTicketMessages, selectedTicketId]);
 
   // Active selected ticket
   const currentTicket =

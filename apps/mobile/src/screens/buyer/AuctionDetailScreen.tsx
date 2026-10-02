@@ -25,6 +25,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 import { useAuctionSocket, NewBidPayload, TimerResetPayload, AuctionEndedPayload } from '../../hooks/useAuctionSocket';
 import { BidRecord } from '../../types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -43,6 +44,7 @@ export const AuctionDetailScreen: React.FC = () => {
 
   const t = getTranslation(language);
   const isRtl = language !== 'en';
+  const insets = useSafeAreaInsets();
 
   const baseAuction = auctions.find((a) => a.id === selectedAuctionId) || auctions[0];
 
@@ -394,11 +396,11 @@ export const AuctionDetailScreen: React.FC = () => {
         </View>
 
         {/* Spacer for sticky bottom bar */}
-        <View style={{ height: 110 }} />
+        <View style={{ height: 120 + Math.max(insets.bottom, 16) }} />
       </ScrollView>
 
       {/* 8. Sticky Bottom Bidding Controller */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) + 4 }]}>
         {/* Success Feedback Banner */}
         {bidSuccess && (
           <View style={styles.bidSuccessToast}>

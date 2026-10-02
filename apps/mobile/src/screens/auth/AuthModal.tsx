@@ -177,6 +177,15 @@ export const AuthModal: React.FC = () => {
 
       const data = await response.json();
 
+      if (data.isBlocked) {
+        setErrorMessage(
+          isRtl
+            ? 'هذا الحساب موقوف. تواصل مع دعم زيدو للاستفسار.'
+            : 'This account has been suspended. Contact Zeedo Support.'
+        );
+        return;
+      }
+
       if (response.ok && data.isValid) {
         const token = data.sessionToken || `tok-${Date.now()}`;
         const user: MobileUser = {

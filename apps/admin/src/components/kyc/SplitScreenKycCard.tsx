@@ -360,7 +360,7 @@ export const SplitScreenKycCard: React.FC = () => {
                         <span>OCR Discrepancy Flagged</span>
                       </div>
                       <ul className="list-disc list-inside text-[11px] pl-1">
-                        {doc.discrepancies.map((d, idx) => (
+                        {doc.discrepancies.map((d: string, idx: number) => (
                           <li key={idx}>{d}</li>
                         ))}
                       </ul>

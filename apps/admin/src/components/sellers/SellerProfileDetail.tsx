@@ -34,7 +34,7 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
   const seller = sellers.find((s) => s.id === sellerId);
 
   const [activeTab, setActiveTab] = useState<'sales' | 'listings' | 'commissions'>('sales');
-  const [sliderCommission, setSliderCommission] = useState<number>(seller?.commissionRate || 0.05);
+  const [sliderCommission, setSliderCommission] = useState<number>(seller?.commissionRate || 0.10);
   const [sendingCreds, setSendingCreds] = useState<boolean>(false);
 
   if (!seller) {
@@ -67,7 +67,7 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
   const totalListingsCount = seller.totalListings || sellerLiveAuctions.length || 4;
   const postingFeesOwedIqd = totalListingsCount * 1000;
   const codVolumeIqd = seller.totalCodVolumeIqd || 3500000;
-  const commissionRate = seller.commissionRate || sliderCommission || 0.05;
+  const commissionRate = seller.commissionRate || sliderCommission || 0.10;
   const commissionOwedIqd = Math.round(codVolumeIqd * commissionRate);
   const totalAmountOwedIqd = postingFeesOwedIqd + commissionOwedIqd;
 
@@ -259,20 +259,24 @@ export const SellerProfileDetail: React.FC<SellerProfileDetailProps> = ({ seller
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Commission Rate</span>
+              <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Zeedo Cut (Rate Per Merchant)</span>
               <span className="font-mono font-black text-emerald-700 text-sm">
                 {(sliderCommission * 100).toFixed(0)}%
               </span>
             </div>
             <input
               type="range"
-              min={0.03}
-              max={0.15}
+              min={0.01}
+              max={0.30}
               step={0.01}
               value={sliderCommission}
               onChange={(e) => handleCommissionChange(Number(e.target.value))}
               className="w-full accent-slate-800"
             />
+            <div className="flex justify-between text-[10px] font-medium text-slate-500">
+              <span>Seller: <strong className="text-slate-800">{((1 - sliderCommission) * 100).toFixed(0)}%</strong></span>
+              <span>Zeedo: <strong className="text-emerald-700">{(sliderCommission * 100).toFixed(0)}%</strong></span>
+            </div>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">

@@ -16,22 +16,7 @@ export interface RooftopPin {
   isVerified: boolean;
 }
 
-export type KycStatus = 'unsubmitted' | 'pending' | 'verified' | 'rejected';
-
-export interface KycDocument {
-  idType: 'national_id' | 'passport';
-  docNumber: string;
-  docUrl: string;
-  docBackUrl?: string;
-  fullName: string;
-  dob: string;
-  issueDate: string;
-  expiryDate: string;
-  ocrConfidence: number; // e.g. 96 for 96%
-  discrepancies: string[];
-  submittedAt: string;
-  rejectedReason?: string;
-}
+export type KycStatus = 'verified' | 'pending' | 'rejected';
 
 export interface UserBuyer {
   id: string;
@@ -42,11 +27,13 @@ export interface UserBuyer {
   avatar?: string;
   gender?: 'male' | 'female' | string;
   kycStatus: KycStatus;
-  kycDocument?: KycDocument;
+  kycDocument?: any;
   rooftopPin?: RooftopPin;
   totalBids: number;
   totalWins: number;
+  totalSpentIqd?: number;
   joinedAt: string;
+  isBlocked?: boolean;
 }
 
 export interface SellerMerchant {
@@ -63,6 +50,9 @@ export interface SellerMerchant {
   totalListings: number;
   completedSales: number;
   totalCodVolumeIqd: number;
+  totalRevenueIqd?: number;      // total winning bids from completed sales
+  totalPayoutIqd?: number;        // amount paid out to merchant so far
+  outstandingBalanceIqd?: number; // totalRevenueIqd * (1 - rate) - 1000*sales - totalPayoutIqd
   rating: number;
   createdAt: string;
   username?: string;
@@ -79,27 +69,6 @@ export type ListingStatus =
   | 'completed' 
   | 'cancelled' 
   | 'rejected';
-
-export type CodLogisticsStatus = 
-  | 'ready_for_dispatch' 
-  | 'manifested' 
-  | 'with_courier' 
-  | 'collected_cod' 
-  | 'cod_refused';
-
-export type ParcelDeliveryStage = 
-  | 'ready_for_dispatch' 
-  | 'out_for_delivery' 
-  | 'delivered_paid' 
-  | 'failed_rth';
-
-export interface DeliveryAttempt {
-  id: string;
-  attemptNumber: number; // 1, 2, 3
-  timestamp: string;
-  status: 'unreachable' | 'rescheduled' | 'refused_cash' | 'wrong_address' | 'delivered';
-  driverNote: string;
-}
 
 export interface BidRecord {
   id: string;
@@ -168,22 +137,24 @@ export interface ListingAuction {
   };
   bidsHistory: BidRecord[];
   
-  // Logistics & Parcel Delivery Lifecycle
-  codStatus?: CodLogisticsStatus;
-  orderStatus?: 'pending_dispatch' | 'dispatched' | 'delivered_paid' | 'cancelled_refunded';
+  // Moderation notes
+  moderationNotes?: string;
+
+  // Finance: auto-computed on auction end
+  zeedoCommissionIqd?: number;  // winningBid * commissionRate
+  flatPostingFeeIqd?: number;    // always 1,000 IQD
+  merchantPayoutIqd?: number;    // winningBid - commission - 1000
+
+  // Optional COD & Merchant Order Tracking
+  codStatus?: string;
+  orderStatus?: string;
+  packageAwbId?: string;
+  deliveryStage?: string;
+  deliveryAttempts?: any[];
+  courierTrackingNotes?: any;
   orderDeliveredAt?: string;
   orderCommissionRefunded?: boolean;
   orderNotes?: string;
-  packageAwbId?: string;
-  courierManifestId?: string;
-  deliveryStage?: ParcelDeliveryStage;
-  deliveryAttempts?: DeliveryAttempt[];
-  courierDriverName?: string;
-  courierDriverPhone?: string;
-  courierTrackingNotes?: string;
-  
-  // Moderation notes
-  moderationNotes?: string;
 }
 
 export interface MerchantReceipt {
@@ -218,36 +189,6 @@ export interface SellerInvoice {
   dueDate: string;
   paidAt?: string;
   createdAt: string;
-}
-
-export interface CourierManifestItem {
-  sequenceNumber: number;
-  listingId: string;
-  packageAwbId: string;
-  itemTitle: string;
-  buyerName: string;
-  buyerPhone: string;
-  city: string;
-  addressText: string;
-  landmark: string;
-  gpsCoordinates: { lat: number; lng: number };
-  codAmountIqd: number;
-  sellerStoreName: string;
-}
-
-export interface CourierManifest {
-  id: string;
-  manifestCode: string;
-  courierCompanyName: string; // e.g. "Al-Zajil Express", "Erbil Speed Logistics"
-  courierDriverName: string;
-  courierDriverPhone: string;
-  courierVehiclePlate: string;
-  dispatcherName: string;
-  date: string;
-  items: CourierManifestItem[];
-  totalPackages: number;
-  totalCodSumIqd: number;
-  status: 'draft' | 'handed_over' | 'completed';
 }
 
 export interface MobileBanner {
@@ -303,12 +244,21 @@ export interface StaffUser {
 
 export type AuditCategory =
   | 'auth'
-  | 'kyc'
   | 'moderation'
   | 'auctions'
-  | 'logistics'
+  | 'finance'
   | 'sellers'
-  | 'team';
+  | 'buyers'
+  | 'support'
+  | 'team'
+  | 'kyc'
+  | 'logistics';
+
+export type CodLogisticsStatus = string;
+export type ParcelDeliveryStage = string;
+export type DeliveryAttempt = any;
+export type KycDocument = any;
+export type CourierManifest = any;
 
 export interface AuditLogEntry {
   id: string;

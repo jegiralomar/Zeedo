@@ -338,6 +338,55 @@ export async function initDatabaseSchema() {
       ) ON CONFLICT (username) DO NOTHING;
     `;
 
+    // 12. Support Helpdesk Tickets and Real-Time Chat Messages
+    await sql`
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        id VARCHAR(64) PRIMARY KEY,
+        ticket_number VARCHAR(64),
+        user_id VARCHAR(64),
+        user_name VARCHAR(128),
+        user_phone VARCHAR(32),
+        buyer_id VARCHAR(64),
+        buyer_name VARCHAR(128),
+        buyer_phone VARCHAR(32),
+        buyer_city VARCHAR(64) DEFAULT 'Erbil',
+        subject VARCHAR(255) DEFAULT 'Customer Inquiry',
+        category VARCHAR(64) DEFAULT 'general',
+        status VARCHAR(32) DEFAULT 'open',
+        priority VARCHAR(32) DEFAULT 'normal',
+        last_message TEXT,
+        messages JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS ticket_number VARCHAR(64);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS user_id VARCHAR(64);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS user_name VARCHAR(128);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS user_phone VARCHAR(32);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS buyer_id VARCHAR(64);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS buyer_name VARCHAR(128);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS buyer_phone VARCHAR(32);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS buyer_city VARCHAR(64);`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS last_message TEXT;`;
+    await sql`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS messages JSONB DEFAULT '[]'::jsonb;`;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS support_messages (
+        id VARCHAR(64) PRIMARY KEY,
+        ticket_id VARCHAR(64) NOT NULL,
+        sender_type VARCHAR(16) NOT NULL,
+        sender_id VARCHAR(64) NOT NULL,
+        sender_name VARCHAR(128) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_user ON support_tickets(user_id);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_support_messages_ticket ON support_messages(ticket_id);`;
+
     return true;
   } catch (error) {
     console.error('Database schema initialization error:', error);

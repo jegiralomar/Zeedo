@@ -7,22 +7,23 @@ import {
   Search,
   MapPin,
   Phone,
-  ExternalLink,
-  ShieldCheck,
   RefreshCw,
   Gavel,
   Trophy,
+  ChevronRight,
+  ShieldBan,
   ArrowUpRight,
-  MessageSquare,
-  Sparkles,
 } from 'lucide-react';
+import { BuyerProfileDetail } from './BuyerProfileDetail';
+import { UserBuyer } from '@/types';
 
 export const BuyersDirectoryView: React.FC = () => {
   const { users, syncUsersFromDb } = useAdminStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('all');
-  const [activityFilter, setActivityFilter] = useState<'all' | 'bidders' | 'winners'>('all');
+  const [activityFilter, setActivityFilter] = useState<'all' | 'bidders' | 'winners' | 'blocked'>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedBuyer, setSelectedBuyer] = useState<UserBuyer | null>(null);
 
   // Sync latest users from database on mount
   useEffect(() => {
@@ -35,7 +36,12 @@ export const BuyersDirectoryView: React.FC = () => {
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  // Filtered buyers: In ZEEDO architecture, every registered buyer is 100% verified via OTP & GPS pin
+  // Return profile detail view if a buyer is selected
+  if (selectedBuyer) {
+    return <BuyerProfileDetail buyer={selectedBuyer} onBack={() => setSelectedBuyer(null)} />;
+  }
+
+  // Filtered buyers
   const filteredBuyers = users.filter((buyer) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -52,7 +58,8 @@ export const BuyersDirectoryView: React.FC = () => {
     const matchesActivity =
       activityFilter === 'all' ||
       (activityFilter === 'bidders' && (buyer.totalBids || 0) > 0) ||
-      (activityFilter === 'winners' && (buyer.totalWins || 0) > 0);
+      (activityFilter === 'winners' && (buyer.totalWins || 0) > 0) ||
+      (activityFilter === 'blocked' && buyer.isBlocked);
 
     return matchesSearch && matchesCity && matchesActivity;
   });
@@ -320,27 +327,27 @@ export const BuyersDirectoryView: React.FC = () => {
 
                       {/* Account Status Pill */}
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>Verified Active</span>
-                        </span>
+                        {buyer.isBlocked ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-800 border border-red-200 text-[11px] font-bold">
+                            <ShieldBan className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                            <span>Blocked</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Active</span>
+                          </span>
+                        )}
                       </td>
 
                       {/* Delivery Rooftop Pin */}
                       <td className="py-3.5 px-4">
                         {pin?.latitude && pin?.longitude ? (
                           <div className="space-y-0.5">
-                            <a
-                              href={gmapsUrl || '#'}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-indigo-600 hover:underline"
-                              title="View on Google Maps"
-                            >
+                            <div className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-indigo-600">
                               <MapPin className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                               <span>{pin.latitude.toFixed(4)}, {pin.longitude.toFixed(4)}</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
+                            </div>
                             <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
                               {pin.landmark || pin.addressText || buyer.city}
                             </div>
@@ -382,16 +389,13 @@ export const BuyersDirectoryView: React.FC = () => {
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition-colors"
-                          title="Chat with buyer on WhatsApp"
+                        <button
+                          onClick={() => setSelectedBuyer(buyer)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-[11px] transition-colors"
                         >
-                          <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>WhatsApp</span>
-                        </a>
+                          <span>View Profile</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     </tr>
                   );

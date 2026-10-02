@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, StatusBar, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, StatusBar, Platform, BackHandler, ToastAndroid } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from './src/store/useAppStore';
 import { AppTheme } from './src/theme/colors';
@@ -20,9 +20,12 @@ import { IntroCarouselScreen } from './src/screens/intro/IntroCarouselScreen';
 
 export default function App() {
   const {
+    language,
     hasSeenIntro,
     activeTab,
+    setActiveTab,
     selectedAuctionId,
+    setSelectedAuctionId,
     setSearchQuery,
     userRole,
     merchantScreen,
@@ -32,12 +35,96 @@ export default function App() {
     currentUser,
     sessionToken,
     openAuthModal,
+    closeAuthModal,
+    isAuthModalOpen,
+    isLocationSetupOpen,
+    closeLocationSetup,
   } = useAppStore();
+
+  const lastBackPressRef = useRef(0);
 
   // Load persisted session + intro state from AsyncStorage on first mount
   useEffect(() => {
     hydrate();
   }, []);
+
+  // Android hardware back button handler: prevents app from exiting unexpectedly
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const onBackPress = () => {
+      // 1. If currently inside a full auction detail room, go back to home feed
+      if (selectedAuctionId) {
+        setSelectedAuctionId(null);
+        return true;
+      }
+
+      // 2. If merchant is on a sub-screen, return to merchant dashboard
+      if (userRole === 'merchant' && merchantScreen !== 'dashboard') {
+        setMerchantScreen('dashboard');
+        return true;
+      }
+
+      // 3. If delivery location modal is open, close it
+      if (isLocationSetupOpen) {
+        closeLocationSetup();
+        return true;
+      }
+
+      // 4. If auth modal is open and user profile is complete, close modal
+      if (isAuthModalOpen) {
+        const hasDelivery = Boolean(
+          currentUser?.deliveryLocation?.address ||
+            (currentUser?.city && currentUser?.city !== 'العراق' && currentUser?.city !== 'Erbil')
+        );
+        const hasValidName = Boolean(
+          currentUser?.name &&
+            currentUser.name !== 'مشترك جديد' &&
+            currentUser.name !== 'مشترك زيدو'
+        );
+        if (hasValidName && currentUser?.gender && hasDelivery) {
+          closeAuthModal();
+          return true;
+        }
+      }
+
+      // 5. If on another buyer tab (watchlist, bag, profile), navigate back to main 'auctions' tab
+      if (activeTab !== 'auctions') {
+        setActiveTab('auctions');
+        return true;
+      }
+
+      // 6. Root Screen: Double back press within 2 seconds to exit
+      const now = Date.now();
+      if (now - lastBackPressRef.current < 2000) {
+        return false; // Exit app
+      }
+
+      lastBackPressRef.current = now;
+      ToastAndroid.show(
+        language !== 'en' ? 'اضغط مرة أخرى للخروج من التطبيق' : 'Press back again to exit',
+        ToastAndroid.SHORT
+      );
+      return true; // Handled, prevent app exit
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => backHandler.remove();
+  }, [
+    selectedAuctionId,
+    setSelectedAuctionId,
+    userRole,
+    merchantScreen,
+    setMerchantScreen,
+    isLocationSetupOpen,
+    closeLocationSetup,
+    isAuthModalOpen,
+    closeAuthModal,
+    currentUser,
+    activeTab,
+    setActiveTab,
+    language,
+  ]);
 
   // Check if authenticated user has incomplete profile wizard steps
   useEffect(() => {
@@ -120,8 +207,10 @@ export default function App() {
     return <HomeScreen />;
   };
 
-  // Header is shown on main screens, hidden when in full auction room
+  // Header and BottomNav visibility rules:
+  // Hide BottomNav whenever inside a live auction room or creating an auction lot
   const showHeader = !selectedAuctionId && userRole !== 'merchant';
+  const showBottomNav = !selectedAuctionId && (userRole !== 'merchant' || merchantScreen !== 'create_auction');
 
   return (
     <SafeAreaProvider>
@@ -130,7 +219,7 @@ export default function App() {
         <View style={styles.container}>
           {showHeader && <Header onSearchChange={setSearchQuery} />}
           <View style={styles.screenContainer}>{renderScreen()}</View>
-          <BottomNav />
+          {showBottomNav && <BottomNav />}
           <AuthModal />
           <LocationModal />
         </View>

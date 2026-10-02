@@ -140,6 +140,8 @@ interface AdminStoreState {
   syncAuctionsFromDb: () => Promise<void>;
   syncSellersFromDb: () => Promise<void>;
   syncUsersFromDb: () => Promise<void>;
+  syncTicketsFromDb: () => Promise<void>;
+  fetchTicketMessages: (ticketId: string) => Promise<void>;
 
   // Live Auction Actions & Anti-Sniping
   placeBid: (auctionId: string, bidderId?: string, customAmount?: number) => void;
@@ -203,7 +205,12 @@ export const useAdminStore = create<AdminStoreState>()(
       tickets: INITIAL_TICKETS,
       selectedTicketId: null,
 
-      selectTicket: (id) => set({ selectedTicketId: id }),
+      selectTicket: (id) => {
+        set({ selectedTicketId: id });
+        if (id) {
+          get().fetchTicketMessages(id);
+        }
+      },
 
       updateTicketStatus: (id, status) => {
         set((state) => {
@@ -220,6 +227,13 @@ export const useAdminStore = create<AdminStoreState>()(
           }
           return { tickets: updated };
         });
+
+        fetch('/api/support/tickets', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status }),
+        }).catch((e) => console.warn('Failed to update ticket status in DB:', e));
+
         get().addToast('success', `Ticket status updated to ${status.replace('_', ' ').toUpperCase()}`);
       },
 
@@ -274,6 +288,18 @@ export const useAdminStore = create<AdminStoreState>()(
 
           return { tickets: updated };
         });
+
+        fetch('/api/support/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ticketId,
+            senderType: 'admin',
+            senderId: currentStaff?.id || 'admin',
+            senderName: agentName,
+            message: text.trim(),
+          }),
+        }).catch((e) => console.warn('Failed to send admin message to DB:', e));
 
         get().addToast('success', 'Replied to customer support ticket');
       },
@@ -605,13 +631,13 @@ export const useAdminStore = create<AdminStoreState>()(
         });
       },
 
-      updateSellerCommission: (sellerId, commissionRate) => {
+      updateSellerCommission: async (sellerId, commissionRate) => {
         set((state) => ({
           sellers: state.sellers.map((s) =>
             s.id === sellerId ? { ...s, commissionRate } : s
           ),
         }));
-        get().addToast('info', `Commission rate updated to ${(commissionRate * 100).toFixed(1)}%`);
+        get().addToast('info', `Commission rate updated to ${(commissionRate * 100).toFixed(0)}%`);
         get().logAuditEvent({
           action: 'SELLER_COMMISSION_MODIFIED',
           category: 'sellers',
@@ -619,12 +645,22 @@ export const useAdminStore = create<AdminStoreState>()(
           description: `Modified commission rate for merchant ${sellerId} to ${(commissionRate * 100).toFixed(0)}%`,
           diff: { after: { commissionRate } },
         });
+
+        try {
+          await fetch('/api/sellers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: sellerId, commissionRate }),
+          });
+        } catch (e) {
+          console.warn('Could not persist commission rate to DB:', e);
+        }
       },
 
       createSellerListing: (listingData) => {
         const seller = get().sellers.find((s) => s.id === listingData.sellerId);
         const autoApprove = seller?.auto_approve_listings || false;
-        const newId = `auc-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+        const newId = `zd-${String(Math.floor(100000 + Math.random() * 900000))}`;
         const durationHours = listingData.proposedDurationHours || 24;
         const now = new Date();
         const endsAt = new Date(now.getTime() + durationHours * 3600 * 1000).toISOString();
@@ -846,6 +882,91 @@ export const useAdminStore = create<AdminStoreState>()(
         }
       },
 
+      syncTicketsFromDb: async () => {
+        if (typeof window === 'undefined') return;
+        try {
+          const res = await fetch('/api/support/tickets');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.tickets) && data.tickets.length > 0) {
+              set((state) => {
+                const existingMap = new Map(state.tickets.map((t) => [t.id, t]));
+                for (const dt of data.tickets) {
+                  const prev = existingMap.get(dt.id);
+                  existingMap.set(dt.id, {
+                    id: dt.id,
+                    ticketNumber: dt.ticketNumber || `TKT-${dt.id.slice(-6)}`,
+                    buyerId: dt.userId || dt.buyerId || 'buyer',
+                    buyerName: dt.userName || dt.buyerName || 'ZEEDO Buyer',
+                    buyerPhone: dt.userPhone || dt.buyerPhone || '',
+                    buyerCity: dt.buyerCity || 'Erbil',
+                    kycStatus: 'verified',
+                    rooftopLandmark: '',
+                    subject: dt.subject || 'Customer Support',
+                    category: dt.category || 'general',
+                    status: dt.status || 'open',
+                    priority: dt.priority || 'normal',
+                    createdAt: dt.createdAt || new Date().toISOString(),
+                    updatedAt: dt.updatedAt || new Date().toISOString(),
+                    assignedAgent: prev?.assignedAgent,
+                    messages:
+                      prev?.messages && prev.messages.length > 0
+                        ? prev.messages
+                        : dt.lastMessage
+                        ? [
+                            {
+                              id: `msg-last-${dt.id}`,
+                              sender: 'buyer',
+                              senderName: dt.userName || 'Buyer',
+                              text: dt.lastMessage,
+                              timestamp: new Date(dt.updatedAt || Date.now()).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }),
+                            },
+                          ]
+                        : [],
+                  });
+                }
+                return { tickets: Array.from(existingMap.values()) };
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to sync tickets from DB:', err);
+        }
+      },
+
+      fetchTicketMessages: async (ticketId: string) => {
+        if (typeof window === 'undefined' || !ticketId) return;
+        try {
+          const res = await fetch(`/api/support/messages?ticketId=${ticketId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.messages)) {
+              const mappedMessages: SupportTicketMessage[] = data.messages.map((m: any) => ({
+                id: m.id,
+                sender: m.senderType === 'admin' ? 'agent' : 'buyer',
+                senderName: m.senderName || (m.senderType === 'admin' ? 'ZEEDO Support' : 'Buyer'),
+                text: m.message,
+                timestamp: new Date(m.createdAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+              }));
+
+              set((state) => ({
+                tickets: state.tickets.map((t) =>
+                  t.id === ticketId ? { ...t, messages: mappedMessages } : t
+                ),
+              }));
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to fetch ticket messages:', err);
+        }
+      },
+
       syncAuctionsFromDb: async () => {
         if (typeof window === 'undefined') return;
         try {
@@ -921,7 +1042,7 @@ export const useAdminStore = create<AdminStoreState>()(
         const item = get().auctions.find((a) => a.id === listingId);
         if (!item) return;
 
-        const newAuctionId = `auc-${Math.floor(800 + Math.random() * 200)}`;
+        const newAuctionId = `zd-${Math.floor(100000 + Math.random() * 900000)}`;
         const relisted: ListingAuction = {
           ...item,
           id: newAuctionId,
@@ -1612,7 +1733,7 @@ export const useAdminStore = create<AdminStoreState>()(
           'Bosch Professional GSB 18V-50 Cordless Combi Drill',
         ];
         const randomTitle = mockTitles[Math.floor(Math.random() * mockTitles.length)];
-        const newId = `auc-${Math.floor(810 + Math.random() * 80)}`;
+        const newId = `zd-${Math.floor(100000 + Math.random() * 900000)}`;
 
         const baseline = 160000;
         const newListing: ListingAuction = {

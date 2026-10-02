@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
       let userRecord: any = null;
       if (sql) {
         try {
+          // Ensure is_blocked column exists
+          await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE`.catch(() => {});
+
           const rows = await sql`
             INSERT INTO users (
               id, phone, name, city, role, kyc_status, created_at, updated_at
@@ -45,6 +48,15 @@ export async function POST(req: NextRequest) {
         } catch (dbErr: any) {
           console.error('Error upserting verified user in database:', dbErr);
         }
+      }
+
+      // Block check — prevent blocked users from logging in
+      if (userRecord?.is_blocked) {
+        return jsonResponse(
+          { isValid: false, isBlocked: true, message: 'هذا الحساب موقوف. للاستفسار تواصل مع دعم زيدو.' },
+          { status: 403 },
+          req
+        );
       }
 
       const effectiveUserId = userRecord?.id || defaultUserId;

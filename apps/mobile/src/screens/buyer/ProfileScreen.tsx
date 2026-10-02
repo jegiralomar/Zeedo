@@ -23,6 +23,7 @@ import {
   Sparkles,
   ArrowRight,
   Camera,
+  Headphones,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { AppTheme } from '../../theme/colors';
@@ -30,6 +31,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 import { LanguageCode } from '../../types';
 import { ZEEDO_CONFIG } from '../../config/api';
+import { SupportChatModal } from '../../components/support/SupportChatModal';
 
 export const ProfileScreen: React.FC = () => {
   const {
@@ -46,6 +48,7 @@ export const ProfileScreen: React.FC = () => {
   } = useAppStore();
 
   const [isUpdatingAvatar, setIsUpdatingAvatar] = React.useState(false);
+  const [isSupportChatOpen, setIsSupportChatOpen] = React.useState(false);
 
   const t = getTranslation(language);
   const isRtl = language !== 'en';
@@ -345,7 +348,35 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 6. Direct WhatsApp Support */}
+      {/* 6. Live In-App Support Chat */}
+      <TouchableOpacity
+        style={styles.supportChatCard}
+        onPress={() => setIsSupportChatOpen(true)}
+        activeOpacity={0.85}
+      >
+        <View style={styles.supportIconCircle}>
+          <Headphones size={22} color="#FFFFFF" />
+        </View>
+        <View style={styles.whatsappContent}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.supportChatTitle}>
+              {isRtl ? 'محادثة الدعم الفني المباشرة' : 'Live In-App Support Chat'}
+            </Text>
+            <View style={styles.livePill}>
+              <View style={styles.livePillDot} />
+              <Text style={styles.livePillText}>{isRtl ? 'مباشر' : 'Live'}</Text>
+            </View>
+          </View>
+          <Text style={styles.whatsappSub}>
+            {isRtl
+              ? 'تحدث مباشرة مع فريق الإدارة للمساعدة في المزادات والطلبات'
+              : 'Chat instantly with Zeedo admins for questions and orders'}
+          </Text>
+        </View>
+        <ChevronRight size={18} color="#F83758" />
+      </TouchableOpacity>
+
+      {/* 7. Direct WhatsApp Support */}
       <TouchableOpacity
         style={styles.whatsappCard}
         onPress={handleOpenWhatsApp}
@@ -367,7 +398,7 @@ export const ProfileScreen: React.FC = () => {
         <ChevronRight size={18} color="#64748B" />
       </TouchableOpacity>
 
-      {/* 7. Terms & Conditions */}
+      {/* 8. Terms & Conditions */}
       <View style={styles.menuCard}>
         <View style={styles.menuItem}>
           <FileText size={18} color="#64748B" />
@@ -382,7 +413,7 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 8. Log Out Action Button */}
+      {/* 9. Log Out Action Button */}
       <View style={styles.authSection}>
         <TouchableOpacity
           onPress={logout}
@@ -396,6 +427,12 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Extra Bottom Padding for Floating Pill BottomNav */}
       <View style={{ height: 88 }} />
+
+      {/* Live Support Chat Modal */}
+      <SupportChatModal
+        visible={isSupportChatOpen}
+        onClose={() => setIsSupportChatOpen(false)}
+      />
     </ScrollView>
   );
 };
@@ -660,6 +697,55 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#15803D',
     lineHeight: 16,
+  },
+  supportChatCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: '#FFE4E8',
+    shadowColor: AppTheme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    gap: 12,
+  },
+  supportIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: AppTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  supportChatTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  livePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  livePillDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#16A34A',
+  },
+  livePillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#15803D',
   },
   whatsappCard: {
     flexDirection: 'row',

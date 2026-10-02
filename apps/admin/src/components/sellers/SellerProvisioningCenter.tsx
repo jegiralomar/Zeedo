@@ -52,7 +52,7 @@ export const SellerProvisioningCenter: React.FC = () => {
   const [ownerName, setOwnerName] = useState('');
   const [phone, setPhone] = useState('+964 750 ');
   const [city, setCity] = useState('Erbil');
-  const [commissionRate, setCommissionRate] = useState(0.05); // 5% default
+  const [commissionRate, setCommissionRate] = useState(0.10); // 10% default
   const [autoApprove, setAutoApprove] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('ZeedoSeller2026');
@@ -419,7 +419,7 @@ export const SellerProvisioningCenter: React.FC = () => {
                 Posting Fee: 1,000 IQD
               </span>
               <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-[#F83758]/30 text-[#F83758] border border-[#F83758]/40 font-bold">
-                Base Cut: 5.0%
+                Default Cut: 10.0% (Per Merchant)
               </span>
             </div>
           </div>

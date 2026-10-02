@@ -115,7 +115,7 @@ export async function POST(request: Request) {
       auctionEndsAt,
     } = body;
 
-    const newId = id || `auc-${Date.now().toString().slice(-6)}`;
+    const newId = id || `zd-${String(Math.floor(100000 + Math.random() * 900000))}`;
     const now = new Date();
     const startsAt = auctionStartsAt || now.toISOString();
     const endsAt = auctionEndsAt || new Date(now.getTime() + proposedDurationHours * 3600 * 1000).toISOString();

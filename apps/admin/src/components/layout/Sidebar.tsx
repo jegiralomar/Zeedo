@@ -10,7 +10,6 @@ import {
   Gavel,
   ShieldCheck,
   FileSpreadsheet,
-  Truck,
   Store,
   Megaphone,
   Coins,
@@ -59,10 +58,8 @@ export const Sidebar: React.FC = () => {
   const userRole = currentUser?.role || 'super_admin';
   const roleConfig = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.super_admin;
 
-  const pendingKycCount = users.filter((u) => u.kycStatus === 'pending').length;
   const pendingModerationCount = auctions.filter((a) => a.status === 'moderation_pending').length;
   const liveAuctionsCount = auctions.filter((a) => a.status === 'live').length;
-  const readyLogisticsCount = auctions.filter((a) => a.codStatus === 'ready_for_dispatch').length;
   const openTicketsCount = (tickets || []).filter((t) => t.status === 'open').length;
 
   const pathPrefix = pathname.startsWith('/admin') ? '/admin' : '';
@@ -125,13 +122,6 @@ export const Sidebar: React.FC = () => {
           label: 'Financial Cockpit',
           href: '/finance',
           icon: Coins,
-        },
-        {
-          label: '3PL Logistics Hub',
-          href: '/logistics',
-          icon: Truck,
-          badge: readyLogisticsCount > 0 ? `${readyLogisticsCount} Ready` : null,
-          badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
         },
       ],
     },

@@ -133,7 +133,7 @@ export const CreateAuctionScreen: React.FC<CreateAuctionScreenProps> = ({ onBack
   const handlePublishAuction = async () => {
     setIsPublishing(true);
     try {
-      const newAuctionId = `auc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+      const newAuctionId = `zd-${Math.floor(100000 + Math.random() * 900000)}`;
       const now = new Date();
       const endsAt = new Date(now.getTime() + durationHours * 3600 * 1000);
 

@@ -89,6 +89,9 @@ export const AuditLogCenter: React.FC = () => {
       sellers: { bg: 'bg-[#F3E8FF]', text: 'text-[#7E22CE]' },
       team: { bg: 'bg-[#FEF08A]', text: 'text-[#854D0E]' },
       auth: { bg: 'bg-slate-200', text: 'text-slate-800' },
+      finance: { bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]' },
+      buyers: { bg: 'bg-[#E0E7FF]', text: 'text-[#4338CA]' },
+      support: { bg: 'bg-[#FFE4E6]', text: 'text-[#E11D48]' },
     };
     const c = mapping[cat] || { bg: 'bg-[#F4F6F5]', text: 'text-[#6C7E75]' };
     return (

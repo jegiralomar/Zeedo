@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       ownerName,
       phone,
       city = 'Erbil',
-      commissionRate = 0.07,
+      commissionRate = 0.10,
       auto_approve_listings = false,
       pickupAddress = '',
       pickupCoordinates = { lat: 36.1911, lng: 44.0092 },
@@ -195,6 +195,67 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, seller });
   } catch (error: any) {
     console.error('Sellers POST error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, commissionRate, auto_approve_listings, status } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Seller ID is required' }, { status: 400 });
+    }
+
+    await initDatabaseSchema();
+    const sql = getDb();
+    if (!sql) {
+      return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 503 });
+    }
+
+    if (commissionRate !== undefined) {
+      await sql`
+        UPDATE sellers
+        SET commission_rate = ${Number(commissionRate)}
+        WHERE id = ${id}
+      `;
+    }
+
+    if (auto_approve_listings !== undefined) {
+      await sql`
+        UPDATE sellers
+        SET auto_approve_listings = ${Boolean(auto_approve_listings)}
+        WHERE id = ${id}
+      `;
+    }
+
+    if (status !== undefined) {
+      await sql`
+        UPDATE sellers
+        SET status = ${status}
+        WHERE id = ${id}
+      `;
+    }
+
+    const rows = await sql`SELECT * FROM sellers WHERE id = ${id} LIMIT 1`;
+    if (rows.length === 0) {
+      return NextResponse.json({ success: false, error: 'Seller not found' }, { status: 404 });
+    }
+
+    const s = rows[0];
+    return NextResponse.json({
+      success: true,
+      seller: {
+        id: s.id,
+        storeName: s.store_name,
+        commissionRate: Number(s.commission_rate),
+        auto_approve_listings: Boolean(s.auto_approve_listings),
+        status: s.status,
+      },
+    });
+  } catch (error: any) {
+    console.error('Sellers PATCH error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
