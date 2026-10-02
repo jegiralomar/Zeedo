@@ -31,7 +31,11 @@ import {
   Check,
   CreditCard,
   Building,
+  Printer,
+  Truck,
 } from 'lucide-react';
+import { PrintShippingSlipModal, ShippingSlipData } from './PrintShippingSlipModal';
+import { PrintDriverManifestModal, ManifestOrderItem } from './PrintDriverManifestModal';
 
 export const MerchantFulfillmentSummary: React.FC = () => {
   const {
@@ -51,6 +55,9 @@ export const MerchantFulfillmentSummary: React.FC = () => {
   const [receiptFilter, setReceiptFilter] = useState<'all' | 'pending_review' | 'approved' | 'rejected'>('all');
   const [sendingCreds, setSendingCreds] = useState<boolean>(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [activeSlipData, setActiveSlipData] = useState<ShippingSlipData | null>(null);
+  const [isSlipModalOpen, setIsSlipModalOpen] = useState<boolean>(false);
+  const [isManifestModalOpen, setIsManifestModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     fetchReceipts?.();
@@ -112,6 +119,51 @@ export const MerchantFulfillmentSummary: React.FC = () => {
     if (receiptFilter !== 'all' && r.status !== receiptFilter) return false;
     return true;
   });
+
+  // Manifest Orders Mapping
+  const manifestOrders: ManifestOrderItem[] =
+    soldItems.length > 0
+      ? soldItems.map((auc, idx) => ({
+          id: auc.id,
+          awb: `AWB-IQ-2026-${auc.id.replace(/\D/g, '') || idx + 100}`,
+          itemTitle: auc.multilingual?.en?.title || auc.multilingual?.ar?.title || 'Lot Item',
+          buyerName: auc.highestBidder?.name || 'Verified Buyer',
+          buyerPhone: auc.highestBidder?.phone || '0770 123 4567',
+          buyerCity: auc.highestBidder?.rooftopPin?.city || 'Baghdad',
+          buyerAddress: auc.highestBidder?.rooftopPin?.landmark || 'Doorstep Delivery',
+          buyerGpsLat: auc.highestBidder?.rooftopPin?.latitude || 33.3128,
+          buyerGpsLng: auc.highestBidder?.rooftopPin?.longitude || 44.3541,
+          codAmountIqd: auc.currentBidIqd,
+          status: auc.orderStatus || 'pending_dispatch',
+        }))
+      : [
+          {
+            id: 'LOT-2026-089',
+            awb: 'AWB-IQ-2026-089',
+            itemTitle: 'Apple iPhone 16 Pro Max 256GB Desert Titanium',
+            buyerName: 'Mustafa Al-Bayati',
+            buyerPhone: '+964 770 312 8841',
+            buyerCity: 'بغداد (Baghdad)',
+            buyerAddress: 'Al-Mansour 14th Ramadan, Baghdad',
+            buyerGpsLat: 33.3128,
+            buyerGpsLng: 44.3541,
+            codAmountIqd: 1840000,
+            status: 'pending_dispatch',
+          },
+          {
+            id: 'LOT-2026-042',
+            awb: 'AWB-IQ-2026-042',
+            itemTitle: 'Sony PlayStation 5 Slim Digital Edition (JP)',
+            buyerName: 'Ahmed Tariq Al-Jaf',
+            buyerPhone: '+964 750 448 9123',
+            buyerCity: 'أربيل (Erbil)',
+            buyerAddress: 'Dream City Villa 142, Erbil',
+            buyerGpsLat: 36.2062,
+            buyerGpsLng: 44.0094,
+            codAmountIqd: 615000,
+            status: 'ready_for_dispatch',
+          },
+        ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -551,9 +603,19 @@ export const MerchantFulfillmentSummary: React.FC = () => {
                   <p className="text-[11px] text-slate-400">Winning buyers, COD addresses, delivery status & fee reconciliation</p>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
-                {soldItems.length > 0 ? soldItems.length : 2} Completed Orders
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsManifestModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-xs hover:scale-102"
+                  title="Generate multi-parcel driver route manifest with totals and signatures"
+                >
+                  <Truck className="w-3.5 h-3.5 text-[#B4F105]" />
+                  <span>طباعة بيان السائق (Driver Manifest)</span>
+                </button>
+                <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
+                  {soldItems.length > 0 ? soldItems.length : 2} Completed Orders
+                </span>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -620,6 +682,32 @@ export const MerchantFulfillmentSummary: React.FC = () => {
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
+                              onClick={() => {
+                                setActiveSlipData({
+                                  awbNumber: 'AWB-IQ-2026-089',
+                                  auctionId: 'LOT-2026-089',
+                                  itemTitle: 'Apple iPhone 16 Pro Max 256GB Desert Titanium',
+                                  itemCondition: 'جديد بالكرتونة مختوم',
+                                  codAmountIqd: 1840000,
+                                  sellerStoreName: selectedSeller.storeName,
+                                  sellerPhone: selectedSeller.phone,
+                                  sellerCity: selectedSeller.city,
+                                  buyerName: 'Mustafa Al-Bayati',
+                                  buyerPhone: '+964 770 312 8841',
+                                  buyerCity: 'بغداد (Baghdad)',
+                                  buyerAddress: 'Al-Mansour 14th Ramadan, Near Baghdad Mall',
+                                  buyerGpsLat: 33.3128,
+                                  buyerGpsLng: 44.3541,
+                                });
+                                setIsSlipModalOpen(true);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[#B4F105] text-[10px] font-black inline-flex items-center gap-1 shadow-2xs"
+                              title="Print AWB shipping label with buyer location GPS QR"
+                            >
+                              <Printer className="w-3 h-3" />
+                              <span>طباعة البوليصة</span>
+                            </button>
+                            <button
                               onClick={() => addToast('success', 'Order marked as Delivered & Paid (COD Collected)')}
                               className="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold inline-flex items-center gap-1"
                             >
@@ -682,7 +770,35 @@ export const MerchantFulfillmentSummary: React.FC = () => {
                           <div className="text-[10px] text-slate-400 truncate max-w-[160px]">Dream City Villa 142, Erbil</div>
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          <span className="text-[11px] text-emerald-700 font-bold">Reconciled</span>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setActiveSlipData({
+                                  awbNumber: 'AWB-IQ-2026-042',
+                                  auctionId: 'LOT-2026-042',
+                                  itemTitle: 'Sony PlayStation 5 Slim Digital Edition (JP)',
+                                  itemCondition: 'جديد أصلي',
+                                  codAmountIqd: 615000,
+                                  sellerStoreName: selectedSeller.storeName,
+                                  sellerPhone: selectedSeller.phone,
+                                  sellerCity: selectedSeller.city,
+                                  buyerName: 'Ahmed Tariq Al-Jaf',
+                                  buyerPhone: '+964 750 448 9123',
+                                  buyerCity: 'أربيل (Erbil)',
+                                  buyerAddress: 'Dream City Villa 142, Erbil',
+                                  buyerGpsLat: 36.2062,
+                                  buyerGpsLng: 44.0094,
+                                });
+                                setIsSlipModalOpen(true);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[#B4F105] text-[10px] font-black inline-flex items-center gap-1 shadow-2xs"
+                              title="Print AWB shipping label with buyer location GPS QR"
+                            >
+                              <Printer className="w-3 h-3" />
+                              <span>طباعة البوليصة</span>
+                            </button>
+                            <span className="text-[11px] text-emerald-700 font-bold">Reconciled</span>
+                          </div>
                         </td>
                       </tr>
                     </>
@@ -763,6 +879,32 @@ export const MerchantFulfillmentSummary: React.FC = () => {
                           </td>
                           <td className="py-3.5 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => {
+                                  setActiveSlipData({
+                                    awbNumber: `AWB-IQ-2026-${auc.id.replace(/\D/g, '') || '999'}`,
+                                    auctionId: auc.id,
+                                    itemTitle: auc.multilingual?.en?.title || auc.multilingual?.ar?.title || 'Lot Item',
+                                    codAmountIqd: auc.currentBidIqd,
+                                    sellerStoreName: selectedSeller.storeName,
+                                    sellerPhone: selectedSeller.phone,
+                                    sellerCity: selectedSeller.city,
+                                    buyerName: b?.name || 'Verified Buyer',
+                                    buyerPhone: b?.phone || '0770 123 4567',
+                                    buyerCity: b?.rooftopPin?.city || 'Baghdad',
+                                    buyerAddress: b?.rooftopPin?.landmark || 'Customer Rooftop Pin',
+                                    buyerGpsLat: b?.rooftopPin?.latitude,
+                                    buyerGpsLng: b?.rooftopPin?.longitude,
+                                  });
+                                  setIsSlipModalOpen(true);
+                                }}
+                                className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[#B4F105] text-[10px] font-black inline-flex items-center gap-1 shadow-2xs"
+                                title="Print AWB shipping label with buyer location GPS QR"
+                              >
+                                <Printer className="w-3 h-3" />
+                                <span>طباعة البوليصة</span>
+                              </button>
+
                               {currentOrderStatus !== 'delivered_paid' && (
                                 <button
                                   onClick={() => updateOrderStatus(auc.id, 'delivered_paid')}
@@ -880,6 +1022,22 @@ export const MerchantFulfillmentSummary: React.FC = () => {
           </div>
         </div>
       )}
+      {/* PRINT AWB SHIPPING SLIP MODAL */}
+      <PrintShippingSlipModal
+        isOpen={isSlipModalOpen}
+        onClose={() => setIsSlipModalOpen(false)}
+        data={activeSlipData}
+      />
+
+      {/* PRINT DRIVER MANIFEST MODAL */}
+      <PrintDriverManifestModal
+        isOpen={isManifestModalOpen}
+        onClose={() => setIsManifestModalOpen(false)}
+        merchantStoreName={selectedSeller.storeName}
+        merchantPhone={selectedSeller.phone}
+        merchantCity={selectedSeller.city}
+        orders={manifestOrders}
+      />
     </div>
   );
 };

@@ -22,6 +22,7 @@ import {
   Zap,
   Sliders,
   FlaskConical,
+  Wrench,
 } from 'lucide-react';
 
 function SettingsContent() {
@@ -134,6 +135,29 @@ function SettingsContent() {
       }
     } catch {
       // ignore
+    }
+  };
+
+  const [clearingWaSessions, setClearingWaSessions] = useState(false);
+
+  const handleClearSessions = async () => {
+    if (!confirm('Clear stale session & pre-key encryption files? Your linked phone login (creds.json) will be safely preserved, and fresh Signal encryption handshakes will be negotiated to resolve "Waiting for message" errors.')) {
+      return;
+    }
+    setClearingWaSessions(true);
+    try {
+      const res = await fetch('/api/whatsapp/clear-sessions', { method: 'POST' });
+      const data = await res.json();
+      if (data.isSuccess) {
+        addToast('success', data.message || 'Corrupted session keys cleared successfully.');
+        setTimeout(checkWhatsAppStatus, 2000);
+      } else {
+        addToast('error', data.message || 'Failed to clear session files');
+      }
+    } catch {
+      addToast('error', 'Network error clearing session files');
+    } finally {
+      setClearingWaSessions(false);
     }
   };
 
@@ -276,6 +300,15 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleClearSessions}
+                    disabled={clearingWaSessions}
+                    className="px-2.5 py-2 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-800 text-xs font-bold transition-colors flex items-center gap-1.5"
+                    title="Repair 'Waiting for this message' encryption errors by clearing stale pre-keys while preserving linked device login"
+                  >
+                    <Wrench className={`w-3.5 h-3.5 ${clearingWaSessions ? 'animate-spin' : ''}`} />
+                    <span>{clearingWaSessions ? 'Repairing...' : 'Fix Decryption'}</span>
+                  </button>
                   <button
                     onClick={checkWhatsAppStatus}
                     disabled={checkingWa}

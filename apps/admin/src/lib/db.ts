@@ -199,6 +199,94 @@ export async function initDatabaseSchema() {
       );
     `;
 
+    // 9. CMS Banners Table
+    await sql`
+      CREATE TABLE IF NOT EXISTS cms_banners (
+        id VARCHAR(64) PRIMARY KEY,
+        title_ar VARCHAR(255) NOT NULL,
+        title_en VARCHAR(255) NOT NULL,
+        title_ckb VARCHAR(255),
+        title_badini VARCHAR(255),
+        subtitle_ar VARCHAR(255),
+        subtitle_en VARCHAR(255),
+        subtitle_ckb VARCHAR(255),
+        subtitle_badini VARCHAR(255),
+        image_url TEXT NOT NULL,
+        tap_action VARCHAR(32) DEFAULT 'none',
+        action_target TEXT,
+        position VARCHAR(32) DEFAULT 'hero',
+        is_active BOOLEAN DEFAULT TRUE,
+        sort_order INT DEFAULT 0,
+        valid_from TIMESTAMPTZ DEFAULT NOW(),
+        valid_until TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    // 10. Won Orders Table (COD Fulfillment for Auction Winners)
+    await sql`
+      CREATE TABLE IF NOT EXISTS won_orders (
+        id VARCHAR(64) PRIMARY KEY,
+        auction_id VARCHAR(64) NOT NULL,
+        winner_id VARCHAR(64) NOT NULL,
+        seller_id VARCHAR(64) NOT NULL,
+        winning_bid_iqd BIGINT NOT NULL,
+        item_title VARCHAR(255) NOT NULL,
+        item_image TEXT NOT NULL,
+        delivery_address TEXT,
+        delivery_city VARCHAR(64) DEFAULT 'Erbil',
+        delivery_lat DOUBLE PRECISION,
+        delivery_lng DOUBLE PRECISION,
+        delivery_phone VARCHAR(32),
+        awb_number VARCHAR(64) UNIQUE,
+        cod_status VARCHAR(32) DEFAULT 'ready_for_dispatch',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    // Seed default hero banner if cms_banners is empty
+    await sql`
+      INSERT INTO cms_banners (
+        id, title_ar, title_en, title_ckb, title_badini,
+        subtitle_ar, subtitle_en, subtitle_ckb, subtitle_badini,
+        image_url, tap_action, action_target, position, is_active, sort_order
+      ) VALUES (
+        'ban-01',
+        'مزادات حية يومية بأسعار تبدأ من 1,000 د.ع',
+        'Live Daily Auctions Starting at 1,000 IQD',
+        'مزایەدەی ڕۆژانەی زیندوو بە نرخی کەمترین',
+        'مزایدێت ڕۆژانە یێت زندی',
+        'زايد الآن وادفع عند الاستلام مع ضمان الفحص',
+        'Bid now, pay cash on delivery with inspection guarantee',
+        'ئێستا بەشداری بکە و دوای گەیشتن پارە بدە',
+        'نوکە پشکداریێ بکە و پشتی گەهشتنێ پارە بدە',
+        'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80',
+        'category',
+        'Electronics',
+        'hero',
+        TRUE,
+        0
+      ), (
+        'ban-02',
+        'توصيل موثوق لجميع محافظات العراق وكردستان',
+        'Fast COD Delivery Across All Iraq & Kurdistan',
+        'گەیاندنی خێرا بۆ هەموو پارێزگاکانی عێراق و کوردستان',
+        'گەهاندنا لەز بۆ هەمی پارێزگەهێن عیراق و کوردستانێ',
+        'شحن سريع عبر أسطولنا وشركائنا المعتمدين',
+        'Express delivery via certified local courier partners',
+        'گەیاندن لە ڕێگەی تیمی باوەڕپێکراو',
+        'گەهاندن ب ڕێکا تیمێن باوەرپێکری',
+        'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80',
+        'none',
+        '',
+        'hero',
+        TRUE,
+        1
+      ) ON CONFLICT (id) DO NOTHING;
+    `;
+
     // Seed default pre-configured merchant if none exists
     await sql`
       INSERT INTO sellers (

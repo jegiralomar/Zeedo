@@ -8,8 +8,8 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await safeParseJson<{ phoneNumber?: string }>(req);
-    const { phoneNumber } = body;
+    const body = await safeParseJson<{ phoneNumber?: string; phone?: string }>(req);
+    const phoneNumber = body.phoneNumber || body.phone;
 
     if (!phoneNumber) {
       return jsonResponse({ isSuccess: false, message: 'Phone number is required' }, { status: 400 }, req);

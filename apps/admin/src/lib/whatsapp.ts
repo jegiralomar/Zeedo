@@ -114,6 +114,7 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
           normalizedPhone,
           isSandbox: false,
           messageId: gatewayResult.messageId,
+          code,
           expiresAt,
           message: `Official WhatsApp verification code sent via Zeedo Gateway to ${normalizedPhone}`,
         };

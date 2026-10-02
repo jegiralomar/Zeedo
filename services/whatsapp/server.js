@@ -5,7 +5,8 @@ const {
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
-  Browsers
+  Browsers,
+  proto
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const QRCode = require('qrcode');
@@ -31,13 +32,39 @@ let connectedPhone = null;
 const logger = pino({ level: 'info' });
 
 const messageStore = new Map();
-const retryCounterCache = {
-  data: new Map(),
-  get(key) { return this.data.get(key); },
-  set(key, val) { this.data.set(key, val); },
-  del(key) { this.data.delete(key); },
-  flushAll() { this.data.clear(); }
-};
+
+// TTL cache for message retries to prevent unbounded growth and permanently stuck retry counters
+class TtlCache {
+  constructor(ttlMs = 15 * 60 * 1000) {
+    this.ttlMs = ttlMs;
+    this.store = new Map();
+  }
+  get(key) {
+    const entry = this.store.get(key);
+    if (!entry) return undefined;
+    if (Date.now() > entry.expiry) {
+      this.store.delete(key);
+      return undefined;
+    }
+    return entry.val;
+  }
+  set(key, val) {
+    this.store.set(key, { val, expiry: Date.now() + this.ttlMs });
+    if (this.store.size > 5000) {
+      const now = Date.now();
+      for (const [k, v] of this.store.entries()) {
+        if (now > v.expiry) this.store.delete(k);
+      }
+    }
+  }
+  del(key) {
+    this.store.delete(key);
+  }
+  flushAll() {
+    this.store.clear();
+  }
+}
+const retryCounterCache = new TtlCache();
 
 async function initWhatsApp() {
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -52,20 +79,25 @@ async function initWhatsApp() {
     logger: silentLogger,
     auth: {
       creds: state.creds,
+      // Wrap with makeCacheableSignalKeyStore to prevent pre-key desynchronization and race conditions
       keys: makeCacheableSignalKeyStore(state.keys, silentLogger)
     },
     browser: Browsers.macOS('Chrome'),
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
     markOnlineOnConnect: false,
-    retryRequestDelayMs: 350,
+    retryRequestDelayMs: 500,
     maxMsgRetryCount: 5,
     msgRetryCounterCache: retryCounterCache,
     getMessage: async (key) => {
       if (key?.id && messageStore.has(key.id)) {
-        return messageStore.get(key.id);
+        const msg = messageStore.get(key.id);
+        return typeof msg === 'string' ? { conversation: msg } : msg;
       }
-      return undefined;
+      // CRITICAL FIX: Return empty proto object instead of undefined.
+      // Returning undefined causes a terminal failure in the retry handshake, locking
+      // messages in "Waiting for this message. This may take a while".
+      return proto.Message.fromObject({});
     }
   });
 
@@ -248,7 +280,18 @@ app.post('/send-otp', async (req, res) => {
 
     // Format phone to WhatsApp JID (e.g. 9647501234567@s.whatsapp.net)
     const cleanPhone = phone.replace(/\D/g, '');
-    const jid = `${cleanPhone}@s.whatsapp.net`;
+    let jid = `${cleanPhone}@s.whatsapp.net`;
+
+    // Handle LID and Phone Number Mapping (especially for iOS and multi-device accounts)
+    try {
+      const [contact] = await sock.onWhatsApp(cleanPhone);
+      if (contact?.exists && contact?.jid) {
+        jid = contact.jid;
+        logger.info(`Resolved ${cleanPhone} to verified WhatsApp JID: ${jid}`);
+      }
+    } catch (checkErr) {
+      logger.debug(`Presence/LID lookup skipped for ${cleanPhone}:`, checkErr?.message);
+    }
 
     const textContent = message || [
       '🔒 *رمز التحقق لمنصة زيدو للمزادات*',
@@ -262,18 +305,21 @@ app.post('/send-otp', async (req, res) => {
     ].join('\n');
 
     logger.info(`Sending OTP to ${jid}...`);
-    try {
-      await sock.presenceSubscribe(jid);
-      await sock.sendPresenceUpdate('available', jid);
-    } catch (_) {
-      // Non-blocking presence signal
+    const botPhone = sock?.user?.id?.split(':')[0]?.replace(/\D/g, '');
+    if (botPhone && cleanPhone !== botPhone) {
+      try {
+        await sock.presenceSubscribe(jid);
+        await sock.sendPresenceUpdate('available', jid);
+      } catch (_) {
+        // Non-blocking presence signal
+      }
     }
 
     const sent = await sock.sendMessage(jid, { text: textContent });
 
-    if (sent?.key?.id && sent?.message) {
-      messageStore.set(sent.key.id, sent.message);
-      if (messageStore.size > 2000) {
+    if (sent?.key?.id) {
+      messageStore.set(sent.key.id, sent.message || { conversation: textContent });
+      if (messageStore.size > 5000) {
         const oldestKey = messageStore.keys().next().value;
         messageStore.delete(oldestKey);
       }
@@ -294,10 +340,61 @@ app.post('/send-otp', async (req, res) => {
   }
 });
 
-// 5. Reset session — clears auth_info and triggers new QR scan
+// Helper to remove pre-keys and session files
+function clearSessionFiles(keepCreds = true) {
+  if (!fs.existsSync(AUTH_DIR)) return { deleted: 0 };
+  const files = fs.readdirSync(AUTH_DIR);
+  let deleted = 0;
+  for (const file of files) {
+    if (keepCreds && file === 'creds.json') {
+      continue; // Preserve device pairing credentials
+    }
+    try {
+      fs.unlinkSync(path.join(AUTH_DIR, file));
+      deleted++;
+    } catch (err) {
+      logger.warn(`Failed to delete session file ${file}:`, err.message);
+    }
+  }
+  return { deleted };
+}
+
+// 5. Clear Corrupted Sessions — removes stale pre-keys while PRESERVING creds.json
+// This forces a fresh Signal encryption handshake without requiring a QR code re-scan!
+app.post('/clear-corrupted-sessions', async (req, res) => {
+  try {
+    logger.warn('🧹 Stale pre-key and session cleanup requested. Preserving creds.json...');
+    if (sock) {
+      try { sock.end(); } catch (_) {}
+      sock = null;
+    }
+    isConnected = false;
+    connectedPhone = null;
+
+    const { deleted } = clearSessionFiles(true);
+    messageStore.clear();
+    retryCounterCache.flushAll();
+
+    setTimeout(() => {
+      initWhatsApp().catch((err) => logger.error('Error re-initializing WhatsApp after session clean:', err));
+    }, 1500);
+
+    return res.json({
+      isSuccess: true,
+      message: `Cleared ${deleted} corrupted session/pre-key files while keeping creds.json intact. Fresh encryption handshake initiated.`,
+      deletedFiles: deleted
+    });
+  } catch (err) {
+    logger.error('Failed to clear corrupted sessions:', err);
+    return res.status(500).json({ isSuccess: false, message: err.message });
+  }
+});
+
+// 6. Reset session — clears auth_info (or optionally keeps creds with keepCreds=true)
 app.post('/reset-session', async (req, res) => {
   try {
-    logger.warn('🔄 Session reset requested. Disconnecting and clearing auth...');
+    const keepCreds = req.query.keepCreds === 'true' || req.body?.keepCreds === true;
+    logger.warn(`🔄 Session reset requested. keepCreds: ${keepCreds}...`);
     if (sock) {
       try { sock.end(); } catch (_) {}
       sock = null;
@@ -307,11 +404,7 @@ app.post('/reset-session', async (req, res) => {
     currentQrDataUrl = null;
     currentQrRaw = null;
 
-    // Clear all auth files
-    if (fs.existsSync(AUTH_DIR)) {
-      const files = fs.readdirSync(AUTH_DIR);
-      for (const f of files) fs.unlinkSync(path.join(AUTH_DIR, f));
-    }
+    const { deleted } = clearSessionFiles(keepCreds);
     messageStore.clear();
     retryCounterCache.flushAll();
 
@@ -320,7 +413,13 @@ app.post('/reset-session', async (req, res) => {
       initWhatsApp().catch((err) => logger.error('Error re-initializing WhatsApp:', err));
     }, 1500);
 
-    return res.json({ isSuccess: true, message: 'Session cleared. Scan new QR at /qr' });
+    return res.json({
+      isSuccess: true,
+      message: keepCreds
+        ? `Preserved creds.json. Cleared ${deleted} session files.`
+        : 'All auth data cleared. Scan new QR at /qr',
+      deletedFiles: deleted
+    });
   } catch (err) {
     logger.error('Reset failed:', err);
     return res.status(500).json({ isSuccess: false, message: err.message });

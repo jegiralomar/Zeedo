@@ -86,8 +86,31 @@ export async function POST(request: Request) {
           data: endData,
         }).catch(() => {});
 
-        // If winner exists, dispatch winning notification
+        // If winner exists, dispatch winning notification and persist won_orders record
         if (highestBidderObj && highestBidderObj.id) {
+          try {
+            let itemImg = '';
+            if (Array.isArray(auc.image_urls)) itemImg = auc.image_urls[0] || '';
+            else if (typeof auc.image_urls === 'string') {
+              try { itemImg = JSON.parse(auc.image_urls)[0] || ''; } catch { itemImg = auc.image_urls; }
+            }
+
+            await sql`
+              INSERT INTO won_orders (
+                id, auction_id, winner_id, seller_id, winning_bid_iqd,
+                item_title, item_image, delivery_address, delivery_city,
+                delivery_phone, awb_number, cod_status, created_at, updated_at
+              ) VALUES (
+                ${'ord-' + auc.id}, ${auc.id}, ${highestBidderObj.id}, ${auc.seller_id || 'sel-01'},
+                ${finalBidIqd}, ${auc.title || 'Auction Lot'}, ${itemImg || ''},
+                ${highestBidderObj.address || ''}, ${highestBidderObj.city || 'Erbil'},
+                ${highestBidderObj.phone || ''}, ${packageAwbId}, 'ready_for_dispatch', NOW(), NOW()
+              ) ON CONFLICT (id) DO UPDATE SET cod_status = EXCLUDED.cod_status
+            `;
+          } catch (orderErr) {
+            console.warn('Could not persist won_orders row:', orderErr);
+          }
+
           await broadcastLiveEvent({
             channel: `user:${highestBidderObj.id}`,
             event: 'OUTBID_ALERT',
