@@ -155,3 +155,5 @@ export async function PATCH(req: NextRequest) {
     return jsonResponse({ success: false, error: error.message }, { status: 500 }, req);
   }
 }
+
+export const POST = PATCH;
