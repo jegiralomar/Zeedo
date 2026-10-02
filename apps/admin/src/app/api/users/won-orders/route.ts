@@ -96,16 +96,34 @@ export async function POST(request: NextRequest) {
 
     // Update user stats (total_wins, total_spent_iqd) in users table
     try {
-      const cleanPhone = deliveryPhone ? normalizeIraqiPhone(deliveryPhone) : null;
-      await sql`
-        UPDATE users SET
-          total_wins = COALESCE(total_wins, 0) + 1,
-          total_spent_iqd = COALESCE(total_spent_iqd, 0) + ${winningBidIqd},
-          updated_at = NOW()
-        WHERE id = ${winnerId} OR (phone = ${cleanPhone} AND ${cleanPhone} IS NOT NULL);
-      `;
+      const cleanPhone = deliveryPhone ? normalizeIraqiPhone(deliveryPhone) : '';
+      if (winnerId && cleanPhone) {
+        await sql`
+          UPDATE users SET
+            total_wins = COALESCE(total_wins, 0) + 1,
+            total_spent_iqd = COALESCE(total_spent_iqd, 0) + ${winningBidIqd},
+            updated_at = NOW()
+          WHERE id = ${winnerId} OR phone = ${cleanPhone};
+        `;
+      } else if (winnerId) {
+        await sql`
+          UPDATE users SET
+            total_wins = COALESCE(total_wins, 0) + 1,
+            total_spent_iqd = COALESCE(total_spent_iqd, 0) + ${winningBidIqd},
+            updated_at = NOW()
+          WHERE id = ${winnerId};
+        `;
+      } else if (cleanPhone) {
+        await sql`
+          UPDATE users SET
+            total_wins = COALESCE(total_wins, 0) + 1,
+            total_spent_iqd = COALESCE(total_spent_iqd, 0) + ${winningBidIqd},
+            updated_at = NOW()
+          WHERE phone = ${cleanPhone};
+        `;
+      }
     } catch (uErr: any) {
-      console.warn('Could not update user won orders stats:', uErr?.message);
+      console.error('Could not update user won orders stats:', uErr);
     }
 
     return jsonResponse({
