@@ -32,6 +32,81 @@ let connectedPhone = null;
 const logger = pino({ level: 'info' });
 
 const messageStore = new Map();
+const MESSAGE_STORE_PATH = path.join(AUTH_DIR, 'persistent_message_store.json');
+
+// Load stored messages from disk on startup so retries survive container restarts
+function loadPersistentMessages() {
+  try {
+    if (fs.existsSync(MESSAGE_STORE_PATH)) {
+      const raw = fs.readFileSync(MESSAGE_STORE_PATH, 'utf-8');
+      const data = JSON.parse(raw);
+      for (const [k, v] of Object.entries(data)) {
+        messageStore.set(k, v);
+      }
+      logger.info(`Loaded ${messageStore.size} persistent messages from disk.`);
+    }
+  } catch (err) {
+    logger.warn('Could not load persistent message store:', err.message);
+  }
+}
+
+// Debounced flush of message store to disk
+let saveTimeout = null;
+function persistMessageStore() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    try {
+      const obj = {};
+      const entries = Array.from(messageStore.entries()).slice(-2000);
+      for (const [k, v] of entries) {
+        obj[k] = v;
+      }
+      fs.writeFileSync(MESSAGE_STORE_PATH, JSON.stringify(obj), 'utf-8');
+    } catch (err) {
+      logger.warn('Failed to save message store to disk:', err.message);
+    }
+  }, 1000);
+}
+
+/**
+ * 12-Hour Auto-Healing Daemon:
+ * Purges orphaned pre-key files older than 3 days while keeping creds.json intact.
+ * Prevents corrupted single-use pre-keys from accumulating over weeks/months.
+ */
+function startAutoHealingDaemon() {
+  const SWEEP_INTERVAL = 12 * 60 * 60 * 1000; // Every 12 hours
+  const MAX_PREKEY_AGE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+  setInterval(() => {
+    try {
+      if (!fs.existsSync(AUTH_DIR)) return;
+      const files = fs.readdirSync(AUTH_DIR);
+      const now = Date.now();
+      let pruned = 0;
+
+      for (const file of files) {
+        if (file === 'creds.json' || file === 'persistent_message_store.json') continue;
+
+        if (file.startsWith('pre-key-') || file.startsWith('session-') || file.startsWith('sender-key-')) {
+          const filePath = path.join(AUTH_DIR, file);
+          try {
+            const stats = fs.statSync(filePath);
+            if (now - stats.mtimeMs > MAX_PREKEY_AGE_MS) {
+              fs.unlinkSync(filePath);
+              pruned++;
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (pruned > 0) {
+        logger.info(`🧹 [Auto-Healing Daemon] Purged ${pruned} stale pre-key/session files older than 3 days.`);
+      }
+    } catch (err) {
+      logger.warn('[Auto-Healing Daemon] Error during pre-key sweep:', err.message);
+    }
+  }, SWEEP_INTERVAL);
+}
 
 // TTL cache for message retries to prevent unbounded growth and permanently stuck retry counters
 class TtlCache {
@@ -105,15 +180,18 @@ async function initWhatsApp() {
 
   // Store ALL messages (sent + received) so getMessage can serve retries
   sock.ev.on('messages.upsert', ({ messages }) => {
+    let hasNew = false;
     for (const msg of messages) {
       if (msg.key?.id && msg.message) {
         messageStore.set(msg.key.id, msg.message);
+        hasNew = true;
         if (messageStore.size > 5000) {
           const oldest = messageStore.keys().next().value;
           messageStore.delete(oldest);
         }
       }
     }
+    if (hasNew) persistMessageStore();
   });
 
   sock.ev.on('connection.update', async (update) => {
@@ -319,6 +397,7 @@ app.post('/send-otp', async (req, res) => {
 
     if (sent?.key?.id) {
       messageStore.set(sent.key.id, sent.message || { conversation: textContent });
+      persistMessageStore();
       if (messageStore.size > 5000) {
         const oldestKey = messageStore.keys().next().value;
         messageStore.delete(oldestKey);
@@ -428,5 +507,7 @@ app.post('/reset-session', async (req, res) => {
 
 app.listen(PORT, () => {
   logger.info(`Zeedo WhatsApp Gateway listening on port ${PORT}`);
+  loadPersistentMessages();
+  startAutoHealingDaemon();
   initWhatsApp().catch((err) => logger.error('Error initializing WhatsApp socket:', err));
 });

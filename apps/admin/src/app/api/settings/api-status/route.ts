@@ -25,8 +25,6 @@ async function resolveConfig(dbKey: string, envKey: string, fallback = ''): Prom
 export async function GET() {
   const [
     geminiKey,
-    metaToken,
-    metaPhoneId,
     mode,
     r2AccountId,
     r2AccessKey,
@@ -35,8 +33,6 @@ export async function GET() {
     r2PublicDomain,
   ] = await Promise.all([
     resolveConfig('gemini_api_key', 'GEMINI_API_KEY'),
-    resolveConfig('meta_whatsapp_token', 'META_WHATSAPP_TOKEN'),
-    resolveConfig('meta_phone_number_id', 'META_WHATSAPP_PHONE_NUMBER_ID'),
     resolveConfig('api_mode', 'ZEEDO_API_MODE', 'sandbox'),
     resolveConfig('r2_account_id', 'R2_ACCOUNT_ID'),
     resolveConfig('r2_access_key_id', 'R2_ACCESS_KEY_ID'),
@@ -46,7 +42,6 @@ export async function GET() {
   ]);
 
   const geminiConfigured = Boolean(geminiKey && geminiKey.length > 5);
-  const whatsappConfigured = Boolean(metaToken && metaPhoneId);
   const r2Configured = Boolean(r2AccountId && r2AccessKey && r2SecretKey && r2Bucket);
 
   return jsonResponse({
@@ -56,9 +51,6 @@ export async function GET() {
     credentials: {
       geminiApiKeyMasked: maskKey(geminiKey),
       hasGeminiApiKey: geminiConfigured,
-      metaTokenMasked: maskKey(metaToken),
-      hasMetaToken: Boolean(metaToken),
-      metaPhoneId: metaPhoneId || '',
       r2AccountIdMasked: maskKey(r2AccountId),
       hasR2: r2Configured,
       r2Bucket: r2Bucket || '',
@@ -73,11 +65,11 @@ export async function GET() {
         features: ['Catalog Item Enrichment', '4-Dialect Copywriting (AR, CKB, Badini, EN)', 'Iraqi Market Pricing Grounding'],
       },
       whatsapp: {
-        name: 'Meta WhatsApp Business Cloud API',
-        isConfigured: whatsappConfigured,
-        mode: mode === 'live' && whatsappConfigured ? 'live_meta_cloud' : 'sandbox_simulation',
-        templateName: process.env.META_WHATSAPP_TEMPLATE_NAME || 'zeedo_auth_otp',
-        features: ['6-Digit WhatsApp OTP', 'Iraqi E.164 Normalization (+964 7XX)', 'Anti-Fraud Verification'],
+        name: 'Zeedo Self-Hosted Baileys WhatsApp Gateway',
+        isConfigured: true,
+        mode: 'live_baileys_gateway',
+        gatewayUrl: process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001',
+        features: ['100% Free OTP Dispatch', 'Zero Meta API Fees', 'Direct Server-to-WhatsApp WebSocket', 'Arabic Verification OTP'],
       },
       r2: {
         name: 'Cloudflare R2 Object Storage (Zero Egress)',
@@ -116,8 +108,6 @@ export async function POST(req: NextRequest) {
     if (body.action === 'save_keys') {
       const {
         geminiApiKey,
-        metaToken,
-        metaPhoneId,
         apiMode,
         r2AccountId,
         r2AccessKeyId,
@@ -130,12 +120,6 @@ export async function POST(req: NextRequest) {
       const saves: Promise<void>[] = [];
       if (geminiApiKey !== undefined && geminiApiKey.trim()) {
         saves.push(setSetting('gemini_api_key', geminiApiKey.trim()));
-      }
-      if (metaToken !== undefined && metaToken.trim()) {
-        saves.push(setSetting('meta_whatsapp_token', metaToken.trim()));
-      }
-      if (metaPhoneId !== undefined && metaPhoneId.trim()) {
-        saves.push(setSetting('meta_phone_number_id', metaPhoneId.trim()));
       }
       if (apiMode !== undefined) {
         saves.push(setSetting('api_mode', apiMode));
@@ -197,7 +181,6 @@ export async function POST(req: NextRequest) {
       geminiTest = { success: true, latencyMs: 12, message: 'Sandbox mode active (simulated responses enabled)' };
     }
 
-    const metaToken = await resolveConfig('meta_whatsapp_token', 'META_WHATSAPP_TOKEN');
     const r2Status = await testR2Connection();
 
     return jsonResponse({
@@ -206,11 +189,8 @@ export async function POST(req: NextRequest) {
         gemini: geminiTest,
         whatsapp: {
           success: true,
-          mode: mode === 'live' && metaToken ? 'live' : 'gateway',
-          message:
-            mode === 'live' && metaToken
-              ? 'Meta Cloud Graph API credentials registered'
-              : 'Zeedo WhatsApp Gateway operational (dynamic 6-digit OTP generation)',
+          mode: 'gateway',
+          message: 'Zeedo WhatsApp Gateway operational (dynamic 6-digit OTP generation)',
         },
         r2: {
           success: r2Status.connected,

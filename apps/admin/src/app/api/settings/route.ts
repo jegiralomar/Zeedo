@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 // Root /api/settings — redirects to api-status for convenience
 export async function GET() {
   const geminiKey = process.env.GEMINI_API_KEY || '';
-  const metaToken = process.env.META_WHATSAPP_TOKEN || '';
   const apiMode = process.env.ZEEDO_API_MODE || 'sandbox';
 
   return NextResponse.json({
@@ -17,10 +16,9 @@ export async function GET() {
         isLive: apiMode === 'live' && Boolean(geminiKey),
       },
       whatsapp: {
-        configured: Boolean(metaToken && metaToken.length > 5),
-        phoneNumberId: process.env.META_WHATSAPP_PHONE_NUMBER_ID || '',
-        templateName: process.env.META_WHATSAPP_TEMPLATE_NAME || 'zeedo_auth_otp',
-        isLive: apiMode === 'live' && Boolean(metaToken),
+        type: 'self-hosted-baileys',
+        gatewayUrl: process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001',
+        isLive: true,
       },
     },
     database: {

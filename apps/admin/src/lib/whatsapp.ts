@@ -1,7 +1,7 @@
 /**
- * Meta WhatsApp Business Cloud API Client for ZEEDO BID APP
- * Sends 6-digit OTP codes to Iraqi mobile numbers (+964 7XX...).
- * Automatically falls back to Sandbox simulation when API credentials are omitted.
+ * WhatsApp Gateway Client for ZEEDO BID APP
+ * Sends 6-digit OTP codes and notifications to Iraqi mobile numbers (+964 7XX...)
+ * via the Self-Hosted Baileys WhatsApp Gateway (port 3001).
  */
 
 export interface WhatsAppOtpSendResult {
@@ -9,7 +9,7 @@ export interface WhatsAppOtpSendResult {
   normalizedPhone: string;
   isSandbox: boolean;
   messageId?: string;
-  code?: string; // Provided in sandbox/debug mode for convenient testing
+  code?: string;
   expiresAt: number;
   message: string;
 }
@@ -30,58 +30,34 @@ interface StoredOtpSession {
 // In-memory OTP session cache (keyed by normalized phone number)
 const otpStore = new Map<string, StoredOtpSession>();
 
-function getWhatsAppConfig() {
-  const token = process.env.META_WHATSAPP_TOKEN || '';
-  const phoneId = process.env.META_WHATSAPP_PHONE_NUMBER_ID || '';
-  const templateName = process.env.META_WHATSAPP_TEMPLATE_NAME || 'zeedo_auth_otp';
-  const mode = process.env.ZEEDO_API_MODE || 'sandbox';
-  return {
-    token,
-    phoneId,
-    templateName,
-    isLive: mode === 'live' && Boolean(token && phoneId),
-  };
-}
-
 /**
  * Normalizes Iraqi phone numbers to standard E.164 format (+9647XXXXXXXXX)
  */
 export function normalizeIraqiPhone(rawPhone: string): string {
-  // Strip all non-digit characters
   const digits = rawPhone.replace(/\D/g, '');
 
-  // If starts with 00964, replace with 964
   if (digits.startsWith('00964')) {
     return `+${digits.substring(2)}`;
   }
-
-  // If starts with 964
   if (digits.startsWith('964')) {
     return `+${digits}`;
   }
-
-  // If starts with Iraqi domestic 07 (e.g. 0750 192 8844)
   if (digits.startsWith('07')) {
     return `+964${digits.substring(1)}`;
   }
-
-  // If starts with 7 (e.g. 750 192 8844)
   if (digits.startsWith('7')) {
     return `+964${digits}`;
   }
-
-  // Fallback to default
   return digits.length > 0 ? `+${digits}` : '+9647501928844';
 }
 
 /**
- * Send 6-digit WhatsApp OTP verification code
+ * Send 6-digit WhatsApp OTP verification code via self-hosted Baileys Gateway
  */
 export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSendResult> {
   const normalizedPhone = normalizeIraqiPhone(rawPhone);
-  const { token, phoneId, templateName, isLive } = getWhatsAppConfig();
   
-  // Generate dynamic 6-digit verification code for every attempt (100000 - 999999)
+  // Generate dynamic 6-digit verification code (100000 - 999999)
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const now = Date.now();
   const expiresAt = now + 10 * 60 * 1000; // 10 minutes
@@ -93,8 +69,8 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
     attempts: 0,
   });
 
-  // 1. First Priority: Self-Hosted Baileys WhatsApp Gateway (100% Free, VPS Microservice)
   const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001';
+
   try {
     const gatewayResponse = await fetch(`${gatewayUrl}/send-otp`, {
       method: 'POST',
@@ -103,7 +79,7 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
         phone: normalizedPhone,
         code,
       }),
-      signal: AbortSignal.timeout(6000), // 6s timeout
+      signal: AbortSignal.timeout(8000),
     });
 
     if (gatewayResponse.ok) {
@@ -120,71 +96,16 @@ export async function sendWhatsAppOtp(rawPhone: string): Promise<WhatsAppOtpSend
         };
       }
     }
-  } catch (err) {
-    // Gateway offline or not linked, continue to Meta API
+  } catch (err: any) {
+    console.error('WhatsApp Gateway dispatch error:', err?.message);
   }
 
-  // 2. Second Priority: Meta WhatsApp Cloud API (If credentials provided)
-  if (isLive) {
-    try {
-      const recipientPhone = normalizedPhone.replace('+', '');
-      const metaUrl = `https://graph.facebook.com/v20.0/${phoneId}/messages`;
-
-      const response = await fetch(metaUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: recipientPhone,
-          type: 'template',
-          template: {
-            name: templateName,
-            language: { code: 'ar' },
-            components: [
-              {
-                type: 'body',
-                parameters: [{ type: 'text', text: code }],
-              },
-              {
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: code }],
-              },
-            ],
-          },
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return {
-          isSuccess: true,
-          normalizedPhone,
-          isSandbox: false,
-          messageId: result?.messages?.[0]?.id,
-          expiresAt,
-          message: `Official WhatsApp verification code dispatched to ${normalizedPhone}`,
-        };
-      } else {
-        const errorData = await response.json();
-        console.warn('Meta WhatsApp API error:', errorData);
-      }
-    } catch (err) {
-      console.warn('Meta WhatsApp fetch error:', err);
-    }
-  }
-
-  // If neither gateway nor Meta API was able to send the message
   return {
     isSuccess: false,
     normalizedPhone,
     isSandbox: false,
     expiresAt,
-    message: 'Failed to send WhatsApp verification code. Please try again.',
+    message: 'Failed to send WhatsApp verification code. WhatsApp Gateway is offline or unlinked.',
   };
 }
 
@@ -241,7 +162,7 @@ export function verifyWhatsAppOtp(rawPhone: string, submittedCode: string): What
 }
 
 /**
- * Send a custom text message via WhatsApp (Gateway or Meta Cloud API)
+ * Send a custom text message via WhatsApp Gateway
  */
 export async function sendWhatsAppCustomMessage(
   rawPhone: string,
@@ -250,7 +171,6 @@ export async function sendWhatsAppCustomMessage(
   const normalizedPhone = normalizeIraqiPhone(rawPhone);
   const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL || 'http://whatsapp-gateway:3001';
 
-  // 1. Try Baileys Gateway
   try {
     const gatewayResponse = await fetch(`${gatewayUrl}/send-otp`, {
       method: 'POST',
@@ -259,7 +179,7 @@ export async function sendWhatsAppCustomMessage(
         phone: normalizedPhone,
         message: messageText,
       }),
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(8000),
     });
 
     if (gatewayResponse.ok) {
@@ -268,39 +188,9 @@ export async function sendWhatsAppCustomMessage(
         return { isSuccess: true, message: 'Message sent via WhatsApp Gateway', messageId: data.messageId };
       }
     }
-  } catch (err) {
-    // Gateway offline or error
-  }
-
-  // 2. Try Meta WhatsApp Cloud API if configured
-  const { token, phoneId, isLive } = getWhatsAppConfig();
-  if (isLive) {
-    try {
-      const recipientPhone = normalizedPhone.replace('+', '');
-      const metaUrl = `https://graph.facebook.com/v20.0/${phoneId}/messages`;
-      const response = await fetch(metaUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: recipientPhone,
-          type: 'text',
-          text: { body: messageText },
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return { isSuccess: true, message: 'Message sent via Meta WhatsApp Cloud API', messageId: data?.messages?.[0]?.id };
-      }
-    } catch (err) {
-      console.warn('Meta text message send error:', err);
-    }
+  } catch (err: any) {
+    console.error('WhatsApp Gateway message error:', err?.message);
   }
 
   return { isSuccess: false, message: 'WhatsApp Gateway offline or unlinked' };
 }
-
