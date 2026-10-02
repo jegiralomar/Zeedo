@@ -220,12 +220,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   updateUserProfile: async (updates, token) => {
     const { currentUser, sessionToken } = get();
-    if (!currentUser) return;
-
-    const updatedUser = { ...currentUser, ...updates };
-
-    AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser)).catch(() => {});
-    set({ currentUser: updatedUser });
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...updates };
+      AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser)).catch(() => {});
+      set({ currentUser: updatedUser });
+    }
 
     const effectiveToken = token || sessionToken;
     if (effectiveToken) {

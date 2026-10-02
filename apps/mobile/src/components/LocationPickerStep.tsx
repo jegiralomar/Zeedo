@@ -431,8 +431,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingBottom: 24,
+    paddingBottom: 32,
     gap: 14,
+    flexGrow: 1,
   },
   headerRow: {
     flexDirection: 'row',

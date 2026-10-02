@@ -11,6 +11,7 @@ import {
   Image,
   ScrollView,
   Alert,
+  Dimensions,
 } from 'react-native';
 import {
   Phone,
@@ -34,6 +35,8 @@ import { getTranslation } from '../../i18n/translations';
 import { ZEEDO_CONFIG } from '../../config/api';
 import { LocationPickerStep } from '../../components/LocationPickerStep';
 import { MobileUser, DeliveryLocation } from '../../types';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const AuthModal: React.FC = () => {
   const {
@@ -201,27 +204,8 @@ export const AuthModal: React.FC = () => {
 
         setPendingSession({ token, user });
 
-        const hasDeliveryAddress = Boolean(
-          data.user?.deliveryLocation?.address ||
-            (data.user?.city && data.user.city !== 'العراق' && data.user.city !== 'Erbil')
-        );
-        const isExistingFullUser = Boolean(
-          data.user?.name &&
-            data.user.name !== 'مشترك جديد' &&
-            data.user.name !== 'مشترك زيدو' &&
-            data.user?.gender &&
-            hasDeliveryAddress
-        );
-
-        if (isExistingFullUser) {
-          // Returning user with full profile: complete session & unlock app
-          loginWithSession(token, user);
-          resetState();
-          closeAuthModal();
-        } else {
-          // New or incomplete user: advance to Step 2 wizard without closing modal
-          setStep('profile');
-        }
+        // Forcibly advance to Step 2 (Profile Setup)
+        setStep('profile');
       } else {
         setErrorMessage(
           data.message ||
@@ -460,7 +444,7 @@ export const AuthModal: React.FC = () => {
                   </Text>
                 </View>
               )}
-              {(step === 'phone' || step === 'otp') && stepDots}
+              {stepDots}
             </View>
 
             {step === 'phone' || step === 'otp' ? (
@@ -475,6 +459,7 @@ export const AuthModal: React.FC = () => {
           {/* ───────────────────────────────────────────────────────────────── */}
           {step === 'profile' ? (
             <ScrollView
+              style={styles.profileScrollView}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.profileSetupContainer}
@@ -605,11 +590,14 @@ export const AuthModal: React.FC = () => {
             /* ───────────────────────────────────────────────────────────── */
             /* STEP 3: LOCATION PICKER                                       */
             /* ───────────────────────────────────────────────────────────── */
-            <LocationPickerStep
-              isRtl={isRtl}
-              onConfirm={handleLocationConfirm}
-              isSaving={isSavingLocation}
-            />
+            <View style={styles.locationContainer}>
+              <LocationPickerStep
+                isRtl={isRtl}
+                onConfirm={handleLocationConfirm}
+                isSaving={isSavingLocation}
+                initialLocation={pendingSession?.user?.deliveryLocation}
+              />
+            </View>
           ) : (
             /* ───────────────────────────────────────────────────────────── */
             /* STEP 1: PHONE & OTP                                           */
@@ -787,8 +775,14 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
   },
   sheetTall: {
-    minHeight: '78%',
-    maxHeight: '94%',
+    height: Math.round(SCREEN_HEIGHT * 0.88),
+    maxHeight: Math.round(SCREEN_HEIGHT * 0.94),
+  },
+  profileScrollView: {
+    flex: 1,
+  },
+  locationContainer: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -1034,7 +1028,8 @@ const styles = StyleSheet.create({
   // Profile Setup Specific Styles
   profileSetupContainer: {
     gap: 16,
-    paddingBottom: 16,
+    paddingBottom: 32,
+    flexGrow: 1,
   },
   avatarSection: {
     alignItems: 'center',
