@@ -246,6 +246,44 @@ export async function initDatabaseSchema() {
       );
     `;
 
+    // 11. Users & Buyers Table (Synced across Mobile App and Admin Directory)
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(64) PRIMARY KEY,
+        phone VARCHAR(32) UNIQUE NOT NULL,
+        name VARCHAR(128) NOT NULL,
+        gender VARCHAR(20),
+        avatar TEXT,
+        city VARCHAR(64) DEFAULT 'Erbil',
+        kyc_status VARCHAR(32) DEFAULT 'verified',
+        kyc_national_id VARCHAR(64),
+        rooftop_landmark TEXT,
+        rooftop_lat DOUBLE PRECISION,
+        rooftop_lng DOUBLE PRECISION,
+        rooftop_pin TEXT,
+        total_bids INT DEFAULT 0,
+        total_wins INT DEFAULT 0,
+        total_spent_iqd BIGINT DEFAULT 0,
+        role VARCHAR(32) DEFAULT 'buyer',
+        is_test BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+
+    // Ensure all columns exist on users table
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lat DOUBLE PRECISION;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lng DOUBLE PRECISION;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin TEXT;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_bids INT DEFAULT 0;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_wins INT DEFAULT 0;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_spent_iqd BIGINT DEFAULT 0;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(32) DEFAULT 'buyer';`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test BOOLEAN DEFAULT FALSE;`;
+
     // Seed default hero banner if cms_banners is empty
     await sql`
       INSERT INTO cms_banners (

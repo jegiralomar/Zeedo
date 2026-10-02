@@ -62,6 +62,8 @@ export const AuthModal: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Holds verified session across steps
   const [pendingSession, setPendingSession] = useState<{ token: string; user: MobileUser } | null>(null);
@@ -145,13 +147,25 @@ export const AuthModal: React.FC = () => {
         const user: MobileUser = {
           id: data.user?.id || `usr-${phone.replace(/\D/g, '')}`,
           name: data.user?.name || (isRtl ? 'مشترك جديد' : 'New Member'),
-          phone: phone.trim(),
+          phone: data.user?.phone || phone.trim(),
           city: data.user?.city || 'العراق',
           role: 'buyer',
           kycStatus: 'verified',
           gender: data.user?.gender,
           avatar: data.user?.avatar,
+          deliveryLocation: data.user?.deliveryLocation,
         };
+
+        if (data.user?.name && data.user?.name !== 'مشترك جديد' && data.user?.name !== 'مشترك زيدو') {
+          setFullName(data.user.name);
+        }
+        if (data.user?.gender) {
+          setGender(data.user.gender);
+        }
+        if (data.user?.avatar) {
+          setAvatarUri(data.user.avatar);
+          setUploadedAvatarUrl(data.user.avatar);
+        }
 
         setPendingSession({ token, user });
 
@@ -180,7 +194,7 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  // 3. Handle Avatar Photo Picker (Gallery)
+  // 3. Handle Avatar Photo Picker (Gallery) + Cloud Upload
   const handlePickAvatar = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -202,10 +216,41 @@ export const AuthModal: React.FC = () => {
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
-        setAvatarUri(result.assets[0].uri);
+        const localUri = result.assets[0].uri;
+        setAvatarUri(localUri);
+        setIsUploadingAvatar(true);
+
+        try {
+          const formData = new FormData();
+          const filename = localUri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+          const match = /\.(\w+)$/.exec(filename);
+          const fileType = match ? `image/${match[1]}` : 'image/jpeg';
+          formData.append('file', {
+            uri: localUri,
+            name: filename,
+            type: fileType,
+          } as any);
+          formData.append('folder', 'avatars');
+
+          const uploadRes = await fetch(`${ZEEDO_CONFIG.API_BASE_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.success && uploadData.url) {
+              setUploadedAvatarUrl(uploadData.url);
+            }
+          }
+        } catch (uploadErr) {
+          console.warn('Avatar upload to server failed, using local URI fallback:', uploadErr);
+        } finally {
+          setIsUploadingAvatar(false);
+        }
       }
     } catch (err) {
       console.warn('Avatar picker error:', err);
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -214,11 +259,12 @@ export const AuthModal: React.FC = () => {
     if (!pendingSession) return;
 
     const trimmedName = fullName.trim() || (isRtl ? 'مشترك زيدو' : 'Zeedo Member');
+    const finalAvatar = uploadedAvatarUrl || avatarUri || undefined;
     const updatedUser: MobileUser = {
       ...pendingSession.user,
       name: trimmedName,
       gender,
-      avatar: avatarUri || undefined,
+      avatar: finalAvatar,
     };
 
     setPendingSession({ token: pendingSession.token, user: updatedUser });
@@ -226,7 +272,7 @@ export const AuthModal: React.FC = () => {
     // Update in store and server
     loginWithSession(pendingSession.token, updatedUser);
     updateUserProfile(
-      { name: trimmedName, gender, avatar: avatarUri || undefined },
+      { name: trimmedName, gender, avatar: finalAvatar },
       pendingSession.token
     );
 
@@ -290,6 +336,8 @@ export const AuthModal: React.FC = () => {
     setPendingSession(null);
     setFullName('');
     setAvatarUri(null);
+    setUploadedAvatarUrl(null);
+    setIsUploadingAvatar(false);
     setGender('male');
   };
 

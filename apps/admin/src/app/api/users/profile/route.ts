@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { verifySessionToken } from '@/lib/session';
+import { normalizeIraqiPhone } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
 
 export async function OPTIONS(req: NextRequest) {
@@ -37,12 +38,14 @@ export async function PATCH(req: NextRequest) {
 
     userId = userId || body.id || null;
     phone = phone || body.phone || null;
+    const cleanPhone = phone ? normalizeIraqiPhone(phone) : null;
+    const effectiveUserId = userId || (cleanPhone ? `usr-${cleanPhone.replace(/\D/g, '')}` : `usr-${Date.now()}`);
 
-    const name = body.name || null;
+    const name = body.name?.trim() || null;
     const gender = body.gender || null;
     const avatar = body.avatar || null;
-    const city = body.city || null;
-    const address = body.deliveryAddress || '';
+    const city = body.city?.trim() || null;
+    const address = body.deliveryAddress?.trim() || '';
     const lat = body.deliveryLat ?? null;
     const lng = body.deliveryLng ?? null;
 
@@ -60,30 +63,43 @@ export async function PATCH(req: NextRequest) {
     const sql = getDb();
 
     if (sql) {
-      try {
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lat DOUBLE PRECISION;`;
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lng DOUBLE PRECISION;`;
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin TEXT;`;
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`;
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`;
-      } catch {}
-
       let rows: any[] = [];
-      if (userId) {
+
+      if (cleanPhone) {
         rows = await sql`
-          UPDATE users SET
-            name = COALESCE(${name}, name),
-            gender = COALESCE(${gender}, gender),
-            avatar = COALESCE(${avatar}, avatar),
-            city = COALESCE(${city}, city),
-            rooftop_landmark = COALESCE(${address ? address : null}, rooftop_landmark),
-            rooftop_lat = COALESCE(${lat}, rooftop_lat),
-            rooftop_lng = COALESCE(${lng}, rooftop_lng),
-            rooftop_pin = COALESCE(${pinText}, rooftop_pin)
-          WHERE id = ${userId}
+          INSERT INTO users (
+            id, phone, name, gender, avatar, city,
+            rooftop_landmark, rooftop_lat, rooftop_lng, rooftop_pin,
+            role, kyc_status, created_at, updated_at
+          ) VALUES (
+            ${effectiveUserId},
+            ${cleanPhone},
+            ${name || 'مشترك زيدو'},
+            ${gender},
+            ${avatar},
+            ${city || 'العراق'},
+            ${address || null},
+            ${lat},
+            ${lng},
+            ${pinText},
+            'buyer',
+            'verified',
+            NOW(),
+            NOW()
+          )
+          ON CONFLICT (phone) DO UPDATE SET
+            name = COALESCE(EXCLUDED.name, users.name),
+            gender = COALESCE(EXCLUDED.gender, users.gender),
+            avatar = COALESCE(EXCLUDED.avatar, users.avatar),
+            city = COALESCE(EXCLUDED.city, users.city),
+            rooftop_landmark = COALESCE(EXCLUDED.rooftop_landmark, users.rooftop_landmark),
+            rooftop_lat = COALESCE(EXCLUDED.rooftop_lat, users.rooftop_lat),
+            rooftop_lng = COALESCE(EXCLUDED.rooftop_lng, users.rooftop_lng),
+            rooftop_pin = COALESCE(EXCLUDED.rooftop_pin, users.rooftop_pin),
+            updated_at = NOW()
           RETURNING *;
         `;
-      } else if (phone) {
+      } else if (effectiveUserId) {
         rows = await sql`
           UPDATE users SET
             name = COALESCE(${name}, name),
@@ -93,8 +109,9 @@ export async function PATCH(req: NextRequest) {
             rooftop_landmark = COALESCE(${address ? address : null}, rooftop_landmark),
             rooftop_lat = COALESCE(${lat}, rooftop_lat),
             rooftop_lng = COALESCE(${lng}, rooftop_lng),
-            rooftop_pin = COALESCE(${pinText}, rooftop_pin)
-          WHERE phone = ${phone}
+            rooftop_pin = COALESCE(${pinText}, rooftop_pin),
+            updated_at = NOW()
+          WHERE id = ${effectiveUserId}
           RETURNING *;
         `;
       }

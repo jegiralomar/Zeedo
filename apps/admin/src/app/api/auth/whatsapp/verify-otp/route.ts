@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { verifyWhatsAppOtp } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse, safeParseJson } from '@/lib/cors';
+import { getDb, initDatabaseSchema } from '@/lib/db';
 
 export async function OPTIONS(req: NextRequest) {
   return handleCorsOptions(req);
@@ -21,15 +22,73 @@ export async function POST(req: NextRequest) {
 
     const result = verifyWhatsAppOtp(phoneNumber, code);
     if (result.isValid) {
+      const canonicalPhone = result.normalizedPhone;
+      const defaultUserId = `usr-${canonicalPhone.replace(/\D/g, '')}`;
+
+      await initDatabaseSchema();
+      const sql = getDb();
+
+      let userRecord: any = null;
+      if (sql) {
+        try {
+          const rows = await sql`
+            INSERT INTO users (
+              id, phone, name, city, role, kyc_status, created_at, updated_at
+            ) VALUES (
+              ${defaultUserId}, ${canonicalPhone}, 'مشترك زيدو', 'العراق', 'buyer', 'verified', NOW(), NOW()
+            )
+            ON CONFLICT (phone) DO UPDATE SET
+              updated_at = NOW()
+            RETURNING *;
+          `;
+          userRecord = rows[0];
+        } catch (dbErr: any) {
+          console.error('Error upserting verified user in database:', dbErr);
+        }
+      }
+
+      const effectiveUserId = userRecord?.id || defaultUserId;
+      const effectiveRole = userRecord?.role || 'buyer';
+
       const { createSessionToken } = await import('@/lib/session');
       const sessionToken = createSessionToken({
-        id: `usr-${phoneNumber.replace(/\D/g, '')}`,
-        phone: phoneNumber,
-        role: 'buyer',
+        id: effectiveUserId,
+        phone: canonicalPhone,
+        role: effectiveRole,
       });
+
+      const parsedPin = userRecord?.rooftop_pin ? (
+        typeof userRecord.rooftop_pin === 'string' ? JSON.parse(userRecord.rooftop_pin) : userRecord.rooftop_pin
+      ) : null;
+
+      const deliveryLocation = userRecord?.rooftop_lat && userRecord?.rooftop_lng ? {
+        lat: Number(userRecord.rooftop_lat),
+        lng: Number(userRecord.rooftop_lng),
+        address: userRecord.rooftop_landmark || '',
+        city: userRecord.city || 'العراق',
+      } : (parsedPin ? {
+        lat: Number(parsedPin.latitude || parsedPin.lat),
+        lng: Number(parsedPin.longitude || parsedPin.lng),
+        address: parsedPin.addressText || parsedPin.landmark || userRecord?.rooftop_landmark || '',
+        city: parsedPin.city || userRecord?.city || 'العراق',
+      } : undefined);
+
       return jsonResponse({
         ...result,
         sessionToken,
+        user: {
+          id: effectiveUserId,
+          phone: canonicalPhone,
+          name: userRecord?.name || 'مشترك زيدو',
+          gender: userRecord?.gender || undefined,
+          avatar: userRecord?.avatar || undefined,
+          city: userRecord?.city || 'العراق',
+          role: effectiveRole,
+          kycStatus: userRecord?.kyc_status || 'verified',
+          totalBids: Number(userRecord?.total_bids || 0),
+          totalWins: Number(userRecord?.total_wins || 0),
+          deliveryLocation,
+        },
         expiresInDays: 90,
       }, undefined, req);
     }

@@ -16,7 +16,8 @@
       "bundleIdentifier": "com.zeedo.bid",
       "infoPlist": {
         "NSCameraUsageDescription": "Zeedo needs camera access for National ID KYC verification.",
-        "NSPhotoLibraryUsageDescription": "Zeedo needs photo access to upload inspection photos."
+        "NSPhotoLibraryUsageDescription": "Zeedo needs photo access to upload inspection photos.",
+        "NSLocationWhenInUseUsageDescription": "Zeedo uses your location to pinpoint accurate doorstep delivery across Iraq and Kurdistan."
       }
     },
     "android": {
@@ -31,7 +32,10 @@
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "POST_NOTIFICATIONS"
       ],
       "predictiveBackGestureEnabled": false
     },

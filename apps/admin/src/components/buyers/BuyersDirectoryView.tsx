@@ -264,12 +264,32 @@ export const BuyersDirectoryView: React.FC = () => {
                       {/* Buyer Name & ID */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-[#5B50D6] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                            {buyer.name.charAt(0).toUpperCase()}
-                          </div>
+                          {buyer.avatarUrl || buyer.avatar ? (
+                            <img
+                              src={buyer.avatarUrl || buyer.avatar}
+                              alt={buyer.name}
+                              className="w-9 h-9 rounded-xl object-cover shrink-0 border border-slate-200/80 shadow-xs"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-[#5B50D6] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                              {buyer.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           <div>
-                            <div className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">
-                              {buyer.name}
+                            <div className="font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                              <span>{buyer.name}</span>
+                              {buyer.gender && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                                  buyer.gender === 'female'
+                                    ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                                    : 'bg-blue-50 text-blue-600 border border-blue-100'
+                                }`}>
+                                  {buyer.gender === 'female' ? 'أنثى ♀' : 'ذكر ♂'}
+                                </span>
+                              )}
                             </div>
                             <div className="text-[10px] font-mono text-slate-400">
                               {buyer.id}

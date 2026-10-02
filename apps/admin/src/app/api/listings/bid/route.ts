@@ -1,6 +1,7 @@
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { broadcastLiveEvent } from '@/lib/realtime';
 import { sendOutbidAlert } from '@/lib/whatsappAlerts';
+import { normalizeIraqiPhone } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse } from '@/lib/cors';
 
 export async function OPTIONS(request: Request) {
@@ -126,6 +127,26 @@ export async function POST(request: Request) {
         bids_history = ${JSON.stringify(updatedHistory)}::jsonb
       WHERE id = ${auctionId}
     `;
+
+    // 2.5 Update or Upsert bidder in users table so total_bids increments and bidder shows in Admin directory
+    try {
+      const cleanPhone = normalizeIraqiPhone(bidderPhone);
+      const effectiveBidderId = bidderId || `usr-${cleanPhone.replace(/\D/g, '')}`;
+      await sql`
+        INSERT INTO users (
+          id, phone, name, city, role, kyc_status, total_bids, created_at, updated_at
+        ) VALUES (
+          ${effectiveBidderId}, ${cleanPhone}, ${bidderName}, ${bidderCity}, 'buyer', 'verified', 1, NOW(), NOW()
+        )
+        ON CONFLICT (phone) DO UPDATE SET
+          total_bids = COALESCE(users.total_bids, 0) + 1,
+          name = CASE WHEN users.name = 'مشترك زيدو' OR users.name IS NULL THEN EXCLUDED.name ELSE users.name END,
+          city = COALESCE(users.city, EXCLUDED.city),
+          updated_at = NOW();
+      `;
+    } catch (uErr: any) {
+      console.warn('Could not update user bid count in users table:', uErr?.message);
+    }
 
     // 3. Broadcast to Real-Time WebSocket Gateway in < 5ms
     const broadcastPayload = {

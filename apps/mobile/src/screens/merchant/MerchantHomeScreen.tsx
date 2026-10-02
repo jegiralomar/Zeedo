@@ -23,7 +23,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 
 export const MerchantHomeScreen: React.FC = () => {
-  const { language, currentUser, auctions, setActiveScreen, setSelectedAuctionId } = useAppStore();
+  const { language, currentUser, auctions, setSelectedAuctionId, setMerchantScreen } = useAppStore();
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
@@ -71,10 +71,22 @@ export const MerchantHomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 3. Action Shortcuts */}
+      {/* 3. Primary Action: List New Lot */}
+      <TouchableOpacity
+        style={styles.createLotBtn}
+        onPress={() => setMerchantScreen('create_auction')}
+        activeOpacity={0.85}
+      >
+        <Plus size={18} color="#0B130F" />
+        <Text style={styles.createLotBtnText}>
+          {isRtl ? '+ إدراج مزاد جديد (سحب ذكي بالذكاء الاصطناعي)' : '+ List New Lot (AI Smart Scraper)'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* 4. Action Shortcuts */}
       <View style={styles.actionsBar}>
         <TouchableOpacity
-          onPress={() => setActiveScreen('merchant_orders')}
+          onPress={() => setMerchantScreen('orders')}
           style={styles.actionBtn}
           activeOpacity={0.8}
         >
@@ -85,7 +97,7 @@ export const MerchantHomeScreen: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setActiveScreen('merchant_commissions')}
+          onPress={() => setMerchantScreen('ledger')}
           style={styles.actionBtn}
           activeOpacity={0.8}
         >
@@ -227,6 +239,26 @@ const styles = StyleSheet.create({
     color: AppTheme.colors.green,
     fontWeight: '700',
     marginTop: 2,
+  },
+  createLotBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#B4F105',
+    borderRadius: 14,
+    height: 48,
+    gap: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  createLotBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0B130F',
   },
   actionsBar: {
     flexDirection: 'row',

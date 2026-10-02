@@ -22,11 +22,14 @@ import {
   User,
   Sparkles,
   ArrowRight,
+  Camera,
 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
 import { LanguageCode } from '../../types';
+import { ZEEDO_CONFIG } from '../../config/api';
 
 export const ProfileScreen: React.FC = () => {
   const {
@@ -38,7 +41,11 @@ export const ProfileScreen: React.FC = () => {
     openLocationSetup,
     wonOrders,
     myBids,
+    updateUserProfile,
+    sessionToken,
   } = useAppStore();
+
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = React.useState(false);
 
   const t = getTranslation(language);
   const isRtl = language !== 'en';
@@ -203,6 +210,69 @@ export const ProfileScreen: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
   // 2. LOGGED-IN VIEW (Full Rich Profile)
   // ─────────────────────────────────────────────────────────────────────────────
+  const handleUpdateAvatar = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          isRtl ? 'صلاحية الاستوديو' : 'Permission Required',
+          isRtl
+            ? 'يرجى السماح بالوصول للاستوديو لتغيير صورتك الشخصية'
+            : 'Please grant gallery access to change your avatar'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const localUri = result.assets[0].uri;
+        setIsUpdatingAvatar(true);
+
+        try {
+          const formData = new FormData();
+          const filename = localUri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+          const match = /\.(\w+)$/.exec(filename);
+          const fileType = match ? `image/${match[1]}` : 'image/jpeg';
+          formData.append('file', {
+            uri: localUri,
+            name: filename,
+            type: fileType,
+          } as any);
+          formData.append('folder', 'avatars');
+
+          const uploadRes = await fetch(`${ZEEDO_CONFIG.API_BASE_URL}/api/upload`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          let finalUrl = localUri;
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.success && uploadData.url) {
+              finalUrl = uploadData.url;
+            }
+          }
+
+          await updateUserProfile({ avatar: finalUrl }, sessionToken || undefined);
+        } catch (uploadErr) {
+          console.warn('Avatar update failed:', uploadErr);
+          await updateUserProfile({ avatar: localUri }, sessionToken || undefined);
+        } finally {
+          setIsUpdatingAvatar(false);
+        }
+      }
+    } catch (err) {
+      console.warn('Avatar picker error:', err);
+      setIsUpdatingAvatar(false);
+    }
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -211,15 +281,25 @@ export const ProfileScreen: React.FC = () => {
     >
       {/* 1. Header Profile Card */}
       <View style={styles.headerCard}>
-        {currentUser.avatar ? (
-          <Image source={{ uri: currentUser.avatar }} style={styles.avatarImg} />
-        ) : (
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarLetter}>
-              {currentUser.name.charAt(0).toUpperCase()}
-            </Text>
+        <TouchableOpacity
+          onPress={handleUpdateAvatar}
+          disabled={isUpdatingAvatar}
+          activeOpacity={0.8}
+          style={styles.avatarWrapper}
+        >
+          {currentUser.avatar ? (
+            <Image source={{ uri: currentUser.avatar }} style={styles.avatarImg} />
+          ) : (
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarLetter}>
+                {currentUser.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View style={styles.avatarEditBadge}>
+            <Camera size={12} color="#FFFFFF" />
           </View>
-        )}
+        </TouchableOpacity>
 
         <Text style={styles.userName}>{currentUser.name}</Text>
         <Text style={styles.userPhone}>{currentUser.phone}</Text>
@@ -487,11 +567,32 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: -2,
+    backgroundColor: AppTheme.colors.primary,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 3,
+  },
   avatarImg: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    marginBottom: 10,
     borderWidth: 3,
     borderColor: AppTheme.colors.primary,
   },
@@ -502,7 +603,6 @@ const styles = StyleSheet.create({
     backgroundColor: AppTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
   },
   avatarLetter: {
     color: '#FFFFFF',

@@ -39,6 +39,8 @@ export interface UserBuyer {
   phone: string; // e.g. +964 750 482 9102
   city: string;
   avatarUrl?: string;
+  avatar?: string;
+  gender?: 'male' | 'female' | string;
   kycStatus: KycStatus;
   kycDocument?: KycDocument;
   rooftopPin?: RooftopPin;

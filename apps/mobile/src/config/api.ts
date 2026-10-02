@@ -13,6 +13,11 @@ const isLocalWeb =
 // When developing locally on web, route through same-origin Metro proxy to bypass browser CORS
 export const API_BASE_URL = isLocalWeb ? '' : 'https://zeedo.bid';
 
+// WebSocket Gateway — connects to the real-time bidding service
+export const WS_BASE_URL = isLocalWeb
+  ? 'ws://localhost:8080'
+  : 'wss://zeedo.bid/ws';
+
 export const ZEEDO_CONFIG = {
   API_BASE_URL,
   WHATSAPP_BOT_NUMBER: '+964 750 881 3641',
@@ -30,5 +35,15 @@ export const ZEEDO_CONFIG = {
     // User Profile & Won Orders
     USER_PROFILE: `${API_BASE_URL}/api/users`,
     PATCH_PROFILE: `${API_BASE_URL}/api/users/profile`,
+    WON_ORDERS: `${API_BASE_URL}/api/users/won-orders`,
+
+    // Product Scraper (merchant listing creation)
+    SCRAPE_PRODUCT: `${API_BASE_URL}/api/scraper/product`,
+
+    // CMS Banners
+    CMS_BANNERS: `${API_BASE_URL}/api/cms/banners`,
   },
+
+  // Real-Time WebSocket Gateway
+  WS_URL: WS_BASE_URL,
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,36 +18,116 @@ import {
   TrendingUp,
   MapPin,
   AlertCircle,
-  Share2,
+  Trophy,
 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
 import { getTranslation } from '../../i18n/translations';
+import { useAuctionSocket, NewBidPayload, TimerResetPayload, AuctionEndedPayload } from '../../hooks/useAuctionSocket';
+import { BidRecord } from '../../types';
 
 const { width } = Dimensions.get('window');
 
 export const AuctionDetailScreen: React.FC = () => {
   const {
     language,
+    currentUser,
     selectedAuctionId,
     setSelectedAuctionId,
     auctions,
     placeBid,
     watchlistIds,
     toggleWatchlist,
+    patchAuction,
   } = useAppStore();
 
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
-  const auction = auctions.find((a) => a.id === selectedAuctionId) || auctions[0];
+  const baseAuction = auctions.find((a) => a.id === selectedAuctionId) || auctions[0];
+
+  // ── Live WS-driven overlay state ─────────────────────────────────────────
+  const [liveBidIqd, setLiveBidIqd] = useState<number | null>(null);
+  const [liveBidsCount, setLiveBidsCount] = useState<number | null>(null);
+  const [liveBidsHistory, setLiveBidsHistory] = useState<BidRecord[] | null>(null);
+  const [liveEndsAt, setLiveEndsAt] = useState<string | null>(null);
+  const [isAntiSnipingActive, setIsAntiSnipingActive] = useState(false);
+  const [antiSnipingResets, setAntiSnipingResets] = useState(0);
+  const [wsEnded, setWsEnded] = useState(false);
+  const [wsWinner, setWsWinner] = useState<{ name: string; wonPriceIqd: number } | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+
+  // Merge WS overrides with base auction data from store
+  const auction = baseAuction
+    ? {
+        ...baseAuction,
+        currentBidIqd: liveBidIqd ?? baseAuction.currentBidIqd,
+        bidsCount: liveBidsCount ?? baseAuction.bidsCount,
+        bidsHistory: liveBidsHistory ?? baseAuction.bidsHistory,
+        endsAt: liveEndsAt ?? baseAuction.endsAt,
+      }
+    : baseAuction;
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedIncrement, setSelectedIncrement] = useState(auction?.incrementStepIqd || 10000);
+  const [selectedIncrement, setSelectedIncrement] = useState(baseAuction?.incrementStepIqd || 10000);
   const [bidSuccess, setBidSuccess] = useState(false);
   const [bidError, setBidError] = useState('');
   const [isBidding, setIsBidding] = useState(false);
   const [ticker, setTicker] = useState(0);
+
+  // ── WebSocket live bidding ────────────────────────────────────────────────
+  const handleNewBid = useCallback((payload: NewBidPayload) => {
+    setLiveBidIqd(payload.currentBidIqd);
+    setLiveBidsCount(payload.totalBids);
+    setLiveEndsAt(payload.auctionEndsAt);
+    setIsAntiSnipingActive(payload.isAntiSnipingActive);
+    setAntiSnipingResets(payload.antiSnipingResetsCount);
+    if (payload.newBidRecord) {
+      setLiveBidsHistory((prev) => {
+        const base = prev ?? baseAuction?.bidsHistory ?? [];
+        return [payload.newBidRecord, ...base].slice(0, 50);
+      });
+    }
+    patchAuction(payload.auctionId, {
+      currentBidIqd: payload.currentBidIqd,
+      bidsCount: payload.totalBids,
+      endsAt: payload.auctionEndsAt,
+    });
+  }, [baseAuction, patchAuction]);
+
+  const handleTimerReset = useCallback((payload: TimerResetPayload) => {
+    setLiveEndsAt(payload.auctionEndsAt);
+    setIsAntiSnipingActive(payload.isAntiSnipingActive);
+    setAntiSnipingResets(payload.antiSnipingResetsCount);
+    patchAuction(payload.auctionId, {
+      endsAt: payload.auctionEndsAt,
+    });
+  }, [patchAuction]);
+
+  const handleAuctionEnded = useCallback((payload: AuctionEndedPayload) => {
+    setWsEnded(true);
+    if (payload.highestBidder) {
+      setWsWinner({
+        name: payload.highestBidder.name,
+        wonPriceIqd: payload.currentBidIqd,
+      });
+    }
+    patchAuction(payload.auctionId, {
+      isLive: false,
+    });
+  }, [patchAuction]);
+
+  useAuctionSocket(
+    baseAuction?.id ?? null,
+    currentUser?.id ?? null,
+    {
+      onNewBid: handleNewBid,
+      onTimerReset: handleTimerReset,
+      onAuctionEnded: handleAuctionEnded,
+      onConnected: () => setWsConnected(true),
+      onDisconnected: () => setWsConnected(false),
+    }
+  );
 
   useEffect(() => {
     const timer = setInterval(() => setTicker((prev) => prev + 1), 1000);
@@ -60,9 +140,9 @@ export const AuctionDetailScreen: React.FC = () => {
   const title = isRtl && auction.titleAr ? auction.titleAr : auction.title;
   const description = isRtl && auction.descriptionAr ? auction.descriptionAr : auction.description;
 
-  // Format remaining time
+  // Format remaining time — re-evaluated every second via ticker, also respects WS-ended signal
   const totalMs = new Date(auction.endsAt).getTime() - Date.now();
-  const isEnded = totalMs <= 0;
+  const isEnded = wsEnded || totalMs <= 0;
   const totalSecs = Math.max(0, Math.floor(totalMs / 1000));
   const hours = Math.floor(totalSecs / 3600);
   const minutes = Math.floor((totalSecs % 3600) / 60);
@@ -105,10 +185,21 @@ export const AuctionDetailScreen: React.FC = () => {
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <View style={styles.liveIndicator}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveIndicatorText}>
-              {isRtl ? 'مزاد حي مباشر' : 'LIVE AUCTION'}
+          <View style={[styles.liveIndicator, isEnded && { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }]}>
+            <View style={[styles.liveDot, isEnded && { backgroundColor: '#94A3B8' }]} />
+            <Text style={[styles.liveIndicatorText, isEnded && { color: '#64748B' }]}>
+              {isEnded
+                ? (isRtl ? 'المزاد منتهي' : 'ENDED')
+                : (isRtl ? 'مزاد حي مباشر' : 'LIVE AUCTION')}
+            </Text>
+          </View>
+          {/* WS real-time connection indicator */}
+          <View style={styles.wsStatusRow}>
+            <View style={[styles.wsDot, wsConnected ? styles.wsDotOn : styles.wsDotOff]} />
+            <Text style={styles.wsStatusText}>
+              {wsConnected
+                ? (isRtl ? 'متصل مباشر' : 'Real-time')
+                : (isRtl ? 'إعادة الاتصال...' : 'Reconnecting...')}
             </Text>
           </View>
         </View>
@@ -127,6 +218,23 @@ export const AuctionDetailScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Winner Announcement Banner — appears when WS broadcasts AUCTION_ENDED */}
+      {isEnded && wsWinner && (
+        <View style={styles.winnerBanner}>
+          <Trophy size={28} color="#FFFFFF" />
+          <View style={styles.winnerBannerText}>
+            <Text style={styles.winnerBannerTitle}>
+              {isRtl ? '🏆 انتهى المزاد!' : '🏆 Auction Closed!'}
+            </Text>
+            <Text style={styles.winnerBannerSub}>
+              {isRtl
+                ? `الفائز: ${wsWinner.name} بمبلغ ${wsWinner.wonPriceIqd.toLocaleString()} د.ع`
+                : `Winner: ${wsWinner.name} — ${wsWinner.wonPriceIqd.toLocaleString()} IQD`}
+            </Text>
+          </View>
+        </View>
+      )}
 
       <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
         {/* 1. Main High-Res Image Gallery */}
@@ -413,6 +521,52 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  // WS real-time indicator
+  wsStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
+  wsDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  wsDotOn: {
+    backgroundColor: '#10B981',
+  },
+  wsDotOff: {
+    backgroundColor: '#F59E0B',
+  },
+  wsStatusText: {
+    fontSize: 9,
+    color: '#94A3B8',
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  // Winner banner
+  winnerBanner: {
+    backgroundColor: '#059669',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  winnerBannerText: {
+    flex: 1,
+  },
+  winnerBannerTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  winnerBannerSub: {
+    fontSize: 12,
+    color: '#D1FAE5',
+    marginTop: 2,
   },
   scrollArea: {
     flex: 1,

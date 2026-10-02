@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { normalizeIraqiPhone } from '@/lib/whatsapp';
 
 async function ensureUsersTable(sql: any) {
   await sql`
@@ -7,6 +8,8 @@ async function ensureUsersTable(sql: any) {
       id VARCHAR(64) PRIMARY KEY,
       phone VARCHAR(32) UNIQUE NOT NULL,
       name VARCHAR(128) NOT NULL,
+      gender VARCHAR(20),
+      avatar TEXT,
       city VARCHAR(64) DEFAULT 'Erbil',
       kyc_status VARCHAR(32) DEFAULT 'verified',
       kyc_national_id VARCHAR(64),
@@ -18,13 +21,21 @@ async function ensureUsersTable(sql: any) {
       total_wins INT DEFAULT 0,
       total_spent_iqd BIGINT DEFAULT 0,
       role VARCHAR(32) DEFAULT 'buyer',
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
   `;
   try {
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lat DOUBLE PRECISION;`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_lng DOUBLE PRECISION;`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rooftop_pin TEXT;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_bids INT DEFAULT 0;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_wins INT DEFAULT 0;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS total_spent_iqd BIGINT DEFAULT 0;`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(32) DEFAULT 'buyer';`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`;
   } catch {}
 }
 
@@ -57,6 +68,9 @@ export async function GET(request: Request) {
           id: r.id,
           phone: r.phone,
           name: r.name,
+          gender: r.gender,
+          avatar: r.avatar,
+          avatarUrl: r.avatar,
           city: r.city,
           kycStatus: r.kyc_status || 'pending',
           kycNationalId: r.kyc_national_id,
@@ -92,6 +106,8 @@ export async function POST(request: Request) {
       id,
       name,
       phone,
+      gender,
+      avatar,
       city = 'Erbil',
       role = 'buyer',
       kycStatus,
@@ -103,8 +119,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Name and phone are required' }, { status: 400 });
     }
 
-    const cleanPhone = phone.trim();
-    const userId = id || `usr-${Date.now()}`;
+    const cleanPhone = normalizeIraqiPhone(phone);
+    const userId = id || `usr-${cleanPhone.replace(/\D/g, '')}`;
     const effectiveKyc = kycStatus || 'verified';
     const lat = rooftopPin?.latitude || null;
     const lng = rooftopPin?.longitude || null;
@@ -117,19 +133,22 @@ export async function POST(request: Request) {
       await ensureUsersTable(sql);
       const rows = await sql`
         INSERT INTO users (
-          id, phone, name, city, role, kyc_status, rooftop_landmark, rooftop_lat, rooftop_lng, rooftop_pin, created_at
+          id, phone, name, gender, avatar, city, role, kyc_status, rooftop_landmark, rooftop_lat, rooftop_lng, rooftop_pin, created_at, updated_at
         )
         VALUES (
-          ${userId}, ${cleanPhone}, ${name}, ${city}, ${role}, ${effectiveKyc}, ${landmarkText}, ${lat}, ${lng}, ${pinText}, NOW()
+          ${userId}, ${cleanPhone}, ${name}, ${gender || null}, ${avatar || null}, ${city}, ${role}, ${effectiveKyc}, ${landmarkText}, ${lat}, ${lng}, ${pinText}, NOW(), NOW()
         )
         ON CONFLICT (phone) DO UPDATE SET
           name = EXCLUDED.name,
+          gender = COALESCE(EXCLUDED.gender, users.gender),
+          avatar = COALESCE(EXCLUDED.avatar, users.avatar),
           city = EXCLUDED.city,
           kyc_status = COALESCE(EXCLUDED.kyc_status, users.kyc_status),
           rooftop_landmark = COALESCE(EXCLUDED.rooftop_landmark, users.rooftop_landmark),
           rooftop_lat = COALESCE(EXCLUDED.rooftop_lat, users.rooftop_lat),
           rooftop_lng = COALESCE(EXCLUDED.rooftop_lng, users.rooftop_lng),
-          rooftop_pin = COALESCE(EXCLUDED.rooftop_pin, users.rooftop_pin)
+          rooftop_pin = COALESCE(EXCLUDED.rooftop_pin, users.rooftop_pin),
+          updated_at = NOW()
         RETURNING *;
       `;
       const u = rows[0];
@@ -139,6 +158,8 @@ export async function POST(request: Request) {
           id: u.id,
           phone: u.phone,
           name: u.name,
+          gender: u.gender,
+          avatar: u.avatar,
           city: u.city,
           kycStatus: u.kyc_status,
           rooftopLandmark: u.rooftop_landmark,
@@ -153,7 +174,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      user: { id: userId, phone: cleanPhone, name, city, role, kycStatus: effectiveKyc },
+      user: { id: userId, phone: cleanPhone, name, gender, avatar, city, role, kycStatus: effectiveKyc },
       source: 'memory_fallback',
     });
   } catch (error: any) {

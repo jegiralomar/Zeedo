@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getDb, initDatabaseSchema } from '@/lib/db';
+import { normalizeIraqiPhone } from '@/lib/whatsapp';
 import { jsonResponse, handleCorsOptions, safeParseJson } from '@/lib/cors';
 
 export async function OPTIONS(request: Request) {
@@ -92,6 +93,20 @@ export async function POST(request: NextRequest) {
         ${deliveryPhone}, ${awbNumber}, ${codStatus}, NOW(), NOW()
       )
     `;
+
+    // Update user stats (total_wins, total_spent_iqd) in users table
+    try {
+      const cleanPhone = deliveryPhone ? normalizeIraqiPhone(deliveryPhone) : null;
+      await sql`
+        UPDATE users SET
+          total_wins = COALESCE(total_wins, 0) + 1,
+          total_spent_iqd = COALESCE(total_spent_iqd, 0) + ${winningBidIqd},
+          updated_at = NOW()
+        WHERE id = ${winnerId} OR (phone = ${cleanPhone} AND ${cleanPhone} IS NOT NULL);
+      `;
+    } catch (uErr: any) {
+      console.warn('Could not update user won orders stats:', uErr?.message);
+    }
 
     return jsonResponse({
       success: true,

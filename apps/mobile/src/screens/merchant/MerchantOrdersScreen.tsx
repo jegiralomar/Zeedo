@@ -5,7 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  Alert,
 } from 'react-native';
 import {
   ArrowLeft,
@@ -14,46 +14,105 @@ import {
   CheckCircle,
   Phone,
   MapPin,
-  Barcode,
   Printer,
+  FileText,
 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
+import {
+  MobileShippingSlipModal,
+  MobileShippingOrderItem,
+} from '../../components/merchant/MobileShippingSlipModal';
+import { MobileDriverManifestModal } from '../../components/merchant/MobileDriverManifestModal';
 
 export const MerchantOrdersScreen: React.FC = () => {
   const { setActiveScreen } = useAppStore();
 
-  const [orders, setOrders] = useState([
+  const [orders, setOrders] = useState<MobileShippingOrderItem[]>([
     {
       id: 'ORD-98214',
       awb: 'AWB-IQ-2026-98214',
       lotTitle: 'Sony PlayStation 5 Pro 2TB Edition (عراقي أصلي)',
-      buyerName: 'كرار حيدر',
+      itemCondition: 'جديد بالكرتونة مختوم',
+      buyerName: 'كرار حيدر التميمي',
       buyerPhone: '07701234567',
       buyerCity: 'بغداد - المنصور',
+      buyerAddress: 'شارع 14 رمضان، قرب مول بغداد، زقاق 22',
+      buyerGpsLat: 33.3128,
+      buyerGpsLng: 44.3541,
       codAmountIqd: 450000,
       status: 'ready_for_dispatch',
+      sellerStoreName: 'متجر الكرادة للإلكترونيات',
+      sellerPhone: '0770 999 1122',
+      sellerCity: 'بغداد',
     },
     {
       id: 'ORD-98102',
       awb: 'AWB-IQ-2026-98102',
       lotTitle: 'Apple iPhone 16 Pro Max 256GB Natural Titanium',
+      itemCondition: 'جديد مع الضمان العراقي الرسمي',
       buyerName: 'علي المنصوري',
       buyerPhone: '07802345678',
       buyerCity: 'البصرة - العشار',
+      buyerAddress: 'شارع الكويت، مجاور مصرف الرافدين',
+      buyerGpsLat: 30.5085,
+      buyerGpsLng: 47.8189,
       codAmountIqd: 820000,
+      status: 'ready_for_dispatch',
+      sellerStoreName: 'متجر الكرادة للإلكترونيات',
+      sellerPhone: '0770 999 1122',
+      sellerCity: 'بغداد',
+    },
+    {
+      id: 'ORD-97994',
+      awb: 'AWB-IQ-2026-97994',
+      lotTitle: 'Apple Watch Ultra 2 Titanium Case (GPS + Cellular)',
+      itemCondition: 'كالجديد (استخدام يومين فقط)',
+      buyerName: 'ريبوار كوران',
+      buyerPhone: '07504481234',
+      buyerCity: 'أربيل - دريم سيتي',
+      buyerAddress: 'فيلا 184، مجمع دريم سيتي السكني',
+      buyerGpsLat: 36.2062,
+      buyerGpsLng: 44.0094,
+      codAmountIqd: 560000,
       status: 'with_courier',
+      sellerStoreName: 'متجر الكرادة للإلكترونيات',
+      sellerPhone: '0770 999 1122',
+      sellerCity: 'بغداد',
     },
   ]);
 
-  const handleHandoff = (orderId: string) => {
+  // Modal States
+  const [selectedSlipOrder, setSelectedSlipOrder] = useState<MobileShippingOrderItem | null>(null);
+  const [slipModalVisible, setSlipModalVisible] = useState(false);
+  const [manifestModalVisible, setManifestModalVisible] = useState(false);
+
+  const handleOpenSlip = (order: MobileShippingOrderItem) => {
+    setSelectedSlipOrder(order);
+    setSlipModalVisible(true);
+  };
+
+  const handleHandoffSingle = (orderId: string) => {
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status: 'with_courier' } : o))
     );
   };
 
+  const handleHandoffBatch = (orderIds: string[]) => {
+    setOrders((prev) =>
+      prev.map((o) => (orderIds.includes(o.id) ? { ...o, status: 'with_courier' } : o))
+    );
+    Alert.alert(
+      'تم تسليم الشحنات بنجاح',
+      `تم تسليم ${orderIds.length} طرد إلى كابتن شركة الشحن وتحديث حالتها إلى قيد التوصيل.`
+    );
+  };
+
+  const readyOrdersCount = orders.filter((o) => o.status === 'ready_for_dispatch').length;
+
   return (
     <View style={styles.container}>
+      {/* Top Bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           onPress={() => setActiveScreen('merchant_home')}
@@ -61,21 +120,53 @@ export const MerchantOrdersScreen: React.FC = () => {
         >
           <ArrowLeft size={20} color={AppTheme.colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>Merchant COD Fulfillment</Text>
+        <Text style={styles.topBarTitle}>إدارة بوالص الشحن والتسليم (AWB)</Text>
         <View style={{ width: 36 }} />
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.headerSubtitle}>
-          Generate AWB thermal labels and hand off parcels to 3PL couriers (Al-Zajel) for doorstep COD inspection.
-        </Text>
+        {/* Header Action Banner */}
+        <View style={styles.manifestHeroCard}>
+          <View style={styles.manifestHeroInfo}>
+            <View style={styles.manifestBadge}>
+              <Truck size={14} color="#B4F105" />
+              <Text style={styles.manifestBadgeText}>بيان تسليم السائق (DRIVER MANIFEST)</Text>
+            </View>
+            <Text style={styles.manifestHeroTitle}>
+              تجهيز شحنات اليوم ومنافيست التسليم
+            </Text>
+            <Text style={styles.manifestHeroSubtitle}>
+              اطبع بوالص الشحن مع باركود GPS لمواقع الزبائن وأنشئ بيان تسليم للسائق مع المبالغ المطلوب تحصيلها نقداً.
+            </Text>
+          </View>
 
+          <TouchableOpacity
+            onPress={() => setManifestModalVisible(true)}
+            style={styles.generateManifestBtn}
+            activeOpacity={0.85}
+          >
+            <FileText size={16} color="#0F172A" />
+            <Text style={styles.generateManifestBtnText}>
+              إنشاء بيان السائق ({readyOrdersCount} جاهزة)
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Section Title */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>الطلبات والطرود المزايد عليها</Text>
+          <Text style={styles.orderCountBadge}>{orders.length} طرود</Text>
+        </View>
+
+        {/* Order Cards List */}
         {orders.map((item) => (
           <View key={item.id} style={styles.orderCard}>
             <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.lotTitle}>{item.lotTitle}</Text>
-                <Text style={styles.orderId}>ID: {item.id}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lotTitle} numberOfLines={2}>
+                  {item.lotTitle}
+                </Text>
+                <Text style={styles.orderId}>كود الطرد: {item.id}</Text>
               </View>
               <View
                 style={[
@@ -93,52 +184,63 @@ export const MerchantOrdersScreen: React.FC = () => {
                       : styles.statusReadyText,
                   ]}
                 >
-                  {item.status === 'with_courier' ? 'With Courier' : 'Ready for Courier'}
+                  {item.status === 'with_courier' ? 'مع المندوب' : 'جاهز للتسليم'}
                 </Text>
               </View>
             </View>
 
+            {/* Buyer & Address */}
             <View style={styles.buyerInfoBox}>
               <View style={styles.infoRow}>
-                <MapPin size={13} color={AppTheme.colors.textMuted} />
-                <Text style={styles.infoText}>{item.buyerCity}</Text>
+                <MapPin size={13} color="#4392F9" />
+                <Text style={styles.infoTextBold}>{item.buyerCity}</Text>
+                <Text style={styles.infoTextSub}>- {item.buyerAddress}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Phone size={13} color={AppTheme.colors.textMuted} />
+                <Phone size={13} color="#10B981" />
                 <Text style={styles.infoText}>{item.buyerName} ({item.buyerPhone})</Text>
               </View>
             </View>
 
             {/* AWB Code */}
             <View style={styles.awbRow}>
-              <Text style={styles.awbLabel}>AWB Tracking Code:</Text>
+              <Text style={styles.awbLabel}>رقم بوليصة الشحن (AWB):</Text>
               <Text style={styles.awbCode}>{item.awb}</Text>
             </View>
 
             {/* Cash Collection */}
             <View style={styles.codRow}>
-              <Text style={styles.codLabel}>Doorstep Cash to Collect:</Text>
+              <Text style={styles.codLabel}>المبلغ المطلوب تحصيله عند الباب:</Text>
               <Text style={styles.codAmount}>
                 {item.codAmountIqd.toLocaleString()} د.ع
               </Text>
             </View>
 
-            {/* Actions */}
-            <View style={styles.actionsRow}>
+            {/* Action Buttons: Print Slip & Handoff */}
+            <View style={styles.cardActionsRow}>
+              <TouchableOpacity
+                onPress={() => handleOpenSlip(item)}
+                style={styles.printSlipBtn}
+                activeOpacity={0.85}
+              >
+                <Printer size={15} color="#FFFFFF" />
+                <Text style={styles.printSlipBtnText}>طباعة ملصق الشحن (GPS QR)</Text>
+              </TouchableOpacity>
+
               {item.status === 'ready_for_dispatch' ? (
                 <TouchableOpacity
-                  onPress={() => handleHandoff(item.id)}
+                  onPress={() => handleHandoffSingle(item.id)}
                   style={styles.handoffBtn}
                   activeOpacity={0.85}
                 >
-                  <Truck size={16} color="#FFFFFF" />
-                  <Text style={styles.handoffBtnText}>Handoff to Al-Zajel Courier</Text>
+                  <Truck size={15} color="#0F172A" />
+                  <Text style={styles.handoffBtnText}>تسليم للسائق</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.courierDispatchedNotice}>
-                  <CheckCircle size={16} color={AppTheme.colors.green} />
+                  <CheckCircle size={15} color="#065F46" />
                   <Text style={styles.courierDispatchedText}>
-                    Dispatched on Route with Courier
+                    في طريق التوصيل
                   </Text>
                 </View>
               )}
@@ -148,6 +250,24 @@ export const MerchantOrdersScreen: React.FC = () => {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Shipping Slip Print Modal with GPS QR Code */}
+      <MobileShippingSlipModal
+        visible={slipModalVisible}
+        onClose={() => setSlipModalVisible(false)}
+        order={selectedSlipOrder}
+      />
+
+      {/* Driver Route Manifest Modal with totals and parcel stops */}
+      <MobileDriverManifestModal
+        visible={manifestModalVisible}
+        onClose={() => setManifestModalVisible(false)}
+        orders={orders}
+        onHandoffBatch={handleHandoffBatch}
+        merchantStoreName="متجر الكرادة للإلكترونيات"
+        merchantPhone="0770 999 1122"
+        merchantCity="بغداد"
+      />
     </View>
   );
 };
@@ -176,18 +296,86 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topBarTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
     color: AppTheme.colors.textPrimary,
   },
   scroll: {
     padding: 16,
   },
-  headerSubtitle: {
-    fontSize: 11,
-    color: AppTheme.colors.textMuted,
-    lineHeight: 16,
+  manifestHeroCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    gap: 12,
+  },
+  manifestHeroInfo: {
+    gap: 6,
+  },
+  manifestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1E293B',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  manifestBadgeText: {
+    color: '#B4F105',
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  manifestHeroTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  manifestHeroSubtitle: {
+    fontSize: 11,
+    color: '#94A3B8',
+    lineHeight: 16,
+  },
+  generateManifestBtn: {
+    backgroundColor: '#B4F105',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  generateManifestBtnText: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: AppTheme.colors.textPrimary,
+  },
+  orderCountBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: AppTheme.colors.textMuted,
+    backgroundColor: AppTheme.colors.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
   },
   orderCard: {
     backgroundColor: AppTheme.colors.card,
@@ -202,12 +390,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 10,
+    gap: 8,
   },
   lotTitle: {
     fontSize: 13,
     fontWeight: '800',
     color: AppTheme.colors.textPrimary,
-    maxWidth: 220,
+    lineHeight: 18,
   },
   orderId: {
     fontSize: 10,
@@ -251,11 +440,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexWrap: 'wrap',
   },
   infoText: {
     fontSize: 11,
     color: AppTheme.colors.textPrimary,
     fontWeight: '600',
+  },
+  infoTextBold: {
+    fontSize: 11,
+    color: AppTheme.colors.textPrimary,
+    fontWeight: '800',
+  },
+  infoTextSub: {
+    fontSize: 10,
+    color: AppTheme.colors.textSecondary,
+    flexShrink: 1,
   },
   awbRow: {
     flexDirection: 'row',
@@ -292,34 +492,53 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: AppTheme.colors.primary,
   },
-  actionsRow: {
-    marginTop: 2,
+  cardActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  handoffBtn: {
-    backgroundColor: AppTheme.colors.primary,
-    paddingVertical: 12,
+  printSlipBtn: {
+    flex: 1.2,
+    backgroundColor: '#0F172A',
+    paddingVertical: 10,
     borderRadius: AppTheme.radius.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
+  },
+  printSlipBtnText: {
+    color: '#B4F105',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  handoffBtn: {
+    flex: 1,
+    backgroundColor: '#E2E8F0',
+    paddingVertical: 10,
+    borderRadius: AppTheme.radius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   handoffBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
+    color: '#0F172A',
+    fontSize: 11,
     fontWeight: '800',
   },
   courierDispatchedNotice: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: '#ECFDF5',
-    padding: 10,
+    paddingVertical: 10,
     borderRadius: AppTheme.radius.sm,
   },
   courierDispatchedText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#065F46',
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
