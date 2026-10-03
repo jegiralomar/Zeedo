@@ -861,7 +861,7 @@ export const useAdminStore = create<AdminStoreState>()(
           const res = await fetch('/api/users', { headers: getAdminAuthHeaders() });
           if (res.ok) {
             const data = await res.json();
-            if (data.success && Array.isArray(data.users) && data.users.length > 0) {
+            if (data.success && Array.isArray(data.users)) {
               const dbUsers: UserBuyer[] = data.users.map((u: any) => ({
                 id: u.id,
                 name: u.name,
@@ -876,16 +876,8 @@ export const useAdminStore = create<AdminStoreState>()(
                 totalWins: u.totalWins || 0,
                 joinedAt: u.createdAt || u.joinedAt || new Date().toISOString(),
               }));
-              set((state) => {
-                const existingMap = new Map(state.users.map((item) => [item.phone || item.id, item]));
-                for (const dbUser of dbUsers) {
-                  existingMap.set(dbUser.phone || dbUser.id, {
-                    ...(existingMap.get(dbUser.phone || dbUser.id) || {}),
-                    ...dbUser,
-                  });
-                }
-                return { users: Array.from(existingMap.values()) };
-              });
+              // Authoritative database sync: reflects real database state
+              set({ users: dbUsers });
             }
           }
         } catch (err) {
@@ -1948,7 +1940,7 @@ export const useAdminStore = create<AdminStoreState>()(
       },
     }),
     {
-      name: 'zeedo_admin_store_prod_v3',
+      name: 'zeedo_admin_store_prod_v4',
       storage: createJSONStorage(() => localStorage),
     }
   )
