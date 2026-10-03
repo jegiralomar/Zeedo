@@ -147,8 +147,6 @@ export async function initDatabaseSchema() {
         completed_sales INT DEFAULT 0,
         total_cod_volume_iqd BIGINT DEFAULT 0,
         rating NUMERIC(3, 1) DEFAULT 5.0,
-        username VARCHAR(64) UNIQUE NOT NULL,
-        password VARCHAR(128) NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `;
@@ -283,60 +281,6 @@ export async function initDatabaseSchema() {
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(32) DEFAULT 'buyer';`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_test BOOLEAN DEFAULT FALSE;`;
-
-    // Seed default hero banner if cms_banners is empty
-    await sql`
-      INSERT INTO cms_banners (
-        id, title_ar, title_en, title_ckb, title_badini,
-        subtitle_ar, subtitle_en, subtitle_ckb, subtitle_badini,
-        image_url, tap_action, action_target, position, is_active, sort_order
-      ) VALUES (
-        'ban-01',
-        'مزادات حية يومية بأسعار تبدأ من 1,000 د.ع',
-        'Live Daily Auctions Starting at 1,000 IQD',
-        'مزایەدەی ڕۆژانەی زیندوو بە نرخی کەمترین',
-        'مزایدێت ڕۆژانە یێت زندی',
-        'زايد الآن وادفع عند الاستلام مع ضمان الفحص',
-        'Bid now, pay cash on delivery with inspection guarantee',
-        'ئێستا بەشداری بکە و دوای گەیشتن پارە بدە',
-        'نوکە پشکداریێ بکە و پشتی گەهشتنێ پارە بدە',
-        'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80',
-        'category',
-        'Electronics',
-        'hero',
-        TRUE,
-        0
-      ), (
-        'ban-02',
-        'توصيل موثوق لجميع محافظات العراق وكردستان',
-        'Fast COD Delivery Across All Iraq & Kurdistan',
-        'گەیاندنی خێرا بۆ هەموو پارێزگاکانی عێراق و کوردستان',
-        'گەهاندنا لەز بۆ هەمی پارێزگەهێن عیراق و کوردستانێ',
-        'شحن سريع عبر أسطولنا وشركائنا المعتمدين',
-        'Express delivery via certified local courier partners',
-        'گەیاندن لە ڕێگەی تیمی باوەڕپێکراو',
-        'گەهاندن ب ڕێکا تیمێن باوەرپێکری',
-        'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80',
-        'none',
-        '',
-        'hero',
-        TRUE,
-        1
-      ) ON CONFLICT (id) DO NOTHING;
-    `;
-
-    // Seed default pre-configured merchant if none exists
-    await sql`
-      INSERT INTO sellers (
-        id, store_name, owner_name, phone, city, commission_rate,
-        auto_approve_listings, pickup_address, status, total_listings,
-        completed_sales, total_cod_volume_iqd, rating, username, password, created_at
-      ) VALUES (
-        'sel-01', 'ZEEDO Official Store', 'Merchant Partner', '+964 750 111 2233',
-        'Erbil', 0.07, TRUE, 'Gulan Street, Erbil', 'active', 0,
-        0, 0, 5.0, 'merchant', 'ZEEDOMerchant98', NOW()
-      ) ON CONFLICT (username) DO NOTHING;
-    `;
 
     // 12. Support Helpdesk Tickets and Real-Time Chat Messages
     await sql`

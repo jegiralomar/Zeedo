@@ -27,10 +27,9 @@ export const MerchantHomeScreen: React.FC = () => {
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
-  const myLots = auctions.filter((a) => a.sellerId === 'sel-mansour' || a.id.includes('ps5') || a.id.includes('airjordan'));
+  const myLots = auctions.filter((a) => currentUser?.id ? a.sellerId === currentUser.id : false);
 
   const totalGrossIqd = myLots.reduce((acc, it) => acc + it.currentBidIqd, 0);
-  const totalGrossUsd = Math.round(totalGrossIqd / 1510);
   const netEarningsIqd = Math.round(totalGrossIqd * 0.9);
 
   return (
@@ -58,7 +57,6 @@ export const MerchantHomeScreen: React.FC = () => {
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel}>GROSS VOLUME (GMV)</Text>
           <Text style={styles.kpiValueIqd}>{totalGrossIqd.toLocaleString()} د.ع</Text>
-          <Text style={styles.kpiValueUsd}>≈ ${totalGrossUsd} USD</Text>
         </View>
 
         {/* Net Earnings (90%) */}
@@ -343,3 +341,4 @@ const styles = StyleSheet.create({
     color: AppTheme.colors.textMuted,
   },
 });
+

@@ -56,12 +56,10 @@ export const CreateAuctionScreen: React.FC<CreateAuctionScreenProps> = ({ onBack
   const [descriptionEn, setDescriptionEn] = useState('');
   const [category, setCategory] = useState('electronics');
   const [condition, setCondition] = useState<'New' | 'Used' | 'New Open Box'>('New');
-  const [images, setImages] = useState<string[]>([
-    'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
-  ]);
-  const [startingPriceIqd, setStartingPriceIqd] = useState('1000');
-  const [incrementStepIqd, setIncrementStepIqd] = useState('2500');
-  const [retailPriceIqd, setRetailPriceIqd] = useState('250000');
+  const [images, setImages] = useState<string[]>([]);
+  const [startingPriceIqd, setStartingPriceIqd] = useState('');
+  const [incrementStepIqd, setIncrementStepIqd] = useState('1000');
+  const [retailPriceIqd, setRetailPriceIqd] = useState('');
   const [durationHours, setDurationHours] = useState<number>(24);
   const [isPublishing, setIsPublishing] = useState(false);
   const [createdAuctionId, setCreatedAuctionId] = useState<string | null>(null);
@@ -104,9 +102,11 @@ export const CreateAuctionScreen: React.FC<CreateAuctionScreenProps> = ({ onBack
           setImages(d.images);
         }
 
-        if (d.retailPriceUsd) {
-          const iqd = Math.round(d.retailPriceUsd * 1510);
-          setRetailPriceIqd(String(iqd));
+        if (d.retailPriceIqd) {
+          setRetailPriceIqd(String(d.retailPriceIqd));
+          setStartingPriceIqd('1000');
+        } else if (d.retailPriceUsd) {
+          setRetailPriceIqd(String(d.retailPriceUsd));
           setStartingPriceIqd('1000');
         }
 
@@ -520,6 +520,23 @@ export const CreateAuctionScreen: React.FC<CreateAuctionScreenProps> = ({ onBack
                 ? `المزاد متاح الآن لكافة المشترين في العراق وكردستان. رقم المزاد: ${createdAuctionId}`
                 : `Your lot is now live in the Zeedo marketplace feed. ID: ${createdAuctionId}`}
             </Text>
+
+            <View style={{ alignItems: 'center', marginVertical: 20 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 10 }}>
+                {isRtl ? 'كود التتبع اللوجستي (اطبعه للمنتج)' : 'Logistics QR Code (Print & attach)'}
+              </Text>
+              <View style={{ padding: 10, backgroundColor: 'white', borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 3 }}>
+                <Image 
+                  source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://zeedo.iq/logistics/${createdAuctionId}` }} 
+                  style={{ width: 180, height: 180 }} 
+                />
+              </View>
+              <Text style={{ fontSize: 11, color: '#64748B', textAlign: 'center', marginTop: 12, paddingHorizontal: 20 }}>
+                {isRtl 
+                  ? 'قم بطباعة هذا الكود وإلصاقه على السلعة. بعد البيع سيتم تحديثه تلقائياً بمعلومات المشتري وموقع التوصيل للمندوب.' 
+                  : 'Print and stick this QR to your item. After sale, it auto-syncs buyer details and GPS location for your driver.'}
+              </Text>
+            </View>
 
             <TouchableOpacity
               style={styles.primaryBtn}

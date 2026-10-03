@@ -115,7 +115,7 @@ export const BottomNav: React.FC = () => {
     );
   }
 
-  // Pure Buyer 4-Tab Custom Dock (Auctions, Watchlist, Bag, Profile)
+  // Pure Buyer 4-Tab Custom Dock (Auctions, Bag, Watchlist, Profile)
   return (
     <View style={styles.floatingWrapper} pointerEvents="box-none">
       <View style={styles.pillContainer}>
@@ -139,27 +139,7 @@ export const BottomNav: React.FC = () => {
           </Text>
         </TouchableOpacity>
 
-        {/* 2. Watchlist / المفضلة */}
-        <TouchableOpacity
-          onPress={() => setActiveTab('watchlist')}
-          style={[styles.tabItem, activeTab === 'watchlist' && styles.tabItemActive]}
-          activeOpacity={0.75}
-        >
-          <Heart
-            size={20}
-            color={activeTab === 'watchlist' ? AppTheme.colors.primary : '#64748B'}
-          />
-          <Text
-            style={[
-              styles.tabLabel,
-              activeTab === 'watchlist' && styles.tabLabelActive,
-            ]}
-          >
-            {t.watchlistTab}
-          </Text>
-        </TouchableOpacity>
-
-        {/* 3. My Bag / حقيبتي (Won Lots + Active Bids) */}
+        {/* 2. My Bag / حقيبتي (Won Lots + Active Bids) */}
         <TouchableOpacity
           onPress={() => setActiveTab('bag')}
           style={[styles.tabItem, activeTab === 'bag' && styles.tabItemActive]}
@@ -183,6 +163,26 @@ export const BottomNav: React.FC = () => {
             ]}
           >
             {t.bagTab}
+          </Text>
+        </TouchableOpacity>
+
+        {/* 3. Watchlist / المفضلة */}
+        <TouchableOpacity
+          onPress={() => setActiveTab('watchlist')}
+          style={[styles.tabItem, activeTab === 'watchlist' && styles.tabItemActive]}
+          activeOpacity={0.75}
+        >
+          <Heart
+            size={20}
+            color={activeTab === 'watchlist' ? AppTheme.colors.primary : '#64748B'}
+          />
+          <Text
+            style={[
+              styles.tabLabel,
+              activeTab === 'watchlist' && styles.tabLabelActive,
+            ]}
+          >
+            {t.watchlistTab}
           </Text>
         </TouchableOpacity>
 

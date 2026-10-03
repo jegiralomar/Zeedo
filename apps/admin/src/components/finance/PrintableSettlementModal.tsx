@@ -20,7 +20,6 @@ interface SettlementItem {
 
 interface PrintableSettlementModalProps {
   seller: SellerMerchant;
-  marketRate: number;
   items: SettlementItem[];
   settledAmountIqd: number;
   onClose: () => void;
@@ -28,7 +27,6 @@ interface PrintableSettlementModalProps {
 
 export const PrintableSettlementModal: React.FC<PrintableSettlementModalProps> = ({
   seller,
-  marketRate,
   items,
   settledAmountIqd,
   onClose,
@@ -87,7 +85,7 @@ export const PrintableSettlementModal: React.FC<PrintableSettlementModalProps> =
         `"ZEEDO MERCHANT SETTLEMENT STATEMENT - ${seller.storeName || seller.ownerName}"`,
         `"Statement ID: ${statementId}"`,
         `"Date: ${currentDate}"`,
-        `"Exchange Rate: 1 USD = ${marketRate} IQD"`,
+        `"Currency: Iraqi Dinar (IQD)"`,
         '',
         headers.join(','),
         ...rows.map((e) => e.join(',')),
@@ -158,7 +156,7 @@ export const PrintableSettlementModal: React.FC<PrintableSettlementModalProps> =
             <div className="text-left sm:text-right font-mono text-xs text-slate-600 space-y-0.5">
               <p className="font-bold text-slate-900 text-sm">{statementId}</p>
               <p>Issued: <span className="font-semibold text-slate-800">{currentDate}</span></p>
-              <p>Rate: <span className="font-semibold text-emerald-700">$1 = {marketRate.toLocaleString()} IQD</span></p>
+              <p>Currency: <span className="font-semibold text-emerald-700">Iraqi Dinar (IQD)</span></p>
             </div>
           </div>
 

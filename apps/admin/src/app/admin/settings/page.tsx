@@ -6,7 +6,6 @@ import { Header } from '@/components/layout/Header';
 import { useAdminStore, getAdminAuthHeaders } from '@/store/useAdminStore';
 import { TestingSandboxTab } from '@/components/settings/TestingSandboxTab';
 import {
-  DollarSign,
   TrendingUp,
   MessageSquare,
   QrCode,
@@ -40,11 +39,6 @@ function SettingsContent() {
     }
   }, [urlTab]);
 
-  // Exchange Rate State
-  const [marketRate, setMarketRate] = useState(1510);
-  const [rateInput, setRateInput] = useState('1510');
-  const [savingRate, setSavingRate] = useState(false);
-
   // WhatsApp Gateway State
   const [waConnected, setWaConnected] = useState<boolean | null>(null);
   const [waMessage, setWaMessage] = useState<string>('Checking gateway...');
@@ -59,50 +53,8 @@ function SettingsContent() {
 
   // Load initial data
   useEffect(() => {
-    fetchExchangeRate();
     checkWhatsAppStatus();
   }, []);
-
-  const fetchExchangeRate = async () => {
-    try {
-      const res = await fetch('/api/exchange-rate');
-      const json = await res.json();
-      if (json?.data?.marketRate) {
-        setMarketRate(json.data.marketRate);
-        setRateInput(String(json.data.marketRate));
-      }
-    } catch {
-      // fallback
-    }
-  };
-
-  const handleUpdateRate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const rateNum = Number(rateInput);
-    if (!rateNum || rateNum < 1000 || rateNum > 2500) {
-      addToast('error', 'Rate must be between 1,000 and 2,500 IQD');
-      return;
-    }
-    setSavingRate(true);
-    try {
-      const res = await fetch('/api/exchange-rate', {
-        method: 'POST',
-        headers: getAdminAuthHeaders(),
-        body: JSON.stringify({ rate: rateNum }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMarketRate(rateNum);
-        addToast('success', `Iraqi parallel rate updated to $1 = ${rateNum.toLocaleString()} IQD`);
-      } else {
-        addToast('error', data.message || 'Failed to update rate');
-      }
-    } catch {
-      addToast('error', 'Network error updating rate');
-    } finally {
-      setSavingRate(false);
-    }
-  };
 
   const checkWhatsAppStatus = async () => {
     setCheckingWa(true);
@@ -191,7 +143,7 @@ function SettingsContent() {
     <>
       <Header
         title="System Settings & Testing Control"
-        subtitle="Parallel Exchange Rate, WhatsApp Gateway, Engine Health & Sandbox Lab"
+        subtitle="WhatsApp Gateway, Engine Health & Sandbox Lab"
       />
 
       <main className="flex-1 p-6 lg:p-8 max-w-6xl mx-auto w-full space-y-6 overflow-y-auto">
@@ -229,65 +181,7 @@ function SettingsContent() {
           <TestingSandboxTab />
         ) : (
           <div className="space-y-8">
-            {/* Section 1: Iraqi Parallel Currency Rate */}
-            <div className="bg-white rounded-2xl border border-[#ECEFF3] p-6 lg:p-7 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-[#17223B]">Iraqi Parallel Street Exchange Rate</h2>
-                    <p className="text-xs text-slate-400">
-                      Real-time cash conversion rate for converting USD items into Iraqi Dinars (IQD) for COD collection.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500">Live Rate:</span>
-                  <span className="font-mono font-black text-lg text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
-                    $1 = {marketRate.toLocaleString()} IQD
-                  </span>
-                </div>
-              </div>
-
-              <form onSubmit={handleUpdateRate} className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                <div className="space-y-1.5 md:col-span-2">
-                  <label className="text-xs font-bold text-[#17223B]">
-                    Update Street Cash Exchange Rate (IQD per $1 USD)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-2.5 text-xs font-mono font-bold text-slate-400">$1 =</span>
-                    <input
-                      type="number"
-                      min="1000"
-                      max="2500"
-                      value={rateInput}
-                      onChange={(e) => setRateInput(e.target.value)}
-                      className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-[#ECEFF3] rounded-xl text-xs font-mono font-bold text-[#17223B] focus:outline-emerald-500 transition-colors"
-                      placeholder="1510"
-                    />
-                  </div>
-                  <span className="text-[11px] text-slate-400 block">
-                    Default: 1,510 IQD per USD. Used across product scraper and mobile auction rooms.
-                  </span>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={savingRate}
-                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-50"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{savingRate ? 'Saving Rate...' : 'Update Platform Rate'}</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Section 2: Baileys WhatsApp OTP Gateway */}
+            {/* Section 1: Baileys WhatsApp OTP Gateway */}
             <div className="bg-white rounded-2xl border border-[#ECEFF3] p-6 lg:p-7 shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 gap-3">
                 <div className="flex items-center gap-3">

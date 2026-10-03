@@ -49,7 +49,7 @@ export async function GET(request: Request) {
           success: true,
           count: INITIAL_TICKETS.length,
           tickets: INITIAL_TICKETS,
-          source: 'neon_postgres_seeded',
+          source: 'postgres_seeded',
         });
       }
 
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
         success: true,
         count: rows.length,
         tickets: rows,
-        source: 'neon_postgres',
+        source: 'postgres',
       });
     } catch (err) {
       console.warn('Postgres query error, falling back to in-memory tickets:', err);
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           success: true,
           ticket: newTicket,
-          source: 'neon_postgres',
+          source: 'postgres',
         });
       } catch (dbErr) {
         console.warn('Failed to insert ticket into Postgres, falling back to memory:', dbErr);

@@ -6,6 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { MapPin, X } from 'lucide-react-native';
 import { AppTheme } from '../theme/colors';
@@ -43,35 +47,45 @@ export const LocationModal: React.FC = () => {
       visible={isLocationSetupOpen}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={closeLocationSetup}
     >
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.iconBadge}>
-                <MapPin size={16} color="#FFFFFF" />
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.backdropDismiss} />
+          </TouchableWithoutFeedback>
+          <View style={styles.sheet}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <View style={styles.iconBadge}>
+                  <MapPin size={16} color="#FFFFFF" />
+                </View>
+                <Text style={styles.headerTitle}>
+                  {isRtl ? 'تحديث عنوان التوصيل' : 'Update Delivery Address'}
+                </Text>
               </View>
-              <Text style={styles.headerTitle}>
-                {isRtl ? 'تحديث عنوان التوصيل' : 'Update Delivery Address'}
-              </Text>
+              <TouchableOpacity onPress={closeLocationSetup} style={styles.closeBtn}>
+                <X size={20} color={AppTheme.colors.textMuted} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={closeLocationSetup} style={styles.closeBtn}>
-              <X size={20} color={AppTheme.colors.textMuted} />
-            </TouchableOpacity>
-          </View>
 
-          {/* Location Picker */}
-          <LocationPickerStep
-            isRtl={isRtl}
-            onConfirm={handleConfirm}
-            onSkip={closeLocationSetup}
-            isSaving={isSaving}
-            initialLocation={currentUser?.deliveryLocation}
-          />
+            {/* Location Picker */}
+            <LocationPickerStep
+              isRtl={isRtl}
+              onConfirm={handleConfirm}
+              onSkip={closeLocationSetup}
+              isSaving={isSaving}
+              initialLocation={currentUser?.deliveryLocation}
+            />
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -79,10 +93,16 @@ export const LocationModal: React.FC = () => {
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'flex-end',
+  },
+  backdropDismiss: {
+    ...StyleSheet.absoluteFill,
   },
   sheet: {
     backgroundColor: '#FFFFFF',
@@ -90,8 +110,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 36,
-    minHeight: '75%',
+    paddingBottom: 24,
+    minHeight: '60%',
     maxHeight: '92%',
   },
   header: {

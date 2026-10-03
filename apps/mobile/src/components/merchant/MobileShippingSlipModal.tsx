@@ -57,11 +57,13 @@ export const MobileShippingSlipModal: React.FC<MobileShippingSlipModalProps> = (
 
   const lat = order?.buyerGpsLat || 33.3128;
   const lng = order?.buyerGpsLng || 44.3541;
+  const logisticsUrl = `https://zeedo.iq/logistics/${order?.id}`;
+
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 
   useEffect(() => {
     if (!order) return;
-    QRCode.toDataURL(mapsUrl, {
+    QRCode.toDataURL(logisticsUrl, {
       width: 240,
       margin: 1,
       color: {
@@ -71,7 +73,7 @@ export const MobileShippingSlipModal: React.FC<MobileShippingSlipModalProps> = (
     })
       .then(setQrDataUrl)
       .catch((err) => console.warn('QR Code generation error:', err));
-  }, [order, mapsUrl]);
+  }, [order, logisticsUrl]);
 
   if (!order) return null;
 
@@ -79,7 +81,7 @@ export const MobileShippingSlipModal: React.FC<MobileShippingSlipModalProps> = (
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.print) {
       window.print();
     } else {
-      Linking.openURL(mapsUrl);
+      Linking.openURL(logisticsUrl);
     }
   };
 
@@ -92,7 +94,7 @@ export const MobileShippingSlipModal: React.FC<MobileShippingSlipModalProps> = (
       `• هاتف المشتري: ${order.buyerPhone}\n` +
       `• المدينة والعنوان: ${order.buyerCity} - ${order.buyerAddress}\n` +
       `• المبلغ المطلوب تحصيله (COD): ${order.codAmountIqd.toLocaleString()} د.ع\n` +
-      `• موقع الزبون الدقيق على الخريطة 📍:\n${mapsUrl}\n\n` +
+      `• صفحة التتبع اللوجستي (معلومات المشتري والـ GPS) 📍:\n${logisticsUrl}\n\n` +
       `*ملاحظة: يحق للزبون معاينة السلعة قبل دفع المبلغ نقداً.*`
     );
     Linking.openURL(`https://wa.me/?text=${text}`);

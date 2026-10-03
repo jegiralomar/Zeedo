@@ -1,0 +1,423 @@
+- generic [ref=f9e1]:
+  - banner:
+    - generic [ref=f9e2]:
+      - img "Zeedo" [ref=f9e3]
+      - generic [ref=f9e4]: ZEEDO
+      - generic [ref=f9e5]: LIVE
+    - navigation [ref=f9e6]:
+      - button "عربي" [ref=f9e7] [cursor=pointer]
+      - button "کوردی" [active] [ref=f9e8] [cursor=pointer]
+      - button "EN" [ref=f9e9] [cursor=pointer]
+  - generic [ref=f9e11]:
+    - generic [ref=f9e12]:
+      - generic [ref=f9e13]: 🇮🇶 یەکەمین ئەپی موزایەدەی ڕاستەوخۆ لە عێراق
+      - heading "موزایەدە بکە. ببە بەرەوە. ببە بە خاوەنی." [level=1] [ref=f9e521]:
+        - generic [ref=f9e522]: موزایەدە بکە.
+        - text: ببە بەرەوە. ببە بە خاوەنی.
+      - paragraph [ref=f9e523]: موزایەدە بکە لەسەر کاتژمێری فاخر، ئێلێکترۆنیک و پۆشاک بە ڕاستەوخۆ. ببە بەرەوە و لە دەرگاکەتدا وەریبگرە — پێش پارەدانەکە بەتەواوی تەماشای بکە.
+      - generic "انقر لتشهد الحماس!" [ref=f9e19] [cursor=pointer]:
+        - generic [ref=f9e20]: LIVE
+        - generic [ref=f9e25]:
+          - generic [ref=f9e524]:
+            - generic [ref=f9e525]: کاتژمێری ئۆمێگا سیماستەر
+            - generic [ref=f9e526]: →
+            - generic [ref=f9e527]: ٧٦٠,٠٠٠ د.ع
+            - generic [ref=f9e528]: ئەحمەد لە بەغدا
+            - generic [ref=f9e529]: ·
+          - generic [ref=f9e530]:
+            - generic [ref=f9e531]: ئایفۆن ١٦ Pro Max
+            - generic [ref=f9e532]: →
+            - generic [ref=f9e533]: ١,٢٢٥,٠٠٠ د.ع
+            - generic [ref=f9e534]: کەریم لە هەولێر
+            - generic [ref=f9e535]: ·
+          - generic [ref=f9e536]:
+            - generic [ref=f9e537]: پلەیستەیشن 5 سلیم
+            - generic [ref=f9e538]: →
+            - generic [ref=f9e539]: ٦٧٥,٠٠٠ د.ع
+            - generic [ref=f9e540]: محەمەد لە بەسرە
+            - generic [ref=f9e541]: ·
+          - generic [ref=f9e542]:
+            - generic [ref=f9e543]: جۆردان 4 ڕیترۆ
+            - generic [ref=f9e544]: →
+            - generic [ref=f9e545]: ٤٩٥,٠٠٠ د.ع
+            - generic [ref=f9e546]: سارا لە سلێمانی
+            - generic [ref=f9e547]: ·
+          - generic [ref=f9e548]:
+            - generic [ref=f9e549]: ماک بووک پرۆ M4
+            - generic [ref=f9e550]: →
+            - generic [ref=f9e551]: ٢,١٥٠,٠٠٠ د.ع
+            - generic [ref=f9e552]: عومەر لە نەجەف
+            - generic [ref=f9e553]: ·
+          - generic [ref=f9e554]:
+            - generic [ref=f9e555]: کاتژمێری ئۆمێگا سیماستەر
+            - generic [ref=f9e556]: →
+            - generic [ref=f9e557]: ٧٦٠,٠٠٠ د.ع
+            - generic [ref=f9e558]: ئەحمەد لە بەغدا
+            - generic [ref=f9e559]: ·
+          - generic [ref=f9e560]:
+            - generic [ref=f9e561]: ئایفۆن ١٦ Pro Max
+            - generic [ref=f9e562]: →
+            - generic [ref=f9e563]: ١,٢٢٥,٠٠٠ د.ع
+            - generic [ref=f9e564]: کەریم لە هەولێر
+            - generic [ref=f9e565]: ·
+          - generic [ref=f9e566]:
+            - generic [ref=f9e567]: پلەیستەیشن 5 سلیم
+            - generic [ref=f9e568]: →
+            - generic [ref=f9e569]: ٦٧٥,٠٠٠ د.ع
+            - generic [ref=f9e570]: محەمەد لە بەسرە
+            - generic [ref=f9e571]: ·
+          - generic [ref=f9e572]:
+            - generic [ref=f9e573]: جۆردان 4 ڕیترۆ
+            - generic [ref=f9e574]: →
+            - generic [ref=f9e575]: ٤٩٥,٠٠٠ د.ع
+            - generic [ref=f9e576]: سارا لە سلێمانی
+            - generic [ref=f9e577]: ·
+          - generic [ref=f9e578]:
+            - generic [ref=f9e579]: ماک بووک پرۆ M4
+            - generic [ref=f9e580]: →
+            - generic [ref=f9e581]: ٢,١٥٠,٠٠٠ د.ع
+            - generic [ref=f9e582]: عومەر لە نەجەف
+            - generic [ref=f9e583]: ·
+          - generic [ref=f9e584]:
+            - generic [ref=f9e585]: کاتژمێری ئۆمێگا سیماستەر
+            - generic [ref=f9e586]: →
+            - generic [ref=f9e587]: ٧٦٠,٠٠٠ د.ع
+            - generic [ref=f9e588]: ئەحمەد لە بەغدا
+            - generic [ref=f9e589]: ·
+          - generic [ref=f9e590]:
+            - generic [ref=f9e591]: ئایفۆن ١٦ Pro Max
+            - generic [ref=f9e592]: →
+            - generic [ref=f9e593]: ١,٢٢٥,٠٠٠ د.ع
+            - generic [ref=f9e594]: کەریم لە هەولێر
+            - generic [ref=f9e595]: ·
+          - generic [ref=f9e596]:
+            - generic [ref=f9e597]: پلەیستەیشن 5 سلیم
+            - generic [ref=f9e598]: →
+            - generic [ref=f9e599]: ٦٧٥,٠٠٠ د.ع
+            - generic [ref=f9e600]: محەمەد لە بەسرە
+            - generic [ref=f9e601]: ·
+          - generic [ref=f9e602]:
+            - generic [ref=f9e603]: جۆردان 4 ڕیترۆ
+            - generic [ref=f9e604]: →
+            - generic [ref=f9e605]: ٤٩٥,٠٠٠ د.ع
+            - generic [ref=f9e606]: سارا لە سلێمانی
+            - generic [ref=f9e607]: ·
+          - generic [ref=f9e608]:
+            - generic [ref=f9e609]: ماک بووک پرۆ M4
+            - generic [ref=f9e610]: →
+            - generic [ref=f9e611]: ٢,١٥٠,٠٠٠ د.ع
+            - generic [ref=f9e612]: عومەر لە نەجەف
+            - generic [ref=f9e613]: ·
+      - generic [ref=f9e134]:
+        - link "Google Play" [ref=f9e135] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f9e139]:
+            - generic [ref=f9e140]: Get it on
+            - generic [ref=f9e141]: Google Play
+        - link "App Store" [ref=f9e142] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f9e146]:
+            - generic [ref=f9e147]: Download on
+            - generic [ref=f9e148]: App Store
+    - generic [ref=f9e149]:
+      - generic [ref=f9e152]:
+        - generic [ref=f9e155]:
+          - generic [ref=f9e156]: 9:41
+          - generic [ref=f9e157]: 5G ▮▮▮ 100%
+        - generic [ref=f9e158]:
+          - generic [ref=f9e159]:
+            - generic [ref=f9e160]: 🔨
+            - generic [ref=f9e614]: موزایەدەی ڕاستەوخۆ
+          - generic [ref=f9e162]: LIVE
+        - generic: 🎉 مبروك! زايدت بنجاح وأنت الآن المتصدر
+        - generic [ref=f9e165]:
+          - img "Omega Seamaster Diver 300M" [ref=f9e166]
+          - generic [ref=f9e167]: 💎 أصلي ١٠٠٪
+          - generic [ref=f9e168]: ساعة OMEGA سيماستر دايفر 300M
+        - generic [ref=f9e170]:
+          - generic [ref=f9e171]:
+            - generic [ref=f9e172]:
+              - generic [ref=f9e173]: موزایەدەی ئێستا
+              - generic [ref=f9e174]:
+                - generic [ref=f9e175]: 750,000
+                - generic [ref=f9e176]: د.ع
+            - generic [ref=f9e177]:
+              - generic [ref=f9e178]: کۆی موزایەدە
+              - generic [ref=f9e179]: 23 مزايدة
+          - generic [ref=f9e180]:
+            - generic [ref=f9e181]:
+              - generic [ref=f9e182]: ⏱️
+              - generic [ref=f9e183]: 00:04:16
+            - generic [ref=f9e184]:
+              - generic [ref=f9e185]: ⚡
+              - generic [ref=f9e186]: بغداد، الكرادة
+          - generic [ref=f9e187]:
+            - button "+١٠k" [ref=f9e188] [cursor=pointer]
+            - button "+٢٥k" [ref=f9e189] [cursor=pointer]
+            - button "+٥٠k" [ref=f9e190] [cursor=pointer]
+            - button "+١٠٠k" [ref=f9e191] [cursor=pointer]
+          - button "🔨 موزایەدە بە 760,000 د.ع" [ref=f9e615] [cursor=pointer]:
+            - generic [ref=f9e193]: 🔨
+            - generic [ref=f9e194]: موزایەدە بە 760,000 د.ع
+          - generic [ref=f9e195]: 🛡️ يحق لك الفحص بالكامل قبل الدفع نقداً عند الباب
+      - generic [ref=f9e196]:
+        - generic [ref=f9e197]: 🏆
+        - generic [ref=f9e198]:
+          - generic [ref=f9e199]: +٥,٠٠٠ بەرەو
+          - generic [ref=f9e200]: موزایەدەی تەواوبوو
+      - generic [ref=f9e201]:
+        - generic [ref=f9e202]: 🛡️
+        - generic [ref=f9e203]:
+          - generic [ref=f9e204]: COD ئەمین
+          - generic [ref=f9e205]: پێش پارەدان تەماشابکە
+  - generic [ref=f9e207]:
+    - generic [ref=f9e208]:
+      - generic [ref=f9e209]: 🔍
+      - generic [ref=f9e210]:
+        - generic [ref=f9e211]: ئەمینی تەماشاکردن لە دەرگا
+        - generic [ref=f9e213]: کاڵاکەت پێش دان تەماشابکە
+    - generic [ref=f9e215]:
+      - generic [ref=f9e216]: 💵
+      - generic [ref=f9e217]:
+        - generic [ref=f9e218]: تەنها پارەی نەقد لە دەرگا
+        - generic [ref=f9e220]: هیچ مەترسییەکی پێشوەخت نییە
+    - generic [ref=f9e222]:
+      - generic [ref=f9e223]: ⏱️
+      - generic [ref=f9e224]:
+        - generic [ref=f9e225]: سیستەمی دژ بە قاپکردن
+        - generic [ref=f9e227]: ٦٠ چرکە درێژکردنەوە بۆ یەکسانی
+    - generic [ref=f9e229]:
+      - generic [ref=f9e230]: 🚚
+      - generic [ref=f9e231]:
+        - generic [ref=f9e232]: هەموو ١٨ پارێزگای عێراق
+        - generic [ref=f9e234]: گەیاندنی خێرا بۆ هەر شوێنێک
+  - generic [ref=f9e237]:
+    - generic [ref=f9e238]:
+      - generic [ref=f9e239]:
+        - text: 🔥
+        - generic [ref=f9e624]: موزایەدە چالاکەکانی ئێستا
+      - heading "کاڵای ڕاستەقینە، موزایەدەی چرکەیی" [level=2] [ref=f9e625]
+      - paragraph [ref=f9e243]:
+        - generic [ref=f9e627]: تەماشای موزایەدە بەهێزەکانی ئێستا بکە لەسەر ئەپی زیدۆ و ببە بە بەرەوەی داهاتوو.
+    - generic [ref=f9e245]:
+      - generic [ref=f9e246]:
+        - generic [ref=f9e247]:
+          - img "Omega Seamaster" [ref=f9e248]
+          - generic [ref=f9e249]: LIVE
+          - generic [ref=f9e251]: بغداد
+        - generic [ref=f9e252]:
+          - generic [ref=f9e253]: ساعات فاخرة · WATCHES
+          - generic [ref=f9e254]: ساعة أوميغا سيماستر دايفر 300M أوتوماتيك
+          - generic [ref=f9e255]:
+            - generic [ref=f9e256]:
+              - generic [ref=f9e257]: المزايدة الحالية
+              - generic [ref=f9e258]: 750,000 د.ع
+            - generic [ref=f9e259]: ⏱️ 00:04:32
+      - generic [ref=f9e260]:
+        - generic [ref=f9e261]:
+          - img "iPhone 16 Pro Max" [ref=f9e262]
+          - generic [ref=f9e263]: LIVE
+          - generic [ref=f9e265]: أربيل
+        - generic [ref=f9e266]:
+          - generic [ref=f9e267]: هواتف ذكية · PHONES
+          - generic [ref=f9e268]: آبل آيفون 16 Pro Max سعة 256GB تيتانيوم صحراوي
+          - generic [ref=f9e269]:
+            - generic [ref=f9e270]:
+              - generic [ref=f9e271]: المزايدة الحالية
+              - generic [ref=f9e272]: 1,200,000 د.ع
+            - generic [ref=f9e273]: ⏱️ 00:08:15
+      - generic [ref=f9e274]:
+        - generic [ref=f9e275]:
+          - img "Sony PlayStation 5 Slim" [ref=f9e276]
+          - generic [ref=f9e277]: LIVE
+          - generic [ref=f9e279]: البصرة
+        - generic [ref=f9e280]:
+          - generic [ref=f9e281]: ألعاب وترفيه · GAMING
+          - generic [ref=f9e282]: سوني بلايستيشن 5 سليم مع يد تحكم إضافية
+          - generic [ref=f9e283]:
+            - generic [ref=f9e284]:
+              - generic [ref=f9e285]: المزايدة الحالية
+              - generic [ref=f9e286]: 650,000 د.ع
+            - generic [ref=f9e287]: ⏱️ 00:12:40
+      - generic [ref=f9e288]:
+        - generic [ref=f9e289]:
+          - img "Nike Air Jordan 4" [ref=f9e290]
+          - generic [ref=f9e291]: LIVE
+          - generic [ref=f9e293]: السليمانية
+        - generic [ref=f9e294]:
+          - generic [ref=f9e295]: مقتنيات وأزياء · SNEAKERS
+          - generic [ref=f9e296]: حذاء نايكم آير جوردان 4 ريترو أسود أصلي
+          - generic [ref=f9e297]:
+            - generic [ref=f9e298]:
+              - generic [ref=f9e299]: المزايدة الحالية
+              - generic [ref=f9e300]: 480,000 د.ع
+            - generic [ref=f9e301]: ⏱️ 00:03:10
+  - generic [ref=f9e303]:
+    - generic [ref=f9e304]:
+      - generic [ref=f9e305]:
+        - text: ✨
+        - generic [ref=f9e628]: چۆن کاردەکات؟
+      - heading "چوار هەنگاوی ئاسان" [level=2] [ref=f9e629]
+      - paragraph [ref=f9e309]:
+        - generic [ref=f9e631]: لە تۆمارکردنی خێرا تا وەرگرتنی کاڵاکەت بە دەستی خۆت.
+    - generic [ref=f9e311]:
+      - generic [ref=f9e312]:
+        - generic [ref=f9e313]: "01"
+        - generic [ref=f9e314]: 📲
+        - generic [ref=f9e315]: ئەپەکە دابەزێنە
+        - paragraph [ref=f9e317]:
+          - generic [ref=f9e633]: زیدۆ دابەزێنە و بە ژمارەی واتسئاپ بە چرکەیەک تۆمار بە.
+      - generic [ref=f9e319]:
+        - generic [ref=f9e320]: "02"
+        - generic [ref=f9e321]: 🔍
+        - generic [ref=f9e322]: موزایەدەکەت هەڵبژێرە
+        - paragraph [ref=f9e324]:
+          - generic [ref=f9e635]: موزایەدەی ڕاستەوخۆ ببینە — کاتژمێر، موبایل و زیاتر بە کاتی ڕاستەقینە.
+      - generic [ref=f9e326]:
+        - generic [ref=f9e327]: "03"
+        - generic [ref=f9e328]: 🔨
+        - generic [ref=f9e329]: موزایەدە بکە و ببە بەرەوە
+        - paragraph [ref=f9e331]:
+          - generic [ref=f9e637]: بە یەک دەست لێدان موزایەدە بکە. سیستەمی دژە قاپکردن دادپەروەری مسۆگەر دەکات.
+      - generic [ref=f9e333]:
+        - generic [ref=f9e334]: "04"
+        - generic [ref=f9e335]: 📦
+        - generic [ref=f9e336]: لە دەرگا تەماشاکە و پارەبدە
+        - paragraph [ref=f9e338]:
+          - generic [ref=f9e639]: کاڵاکەت دەگاتە دەرگات. بیکەرەوە و تاقی بکەوە پێش ئەوەی پارەی نەقد بدەیت.
+  - generic [ref=f9e341]:
+    - generic [ref=f9e342]:
+      - generic [ref=f9e343]:
+        - text: 💎
+        - generic [ref=f9e640]: بۆچی زیدۆ؟
+      - heading "جیاوازیی و متمانەی ڕاستەقینە" [level=2] [ref=f9e641]
+      - paragraph [ref=f9e347]:
+        - generic [ref=f9e643]: زیدۆ بەتایبەت بۆ هاوڵاتیانی عێراق دروستکراوە بۆ ئەزموونێکی پارێزراو.
+    - generic [ref=f9e349]:
+      - generic [ref=f9e350]:
+        - generic [ref=f9e351]: 🛡️
+        - generic [ref=f9e352]: ئەمینی تەماشاکردن لە دەرگا
+        - paragraph [ref=f9e354]:
+          - generic [ref=f9e645]: تەنها پلاتفۆرم لە عێراق کە ڕێگەت پێدەدات پێش پارەدان کاڵاکەت بەتەواوی بپشکنیت.
+      - generic [ref=f9e356]:
+        - generic [ref=f9e357]: ⚡
+        - generic [ref=f9e358]: موزایەدەی ڕاستەوخۆ
+        - paragraph [ref=f9e360]:
+          - generic [ref=f9e647]: بە خێرایی بەرز بەستراوەتەوە تا لە هەمان چرکەدا نرخی نوێ و تەمەنی ماوە ببینیت.
+      - generic [ref=f9e362]:
+        - generic [ref=f9e363]: 🤝
+        - generic [ref=f9e364]: پارەدانی نەقد
+        - paragraph [ref=f9e366]:
+          - generic [ref=f9e649]: پێویستت بە هیچ کارتی بانکی نییە. تەنها کاتێک کاڵاکەت گەیشت پارەی نەقد بدە.
+      - generic [ref=f9e368]:
+        - generic [ref=f9e369]: ⚖️
+        - generic [ref=f9e370]: دژە قاپکردن لە کۆتا چرکە
+        - paragraph [ref=f9e372]:
+          - generic [ref=f9e651]: هەر پێشنیارێک لە ٦٠ چرکەی کۆتاییدا کاتەکە ٦٠ چرکە درێژ دەکاتەوە.
+      - generic [ref=f9e374]:
+        - generic [ref=f9e375]: 🌍
+        - generic [ref=f9e376]: هەموو عێراق
+        - paragraph [ref=f9e378]:
+          - generic [ref=f9e653]: گەیاندن بۆ هەموو شار و شارۆچکەکانی عێراق بە گەرەنتی تەواوەوە.
+      - generic [ref=f9e380]:
+        - generic [ref=f9e381]: 🌐
+        - generic [ref=f9e382]: سێ زمان لە یەک ئەپدا
+        - paragraph [ref=f9e384]:
+          - generic [ref=f9e655]: ئەزموونێکی تایبەت بە زمانی دایک بۆ هەموو هاوڵاتیانی عێراق.
+  - generic [ref=f9e389]:
+    - generic [ref=f9e390]:
+      - text: 🏪
+      - generic [ref=f9e656]: بۆ بازرگانان
+    - heading [level=2] [ref=f9e657]:
+      - generic [ref=f9e658]: لە زیدۆ بفرۆشە —بەرفراوانترین پلاتفۆرم لە عێراق
+    - paragraph [ref=f9e394]:
+      - generic [ref=f9e659]: کاڵاکانت بە باشترین نرخ بفرۆشە و پارەکەت بە دڵنیایی وەربگرەوە.
+    - generic [ref=f9e396]:
+      - generic [ref=f9e397]:
+        - generic [ref=f9e398]: 📋
+        - generic [ref=f9e399]:
+          - generic [ref=f9e400]: تۆمارکردنی خێرا
+          - generic [ref=f9e401]: لە ماوەی ٢٤ کاتژمێردا هەژماری بازرگانیت چالاک بکە.
+      - generic [ref=f9e402]:
+        - generic [ref=f9e403]: 📊
+        - generic [ref=f9e404]:
+          - generic [ref=f9e405]: داشبۆردی بەهێز
+          - generic [ref=f9e406]: چاودێری هەموو فرۆش و داواکارییەکانت بکە بە ئاسانی.
+      - generic [ref=f9e407]:
+        - generic [ref=f9e408]: 💰
+        - generic [ref=f9e409]:
+          - generic [ref=f9e410]: کۆمیشنی ڕوون و ئاشکرا
+          - generic [ref=f9e411]: تەنها کاتێک کاڵاکەت بە سەرکەوتوویی فرۆشرا کۆمیشن دەدەیت.
+    - link "وەک بازرگان پەیوەندی بکە" [ref=f9e661] [cursor=pointer]:
+      - /url: https://wa.me/9647508813641?text=مرحباً، أود التسجيل كتاجر في منصة زيدو للمزادات
+  - generic [ref=f9e430]:
+    - generic [ref=f9e431]:
+      - generic [ref=f9e432]:
+        - text: ❓
+        - generic [ref=f9e663]: پرسیارە باوەکان
+      - heading "هەموو پرسیارەکانت لێرە ببینەوە" [level=2] [ref=f9e664]
+      - paragraph [ref=f9e436]:
+        - generic [ref=f9e666]: وەڵامی ڕوون بۆ هەموو پرسیارەکان دەربارەی پارەدان و گەیاندن.
+    - generic [ref=f9e438]:
+      - generic [ref=f9e667]:
+        - generic [ref=f9e668] [cursor=pointer]: ئایا تۆمارکردن و بەشداریکردن لە موزایەدەکان بەخۆڕاییە؟
+        - generic [ref=f9e673]: بەڵێ، بە تەواوی بێ بەرامبەرە! تەنها نرخی ئەو کاڵایە دەدەیت کە بە سەرکەوتوویی لە موزایەدەکەدا دەیبەیتەوە.
+      - generic [ref=f9e674]:
+        - generic [ref=f9e675] [cursor=pointer]: ئەمینی پشکنینی بەردەم دەرگا چییە؟
+        - generic: مافی تەواوت هەیە پاکێجەکەت لە بەردەم کۆریەرەکەدا بکەیتەوە و بیپشکنیت پێش ئەوەی یەک دینار بدەیت. ئەگەر بە دڵت نەبوو دەتوانیت ڕەتیبکەیتەوە.
+      - generic [ref=f9e680]:
+        - generic [ref=f9e681] [cursor=pointer]: شێوازەکانی پارەدان چییە؟
+        - generic: تەنها پارەی کاش لە کاتی وەرگرتندا (COD). پێویستت بە هیچ کارتی بانکی و پارەی پێشوەختە نییە.
+      - generic [ref=f9e686]:
+        - generic [ref=f9e687] [cursor=pointer]: سیستەمی دژە قاپکردن (Soft-Close) چۆن کار دەکات؟
+        - generic: هەر پێشنیارێک لە ٦٠ چرکەی کۆتاییدا بدرێت، کاتەکە بە شێوەیەکی ئۆتۆماتیکی ٦٠ چرکەی تر درێژ دەبێتەوە تا هەمووان دەرفەتی یەکسانیان هەبێت.
+      - generic [ref=f9e692]:
+        - generic [ref=f9e693] [cursor=pointer]: چۆن دەتوانم وەک بازرگان لە زیدۆ کاڵا بفرۆشم؟
+        - generic: لە ڕێگەی واتسئاپەوە پەیوەندیمان پێوە بکە لە 9647508813641+ یان بە ئیمەیڵی support@zeedo.bid. لە ماوەی ٢٤ کاتژمێردا هەژمارەکەت چالاک دەکرێت.
+      - generic [ref=f9e698]:
+        - generic [ref=f9e699] [cursor=pointer]: گەیاندن بۆ کام پارێزگاکان بەردەستە؟
+        - generic: تۆڕی گەیاندنی زیدۆ هەموو ١٨ پارێزگاکەی عێراق دەگرێتەوە (بەغدا، هەولێر، سلێمانی، بەسرە، دهۆک و هەموو شارەکانی تر).
+  - contentinfo [ref=f9e476]:
+    - generic [ref=f9e477]:
+      - generic [ref=f9e478]:
+        - generic [ref=f9e479]:
+          - generic [ref=f9e480]: ZEEDO
+          - generic [ref=f9e486]: BID · WIN · OWN
+          - generic [ref=f9e487]:
+            - link "Instagram" [ref=f9e488] [cursor=pointer]:
+              - /url: https://instagram.com
+            - link "TikTok" [ref=f9e493] [cursor=pointer]:
+              - /url: https://tiktok.com
+            - link "WhatsApp" [ref=f9e496] [cursor=pointer]:
+              - /url: https://wa.me/9647508813641
+        - generic [ref=f9e499]:
+          - generic [ref=f9e500]: ئەپ
+          - link "ئەپ دابەزێنە" [ref=f9e704] [cursor=pointer]:
+            - /url: "#hero"
+          - link "موزایەدەکان" [ref=f9e705] [cursor=pointer]:
+            - /url: "#auctions"
+          - link "چۆن کاردەکات؟" [ref=f9e706] [cursor=pointer]:
+            - /url: "#how"
+          - link "بۆچی زیدۆ؟" [ref=f9e707] [cursor=pointer]:
+            - /url: "#why"
+        - generic [ref=f9e505]:
+          - generic [ref=f9e506]: بازرگانان
+          - link "لە زیدۆ بفرۆشە" [ref=f9e708] [cursor=pointer]:
+            - /url: "#merchants"
+          - link "support@zeedo.bid" [ref=f9e508] [cursor=pointer]:
+            - /url: mailto:support@zeedo.bid
+          - link "+964 750 881 3641" [ref=f9e509] [cursor=pointer]:
+            - /url: https://wa.me/9647508813641
+        - generic [ref=f9e510]:
+          - generic [ref=f9e511]: پشتگیری
+          - link "FAQ" [ref=f9e512] [cursor=pointer]:
+            - /url: "#faq"
+          - link "پەیوەندی" [ref=f9e709] [cursor=pointer]:
+            - /url: mailto:support@zeedo.bid
+      - generic [ref=f9e515]:
+        - generic [ref=f9e516]: © ٢٠٢٦ پلاتفۆرمی زیدۆ — هەموو مافەکان پارێزراون.
+        - generic [ref=f9e517]:
+          - link "سیاسەتی تایبەتمەندی" [ref=f9e710] [cursor=pointer]:
+            - /url: "#"
+          - link "مەرجەکانی بەکارهێنان" [ref=f9e711] [cursor=pointer]:
+            - /url: "#"

@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     }
 
     const listings = rows.map(formatAuctionRow);
-    return NextResponse.json({ success: true, count: listings.length, listings, source: 'neon_postgres' });
+    return NextResponse.json({ success: true, count: listings.length, listings, source: 'postgres' });
   } catch (error: any) {
     console.error('Listings GET error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

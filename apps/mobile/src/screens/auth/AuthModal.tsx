@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,10 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {
   Phone,
@@ -61,6 +65,22 @@ export const AuthModal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Profile Setup State (Step 2)
   const [fullName, setFullName] = useState('');
@@ -417,21 +437,31 @@ export const AuthModal: React.FC = () => {
       visible={isAuthModalOpen}
       animationType="slide"
       transparent={true}
+      statusBarTranslucent={true}
       onRequestClose={() => {
         if (step === 'phone' || step === 'otp') {
           handleClose();
         }
       }}
     >
-      <View style={styles.overlay}>
-        <View
-          style={[
-            styles.sheet,
-            (step === 'location' || step === 'profile') && styles.sheetTall,
-          ]}
-        >
-          {/* Header Bar */}
-          <View style={styles.header}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.backdropDismiss} />
+          </TouchableWithoutFeedback>
+          <View
+            style={[
+              styles.sheet,
+              (step === 'location' || step === 'profile') && styles.sheetTall,
+              isKeyboardVisible && styles.sheetWithKeyboard,
+            ]}
+          >
+            {/* Header Bar */}
+            <View style={styles.header}>
             <View style={styles.headerLeft}>
               {step === 'profile' && (
                 <View style={styles.stepHeaderTag}>
@@ -607,16 +637,25 @@ export const AuthModal: React.FC = () => {
             /* ───────────────────────────────────────────────────────────── */
             /* STEP 1: PHONE & OTP                                           */
             /* ───────────────────────────────────────────────────────────── */
-            <>
+            <ScrollView
+              style={styles.stepScrollView}
+              contentContainerStyle={[
+                styles.stepScrollContent,
+                isKeyboardVisible && styles.stepScrollContentKeyboard,
+              ]}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
+            >
               {/* Title & Trust Header */}
-              <View style={styles.titleSection}>
-                <View style={styles.brandBadge}>
-                  <Text style={styles.brandBadgeLetter}>Z</Text>
+              <View style={[styles.titleSection, isKeyboardVisible && styles.titleSectionCompact]}>
+                <View style={[styles.brandBadge, isKeyboardVisible && styles.brandBadgeCompact]}>
+                  <Text style={[styles.brandBadgeLetter, isKeyboardVisible && styles.brandBadgeLetterCompact]}>Z</Text>
                 </View>
-                <Text style={[styles.title, isRtl && styles.textRtl]}>
+                <Text style={[styles.title, isRtl && styles.textRtl, isKeyboardVisible && styles.titleCompact]}>
                   {isRtl ? 'تسجيل الدخول إلى زيدو' : 'Sign in to Zeedo'}
                 </Text>
-                <Text style={[styles.subtitle, isRtl && styles.textRtl]}>
+                <Text style={[styles.subtitle, isRtl && styles.textRtl, isKeyboardVisible && styles.subtitleCompact]}>
                   {isRtl
                     ? 'أدخل رقم هاتفك لاستلام رمز التحقق الفوري عبر واتساب'
                     : 'Enter your phone number for instant WhatsApp verification'}
@@ -624,14 +663,16 @@ export const AuthModal: React.FC = () => {
               </View>
 
               {/* Bot Number Notice */}
-              <View style={styles.botNoticeBox}>
-                <MessageSquare size={16} color="#059669" />
-                <Text style={styles.botNoticeText}>
-                  {isRtl
-                    ? `يصلك الرمز مباشرة من رقم زيدو المعتمد: ${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER}`
-                    : `OTP arrives from official Zeedo bot: ${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER}`}
-                </Text>
-              </View>
+              {!isKeyboardVisible && (
+                <View style={styles.botNoticeBox}>
+                  <MessageSquare size={16} color="#059669" />
+                  <Text style={styles.botNoticeText}>
+                    {isRtl
+                      ? `يصلك الرمز مباشرة من رقم زيدو المعتمد: ${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER}`
+                      : `OTP arrives from official Zeedo bot: ${ZEEDO_CONFIG.WHATSAPP_BOT_NUMBER}`}
+                  </Text>
+                </View>
+              )}
 
               {/* Error Message */}
               {errorMessage ? (
@@ -740,19 +781,26 @@ export const AuthModal: React.FC = () => {
                   </Text>
                 </View>
               </View>
-            </>
+            </ScrollView>
           )}
         </View>
       </View>
-    </Modal>
+    </KeyboardAvoidingView>
+  </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'flex-end',
+  },
+  backdropDismiss: {
+    ...StyleSheet.absoluteFill,
   },
   sheet: {
     backgroundColor: '#FFFFFF',
@@ -763,9 +811,41 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     maxHeight: '92%',
   },
+  sheetWithKeyboard: {
+    paddingBottom: Platform.OS === 'ios' ? 20 : 12,
+  },
   sheetTall: {
-    height: Math.round(SCREEN_HEIGHT * 0.88),
-    maxHeight: Math.round(SCREEN_HEIGHT * 0.94),
+    minHeight: Math.round(SCREEN_HEIGHT * 0.60),
+    maxHeight: Math.round(SCREEN_HEIGHT * 0.92),
+  },
+  stepScrollView: {
+    flexGrow: 0,
+  },
+  stepScrollContent: {
+    paddingBottom: 4,
+  },
+  stepScrollContentKeyboard: {
+    paddingBottom: 2,
+  },
+  titleSectionCompact: {
+    marginBottom: 8,
+  },
+  brandBadgeCompact: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+  brandBadgeLetterCompact: {
+    fontSize: 20,
+  },
+  titleCompact: {
+    fontSize: 17,
+    marginBottom: 2,
+  },
+  subtitleCompact: {
+    fontSize: 11.5,
+    lineHeight: 15,
   },
   profileScrollView: {
     flex: 1,

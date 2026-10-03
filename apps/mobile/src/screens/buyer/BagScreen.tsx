@@ -59,7 +59,7 @@ export const BagScreen: React.FC = () => {
   const t = getTranslation(language);
   const isRtl = language !== 'en';
 
-  const [segment, setSegment] = useState<'won' | 'active'>('won');
+  const [segment, setSegment] = useState<'active' | 'won'>('active');
   const [selectedCity, setSelectedCity] = useState('بغداد');
   const [addressDetails, setAddressDetails] = useState('');
   const [phoneRecipient, setPhoneRecipient] = useState('');
@@ -92,25 +92,6 @@ export const BagScreen: React.FC = () => {
 
         <View style={styles.segmentContainer}>
           <TouchableOpacity
-            style={[styles.segmentTab, segment === 'won' && styles.segmentTabActive]}
-            onPress={() => setSegment('won')}
-            activeOpacity={0.8}
-          >
-            <Trophy
-              size={16}
-              color={segment === 'won' ? '#FFFFFF' : '#64748B'}
-            />
-            <Text
-              style={[
-                styles.segmentLabel,
-                segment === 'won' && styles.segmentLabelActive,
-              ]}
-            >
-              {isRtl ? 'المزادات الرابحة' : 'Won Lots'} ({wonOrders.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             style={[styles.segmentTab, segment === 'active' && styles.segmentTabActive]}
             onPress={() => setSegment('active')}
             activeOpacity={0.8}
@@ -126,6 +107,25 @@ export const BagScreen: React.FC = () => {
               ]}
             >
               {isRtl ? 'عطاءاتي الحية' : 'Active Bids'} ({myBids.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentTab, segment === 'won' && styles.segmentTabActive]}
+            onPress={() => setSegment('won')}
+            activeOpacity={0.8}
+          >
+            <Trophy
+              size={16}
+              color={segment === 'won' ? '#FFFFFF' : '#64748B'}
+            />
+            <Text
+              style={[
+                styles.segmentLabel,
+                segment === 'won' && styles.segmentLabelActive,
+              ]}
+            >
+              {isRtl ? 'المزادات الرابحة' : 'Won Lots'} ({wonOrders.length})
             </Text>
           </TouchableOpacity>
         </View>

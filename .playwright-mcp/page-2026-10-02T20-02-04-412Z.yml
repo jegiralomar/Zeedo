@@ -1,0 +1,329 @@
+- generic [active] [ref=f2e1]:
+  - navigation [ref=f2e2]:
+    - button "عربي" [ref=f2e3] [cursor=pointer]
+    - button "کوردی" [ref=f2e4] [cursor=pointer]
+    - button "EN" [ref=f2e5] [cursor=pointer]
+  - generic [ref=f2e7]:
+    - generic [ref=f2e8]:
+      - generic [ref=f2e9]: 🇮🇶 المزادات الحية الأولى في العراق
+      - heading "زايد. اربح. امتلك." [level=1] [ref=f2e12]:
+        - generic [ref=f2e13]: زايد.
+        - text: اربح. امتلك.
+      - paragraph [ref=f2e14]: أول تطبيق مزادات حية في العراق — زايد على السلعة التي تريدها، واربح، واستلمها في منزلك مع حق الفحص قبل الدفع نقداً.
+      - generic [ref=f2e15]:
+        - generic [ref=f2e16]: LIVE
+        - generic [ref=f2e21]:
+          - generic [ref=f2e22]:
+            - generic [ref=f2e23]: ساعة أوميغا سيماستر
+            - generic [ref=f2e24]: →
+            - generic [ref=f2e25]: 850,000 د.ع
+            - generic [ref=f2e26]: أحمد.م
+            - generic [ref=f2e27]: ·
+          - generic [ref=f2e28]:
+            - generic [ref=f2e29]: آيفون ١٦ Pro Max
+            - generic [ref=f2e30]: →
+            - generic [ref=f2e31]: 1,200,000 د.ع
+            - generic [ref=f2e32]: كريم.ع
+            - generic [ref=f2e33]: ·
+          - generic [ref=f2e34]:
+            - generic [ref=f2e35]: هواوي MatePad 11
+            - generic [ref=f2e36]: →
+            - generic [ref=f2e37]: 320,000 د.ع
+            - generic [ref=f2e38]: سارة.ق
+            - generic [ref=f2e39]: ·
+          - generic [ref=f2e40]:
+            - generic [ref=f2e41]: Jordan 4 Retro
+            - generic [ref=f2e42]: →
+            - generic [ref=f2e43]: 480,000 د.ع
+            - generic [ref=f2e44]: علي.ح
+            - generic [ref=f2e45]: ·
+          - generic [ref=f2e46]:
+            - generic [ref=f2e47]: سوني PS5 Slim
+            - generic [ref=f2e48]: →
+            - generic [ref=f2e49]: 650,000 د.ع
+            - generic [ref=f2e50]: محمد.ر
+            - generic [ref=f2e51]: ·
+          - generic [ref=f2e52]:
+            - generic [ref=f2e53]: Samsung OLED 65"
+            - generic [ref=f2e54]: →
+            - generic [ref=f2e55]: 1,550,000 د.ع
+            - generic [ref=f2e56]: زينب.ع
+            - generic [ref=f2e57]: ·
+          - generic [ref=f2e58]:
+            - generic [ref=f2e59]: MacBook Pro M4
+            - generic [ref=f2e60]: →
+            - generic [ref=f2e61]: 2,100,000 د.ع
+            - generic [ref=f2e62]: نور.س
+            - generic [ref=f2e63]: ·
+          - generic [ref=f2e64]:
+            - generic [ref=f2e65]: ساعة أوميغا سيماستر
+            - generic [ref=f2e66]: →
+            - generic [ref=f2e67]: 850,000 د.ع
+            - generic [ref=f2e68]: أحمد.م
+            - generic [ref=f2e69]: ·
+          - generic [ref=f2e70]:
+            - generic [ref=f2e71]: آيفون ١٦ Pro Max
+            - generic [ref=f2e72]: →
+            - generic [ref=f2e73]: 1,200,000 د.ع
+            - generic [ref=f2e74]: كريم.ع
+            - generic [ref=f2e75]: ·
+          - generic [ref=f2e76]:
+            - generic [ref=f2e77]: هواوي MatePad 11
+            - generic [ref=f2e78]: →
+            - generic [ref=f2e79]: 320,000 د.ع
+            - generic [ref=f2e80]: سارة.ق
+            - generic [ref=f2e81]: ·
+          - generic [ref=f2e82]:
+            - generic [ref=f2e83]: Jordan 4 Retro
+            - generic [ref=f2e84]: →
+            - generic [ref=f2e85]: 480,000 د.ع
+            - generic [ref=f2e86]: علي.ح
+            - generic [ref=f2e87]: ·
+          - generic [ref=f2e88]:
+            - generic [ref=f2e89]: سوني PS5 Slim
+            - generic [ref=f2e90]: →
+            - generic [ref=f2e91]: 650,000 د.ع
+            - generic [ref=f2e92]: محمد.ر
+            - generic [ref=f2e93]: ·
+          - generic [ref=f2e94]:
+            - generic [ref=f2e95]: Samsung OLED 65"
+            - generic [ref=f2e96]: →
+            - generic [ref=f2e97]: 1,550,000 د.ع
+            - generic [ref=f2e98]: زينب.ع
+            - generic [ref=f2e99]: ·
+          - generic [ref=f2e100]:
+            - generic [ref=f2e101]: MacBook Pro M4
+            - generic [ref=f2e102]: →
+            - generic [ref=f2e103]: 2,100,000 د.ع
+            - generic [ref=f2e104]: نور.س
+            - generic [ref=f2e105]: ·
+      - generic [ref=f2e106]:
+        - link "Google Play" [ref=f2e107] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f2e111]:
+            - generic [ref=f2e112]: Get it on
+            - generic [ref=f2e113]: Google Play
+        - link "App Store" [ref=f2e114] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f2e118]:
+            - generic [ref=f2e119]: Download on the
+            - generic [ref=f2e120]: App Store
+    - generic [ref=f2e121]:
+      - img [ref=f2e123]:
+        - generic [ref=f2e134]: 9:41
+        - generic [ref=f2e135]: ▮▮▮ ◼ ⊕
+        - generic [ref=f2e138]: ←
+        - generic [ref=f2e139]: 🔨 مزاد حي مباشر
+        - generic [ref=f2e140]: 🔔
+        - generic [ref=f2e143]: LIVE
+        - generic [ref=f2e146]:
+          - generic [ref=f2e156]:
+            - generic [ref=f2e157]: "12"
+            - generic [ref=f2e158]: "3"
+            - generic [ref=f2e159]: "6"
+            - generic [ref=f2e160]: "9"
+          - generic [ref=f2e166]: OMEGA
+        - generic [ref=f2e169]: ساعة OMEGA سيماستر بروفيشنال
+        - generic [ref=f2e172]: المزايدة الحالية
+        - generic [ref=f2e173]: 750,000 د.ع
+        - generic [ref=f2e176]: ✅ 23 مزايدة
+        - generic [ref=f2e178]: ⚡ بغداد
+        - generic [ref=f2e181]: الوقت المتبقي
+        - generic [ref=f2e182]: 00:04:32
+        - generic [ref=f2e187]: +١٠k
+        - generic [ref=f2e189]: +٢٠k
+        - generic [ref=f2e191]: +٥٠k
+        - generic [ref=f2e193]: +١٠٠k
+        - generic [ref=f2e196]: 🔨 زايد بـ 760,000 د.ع
+      - generic [ref=f2e199]:
+        - generic [ref=f2e200]: 🏆
+        - generic [ref=f2e201]:
+          - generic [ref=f2e202]: +٥٠٠٠ فائز
+          - generic [ref=f2e203]: مزادات مكتملة
+      - generic [ref=f2e204]:
+        - generic [ref=f2e205]: 🛡️
+        - generic [ref=f2e206]:
+          - generic [ref=f2e207]: COD مضمون
+          - generic [ref=f2e208]: فحص قبل الدفع
+  - generic [ref=f2e213]:
+    - generic [ref=f2e214]:
+      - generic [ref=f2e215]:
+        - text: ✨
+        - generic [ref=f2e216]: كيف تعمل؟
+      - heading "أربع خطوات فقط" [level=2] [ref=f2e217]
+      - paragraph [ref=f2e219]:
+        - generic [ref=f2e220]: من التسجيل إلى استلام سلعتك — العملية كلها على هاتفك.
+    - generic [ref=f2e221]:
+      - generic [ref=f2e222]:
+        - generic [ref=f2e223]: "01"
+        - generic [ref=f2e224]: 📲
+        - generic [ref=f2e225]: حمّل التطبيق
+        - paragraph [ref=f2e227]:
+          - generic [ref=f2e228]: حمّل زيدو من Google Play أو App Store وسجّل بنقرات واتسآب — لا كلمة مرور.
+      - generic [ref=f2e229]:
+        - generic [ref=f2e230]: "02"
+        - generic [ref=f2e231]: 🔍
+        - generic [ref=f2e232]: اختر مزادك
+        - paragraph [ref=f2e234]:
+          - generic [ref=f2e235]: تصفّح المزادات الحية — إلكترونيات، ساعات، موضة، سيارات، والمزيد مع عدادات تنازلية.
+      - generic [ref=f2e236]:
+        - generic [ref=f2e237]: "03"
+        - generic [ref=f2e238]: 🔨
+        - generic [ref=f2e239]: زايد وافوز
+        - paragraph [ref=f2e241]:
+          - generic [ref=f2e242]: اختر زيادتك وازايد بلمسة. نظام Soft-Close يمنح الجميع فرصة عادلة للفوز.
+      - generic [ref=f2e243]:
+        - generic [ref=f2e244]: "04"
+        - generic [ref=f2e245]: 📦
+        - generic [ref=f2e246]: فحص ودفع عند الباب
+        - paragraph [ref=f2e248]:
+          - generic [ref=f2e249]: يصلك المنتج ويحق لك فتحه وفحصه أمام المندوب — الدفع نقداً عند الاستلام فقط.
+  - generic [ref=f2e251]:
+    - generic [ref=f2e252]:
+      - generic [ref=f2e253]:
+        - text: 💎
+        - generic [ref=f2e254]: لماذا زيدو؟
+      - heading "الفرق الحقيقي" [level=2] [ref=f2e255]
+      - paragraph [ref=f2e257]:
+        - generic [ref=f2e258]: زيدو ليس مجرد تطبيق مزادات — تجربة تسوّق آمنة ومثيرة لم تعرفها العراق من قبل.
+    - generic [ref=f2e259]:
+      - generic [ref=f2e260]:
+        - generic [ref=f2e261]: 🛡️
+        - generic [ref=f2e262]: ضمان الفحص عند الباب
+        - paragraph [ref=f2e264]:
+          - generic [ref=f2e265]: الوحيد في العراق — يحق لك فتح الطرد وفحص السلعة أمام المندوب قبل دفع أي مبلغ.
+      - generic [ref=f2e266]:
+        - generic [ref=f2e267]: ⚡
+        - generic [ref=f2e268]: مزادات حية فورية
+        - paragraph [ref=f2e270]:
+          - generic [ref=f2e271]: كل مزايدة تُسجّل لحظياً عبر WebSocket — ترى الأسعار ترتفع في الوقت الفعلي.
+      - generic [ref=f2e272]:
+        - generic [ref=f2e273]: 🤝
+        - generic [ref=f2e274]: دفع نقدي عند الاستلام
+        - paragraph [ref=f2e276]:
+          - generic [ref=f2e277]: لا بطاقة ائتمان، لا مخاطرة مسبقة. ادفع نقداً فقط عند استلام سلعتك في منزلك.
+      - generic [ref=f2e278]:
+        - generic [ref=f2e279]: ⚖️
+        - generic [ref=f2e280]: نظام منع القنص
+        - paragraph [ref=f2e282]:
+          - generic [ref=f2e283]: أي مزايدة في آخر ٦٠ ثانية تمدد الوقت ٦٠ ثانية — الفوز للأحق حقاً.
+      - generic [ref=f2e284]:
+        - generic [ref=f2e285]: 🌍
+        - generic [ref=f2e286]: توصيل لكل محافظات العراق
+        - paragraph [ref=f2e288]:
+          - generic [ref=f2e289]: من بغداد إلى أربيل إلى البصرة — زيدو يوصّل إلى كل محافظات العراق بضمان تام.
+      - generic [ref=f2e290]:
+        - generic [ref=f2e291]: 🌐
+        - generic [ref=f2e292]: ثلاث لغات، تجربة واحدة
+        - paragraph [ref=f2e294]:
+          - generic [ref=f2e295]: التطبيق متاح بالعربية والكردية (سوراني وبادیني) والإنجليزية — لكل عراقي تجربة بلغته.
+  - generic [ref=f2e298]:
+    - generic [ref=f2e299]:
+      - generic [ref=f2e300]:
+        - text: 🏪
+        - generic [ref=f2e301]: للتجار والبائعين
+      - heading [level=2] [ref=f2e302]:
+        - generic [ref=f2e303]: بع على زيدو —أوسع منصة مزادات في العراق
+      - paragraph [ref=f2e304]:
+        - generic [ref=f2e305]: بضاعتك تستحق أفضل سعر. مزادات زيدو الحية تتيح لك الوصول للمزايدين في كل العراق.
+      - generic [ref=f2e306]:
+        - generic [ref=f2e307]:
+          - generic [ref=f2e308]: 📋
+          - generic [ref=f2e309]:
+            - generic [ref=f2e310]: تسجيل بسيط وسريع
+            - generic [ref=f2e311]: راسل فريق زيدو وسجّل كتاجر خلال ٢٤ ساعة
+        - generic [ref=f2e312]:
+          - generic [ref=f2e313]: 📊
+          - generic [ref=f2e314]:
+            - generic [ref=f2e315]: لوحة تحكم متكاملة
+            - generic [ref=f2e316]: تابع مزاداتك وطلباتك وعمولاتك لحظة بلحظة
+        - generic [ref=f2e317]:
+          - generic [ref=f2e318]: 💰
+          - generic [ref=f2e319]:
+            - generic [ref=f2e320]: عمولة شفافة ٥-١٠٪
+            - generic [ref=f2e321]: عمولة واحدة فقط — لا رسوم خفية
+      - link "ابدأ رحلتك كتاجر" [ref=f2e322] [cursor=pointer]:
+        - /url: mailto:support@zeedo.bid
+      - paragraph [ref=f2e327]: support@zeedo.bid
+    - generic [ref=f2e328]:
+      - generic [ref=f2e329]:
+        - generic [ref=f2e330]: 🔨
+        - generic [ref=f2e331]: 100%
+        - generic [ref=f2e332]: دفع نقدي مضمون
+      - generic [ref=f2e333]:
+        - generic [ref=f2e334]: ⚡
+        - generic [ref=f2e335]: 24h
+        - generic [ref=f2e336]: تفعيل حساب التاجر
+      - generic [ref=f2e337]:
+        - generic [ref=f2e338]: 🌍
+        - generic [ref=f2e339]: "18"
+        - generic [ref=f2e340]: محافظة في متناول يدك
+  - generic [ref=f2e342]:
+    - generic [ref=f2e343]:
+      - generic [ref=f2e344]:
+        - text: ❓
+        - generic [ref=f2e345]: الأسئلة الشائعة
+      - heading "هل لديك سؤال؟" [level=2] [ref=f2e346]
+      - paragraph [ref=f2e348]:
+        - generic [ref=f2e349]: كل ما تحتاج معرفته عن زيدو في مكان واحد.
+    - generic [ref=f2e350]:
+      - generic [ref=f2e351]:
+        - generic [ref=f2e352] [cursor=pointer]: هل التطبيق مجاني؟
+        - generic: نعم، تحميل زيدو والتسجيل مجاني تماماً للمشترين. تدفع فقط قيمة السلعة التي تفوز بها.
+      - generic [ref=f2e357]:
+        - generic [ref=f2e358] [cursor=pointer]: كيف أضمن سلامة السلعة؟
+        - generic: ضمان زيدو الفريد يمنحك حق فحص السلعة بالكامل أمام مندوب التوصيل في منزلك قبل دفع أي مبلغ. إذا لم تكن راضياً يمكنك الرفض.
+      - generic [ref=f2e363]:
+        - generic [ref=f2e364] [cursor=pointer]: ما طريقة الدفع في زيدو؟
+        - generic: الدفع نقداً عند الاستلام فقط (COD) — لا بطاقات ائتمان، لا مدفوعات مسبقة. تدفع نقداً عند استلام سلعتك.
+      - generic [ref=f2e369]:
+        - generic [ref=f2e370] [cursor=pointer]: ما هو نظام منع القنص Soft-Close؟
+        - generic: أي مزايدة في آخر ٦٠ ثانية تمدد الوقت تلقائياً ٦٠ ثانية إضافية، وتستمر التمديدات حتى مرور ٦٠ ثانية دون أي مزايدة جديدة.
+      - generic [ref=f2e375]:
+        - generic [ref=f2e376] [cursor=pointer]: هل يتوفر التطبيق لأجهزة iPhone؟
+        - generic: نعم! التطبيق سيكون على App Store قريباً. حالياً متاح على أندرويد.
+      - generic [ref=f2e381]:
+        - generic [ref=f2e382] [cursor=pointer]: كيف أصبح تاجراً على زيدو؟
+        - generic: تواصل معنا على support@zeedo.bid وسيتواصل معك فريقنا خلال ٢٤ ساعة لتفعيل حسابك كتاجر معتمد.
+  - contentinfo [ref=f2e387]:
+    - generic [ref=f2e388]:
+      - generic [ref=f2e389]:
+        - generic [ref=f2e390]:
+          - generic [ref=f2e391]: ZEEDO
+          - generic [ref=f2e397]: BID · WIN · OWN
+          - generic [ref=f2e398]:
+            - link "Instagram" [ref=f2e399] [cursor=pointer]:
+              - /url: "#"
+            - link "TikTok" [ref=f2e404] [cursor=pointer]:
+              - /url: "#"
+            - link "WhatsApp" [ref=f2e407] [cursor=pointer]:
+              - /url: https://wa.me/9647508813641
+        - generic [ref=f2e410]:
+          - generic [ref=f2e411]: التطبيق
+          - link "تحميل التطبيق" [ref=f2e412] [cursor=pointer]:
+            - /url: "#"
+          - link "كيف تعمل؟" [ref=f2e413] [cursor=pointer]:
+            - /url: "#how"
+          - link "لماذا زيدو؟" [ref=f2e414] [cursor=pointer]:
+            - /url: "#why"
+        - generic [ref=f2e415]:
+          - generic [ref=f2e416]: التجار
+          - link "بع على زيدو" [ref=f2e417] [cursor=pointer]:
+            - /url: "#merchants"
+          - link "support@zeedo.bid" [ref=f2e418] [cursor=pointer]:
+            - /url: mailto:support@zeedo.bid
+          - link "+964 750 881 3641" [ref=f2e419] [cursor=pointer]:
+            - /url: https://wa.me/9647508813641
+        - generic [ref=f2e420]:
+          - generic [ref=f2e421]: الدعم
+          - link "FAQ" [ref=f2e422] [cursor=pointer]:
+            - /url: "#faq"
+          - link "تواصل معنا" [ref=f2e423] [cursor=pointer]:
+            - /url: mailto:support@zeedo.bid
+      - generic [ref=f2e425]:
+        - generic [ref=f2e426]: © ٢٠٢٦ زيدو للمزادات الحية — جميع الحقوق محفوظة
+        - generic [ref=f2e427]:
+          - link "سياسة الخصوصية" [ref=f2e428] [cursor=pointer]:
+            - /url: "#"
+          - link "شروط الاستخدام" [ref=f2e429] [cursor=pointer]:
+            - /url: "#"

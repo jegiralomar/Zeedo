@@ -63,7 +63,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         success: true,
-        source: 'neon_postgres',
+        source: 'postgres',
         timestamp: new Date().toISOString(),
         auctions: {
           total: Number(a.total),

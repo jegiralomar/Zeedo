@@ -23,7 +23,6 @@ import {
 export const FinancialCockpitView: React.FC = () => {
   const { auctions, sellers, addToast } = useAdminStore();
 
-  const [marketRate, setMarketRate] = useState<number>(1510);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'settled'>('all');
 
@@ -46,22 +45,11 @@ export const FinancialCockpitView: React.FC = () => {
   const [testPhone, setTestPhone] = useState('07701234567');
   const [sendingTest, setSendingTest] = useState(false);
 
-  // Fetch exchange rate, receipts, and WhatsApp status on mount
+  // Fetch receipts and WhatsApp status on mount
   useEffect(() => {
-    fetchExchangeRate();
     fetchReceipts();
     checkWhatsAppStatus();
   }, []);
-
-  const fetchExchangeRate = async () => {
-    try {
-      const res = await fetch('/api/exchange-rate');
-      const json = await res.json();
-      if (json?.data?.marketRate) {
-        setMarketRate(json.data.marketRate);
-      }
-    } catch {}
-  };
 
   const fetchReceipts = async () => {
     setLoadingReceipts(true);
@@ -102,9 +90,7 @@ export const FinancialCockpitView: React.FC = () => {
     return closedAuctions.reduce((acc, a) => acc + (a.currentBidIqd || a.estimatedRetailMarketPriceIqd || 1000), 0);
   }, [closedAuctions]);
 
-  const grossMerchandiseValueUsd = Math.round(grossMerchandiseValueIqd / marketRate);
   const platformCommissionsIqd = Math.round(grossMerchandiseValueIqd * 0.1);
-  const platformCommissionsUsd = Math.round(platformCommissionsIqd / marketRate);
 
   const totalSettledReceiptsIqd = useMemo(() => {
     return receipts
@@ -137,20 +123,18 @@ export const FinancialCockpitView: React.FC = () => {
     return Object.entries(counts).map(([name, data]) => ({
       name,
       count: data.count,
-      totalUsd: Math.round(data.totalIqd / marketRate),
+      totalIqd: data.totalIqd,
       percent: grossMerchandiseValueIqd > 0 ? Math.round((data.totalIqd / grossMerchandiseValueIqd) * 100) : 0,
     }));
-  }, [closedAuctions, grossMerchandiseValueIqd, marketRate]);
+  }, [closedAuctions, grossMerchandiseValueIqd]);
 
   // 4. Per-Merchant Settlements Breakdown
   const merchantSettlementData = useMemo(() => {
     return sellers.map((seller: SellerMerchant) => {
       const sellerLots = closedAuctions.filter((a) => a.sellerId === seller.id);
       const grossIqd = sellerLots.reduce((acc, a) => acc + (a.currentBidIqd || a.estimatedRetailMarketPriceIqd || 1000), 0);
-      const grossUsd = Math.round(grossIqd / marketRate);
       const commissionRate = seller.commissionRate || 0.10;
       const commIqd = Math.round(grossIqd * commissionRate);
-      const commUsd = Math.round(grossUsd * commissionRate);
       const netPayIqd = grossIqd - commIqd;
 
       const sellerReceipts = receipts.filter(
@@ -161,9 +145,7 @@ export const FinancialCockpitView: React.FC = () => {
 
       const items = sellerLots.map((a) => {
         const itemGrossIqd = a.currentBidIqd || a.estimatedRetailMarketPriceIqd || 1000;
-        const itemGrossUsd = Math.round(itemGrossIqd / marketRate);
         const itemCommIqd = Math.round(itemGrossIqd * commissionRate);
-        const itemCommUsd = Math.round(itemGrossUsd * commissionRate);
         const itemTitle =
           a.multilingual?.en?.title ||
           a.multilingual?.ar?.title ||
@@ -172,11 +154,11 @@ export const FinancialCockpitView: React.FC = () => {
         return {
           id: a.id,
           title: itemTitle,
-          closingPriceUsd: itemGrossUsd,
+          closingPriceUsd: 0,
           closingPriceIqd: itemGrossIqd,
-          commissionUsd: itemCommUsd,
+          commissionUsd: 0,
           commissionIqd: itemCommIqd,
-          netPayableUsd: itemGrossUsd - itemCommUsd,
+          netPayableUsd: 0,
           netPayableIqd: itemGrossIqd - itemCommIqd,
           buyerCity: a.highestBidder?.rooftopPin?.city || 'Baghdad',
           closedAt: a.auctionEndsAt ? new Date(a.auctionEndsAt).toLocaleDateString() : 'Recent',
@@ -187,7 +169,6 @@ export const FinancialCockpitView: React.FC = () => {
       return {
         seller,
         lotsCount: sellerLots.length,
-        grossUsd,
         grossIqd,
         commissionIqd: commIqd,
         netPayIqd,
@@ -197,7 +178,7 @@ export const FinancialCockpitView: React.FC = () => {
         isSettled: balanceDueIqd === 0 && grossIqd > 0,
       };
     });
-  }, [sellers, closedAuctions, marketRate, receipts]);
+  }, [sellers, closedAuctions, receipts]);
 
   // Filtered Merchants
   const filteredMerchants = useMemo(() => {
@@ -224,7 +205,6 @@ export const FinancialCockpitView: React.FC = () => {
       'Phone',
       'Governorate',
       'Closed Lots',
-      'Gross GMV (USD)',
       'Gross GMV (IQD)',
       'Zeedo Commission 10% (IQD)',
       'Net Payable (IQD)',
@@ -240,7 +220,6 @@ export const FinancialCockpitView: React.FC = () => {
         m.seller.phone,
         m.seller.city || 'Baghdad',
         m.lotsCount,
-        m.grossUsd,
         m.grossIqd,
         m.commissionIqd,
         m.netPayIqd,
@@ -254,8 +233,8 @@ export const FinancialCockpitView: React.FC = () => {
       [
         `"ZEEDO MASTER FINANCIAL & COMMISSIONS AUDIT"`,
         `"Exported: ${new Date().toISOString()}"`,
-        `"Exchange Rate Reference: 1 USD = ${marketRate} IQD"`,
-        `"Total Platform GMV: $${grossMerchandiseValueUsd.toLocaleString()} (${grossMerchandiseValueIqd.toLocaleString()} IQD)"`,
+        `"Currency Reference: Iraqi Dinar (IQD)"`,
+        `"Total Platform GMV: ${grossMerchandiseValueIqd.toLocaleString()} IQD"`,
         `"Total Platform Commissions (10%): ${platformCommissionsIqd.toLocaleString()} IQD"`,
         '',
         headers.join(','),
@@ -283,8 +262,7 @@ export const FinancialCockpitView: React.FC = () => {
           buyerPhone: testPhone,
           buyerName: 'كرار حيدر (تجريبي)',
           auctionTitle: 'Sony PlayStation 5 Pro 2TB (عراقي أصلي)',
-          finalPriceUsd: 799,
-          finalPriceIqd: 799 * marketRate,
+          finalPriceIqd: 1200000,
           city: 'بغداد - الكرادة',
           auctionId: 'auc-demo-won',
         };
@@ -293,8 +271,7 @@ export const FinancialCockpitView: React.FC = () => {
           buyerPhone: testPhone,
           buyerName: 'علي المنصوري (تجريبي)',
           auctionTitle: 'Rolex Submariner Date 41mm',
-          newBidAmountUsd: 1250,
-          newBidAmountIqd: 1250 * marketRate,
+          newBidAmountIqd: 1875000,
           auctionId: 'auc-demo-outbid',
         };
       } else if (type === 'dispatched') {
@@ -304,7 +281,7 @@ export const FinancialCockpitView: React.FC = () => {
           auctionTitle: 'Apple iPhone 16 Pro Max 256GB',
           courierName: 'شركة الزاجل للشحن السريع',
           awbNumber: 'ZED-ZJL-984210',
-          codAmountIqd: 1199 * marketRate,
+          codAmountIqd: 1800000,
           city: 'البصرة - العشار',
         };
       }
@@ -344,20 +321,13 @@ export const FinancialCockpitView: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold text-slate-900">Financial Analytics & Merchant Settlements</h1>
               <p className="text-xs text-slate-500 font-medium">
-                Dual-Currency Platform GMV, 10% Closing Fees, COD Receipts & High-DPI Settlement Statements
+                Platform GMV in IQD, 10% Closing Fees, COD Receipts & High-DPI Settlement Statements
               </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="text-right hidden md:block">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Parallel Exchange Rate</span>
-            <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              $1 = {marketRate.toLocaleString()} IQD
-            </span>
-          </div>
-
           <button
             onClick={handleExportMasterAudit}
             className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
@@ -374,14 +344,14 @@ export const FinancialCockpitView: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-bold uppercase tracking-wider">Gross Sales (GMV)</span>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
+            <Coins className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="space-y-0.5">
             <p className="text-2xl font-black text-slate-900 font-['Montserrat']">
-              ${grossMerchandiseValueUsd.toLocaleString()}
-            </p>
-            <p className="text-xs font-mono font-semibold text-slate-500">
               {grossMerchandiseValueIqd.toLocaleString()} IQD
+            </p>
+            <p className="text-xs font-medium text-slate-500">
+              Platform Gross Volume
             </p>
           </div>
           <div className="pt-2 text-[11px] text-emerald-700 font-medium flex items-center gap-1 border-t border-slate-100">
@@ -400,10 +370,10 @@ export const FinancialCockpitView: React.FC = () => {
           </div>
           <div className="space-y-0.5">
             <p className="text-2xl font-black text-[#F83758] font-['Montserrat']">
-              ${platformCommissionsUsd.toLocaleString()}
-            </p>
-            <p className="text-xs font-mono font-semibold text-slate-500">
               {platformCommissionsIqd.toLocaleString()} IQD
+            </p>
+            <p className="text-xs font-medium text-slate-500">
+              10% Earned Fees
             </p>
           </div>
           <div className="pt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1 border-t border-slate-100">
@@ -419,10 +389,10 @@ export const FinancialCockpitView: React.FC = () => {
           </div>
           <div className="space-y-0.5">
             <p className="text-2xl font-black text-slate-900 font-['Montserrat']">
-              ${(grossMerchandiseValueUsd - platformCommissionsUsd).toLocaleString()}
-            </p>
-            <p className="text-xs font-mono font-semibold text-blue-700">
               {netMerchantPayableIqd.toLocaleString()} IQD
+            </p>
+            <p className="text-xs font-medium text-blue-700">
+              Merchant Net Distribution
             </p>
           </div>
           <div className="pt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1 border-t border-slate-100">
@@ -469,7 +439,7 @@ export const FinancialCockpitView: React.FC = () => {
                 <div className="flex justify-between text-xs font-medium">
                   <span className="text-slate-700 font-semibold">{gov.name}</span>
                   <span className="text-slate-500 font-mono">
-                    ${gov.totalUsd.toLocaleString()} ({gov.percent}%)
+                    {gov.totalIqd.toLocaleString()} IQD ({gov.percent}%)
                   </span>
                 </div>
                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
@@ -630,8 +600,7 @@ export const FinancialCockpitView: React.FC = () => {
                 <th className="py-3 px-4">Merchant Store</th>
                 <th className="py-3 px-4">Location</th>
                 <th className="py-3 px-4 text-center">Closed Lots</th>
-                <th className="py-3 px-4 text-right">Gross GMV ($)</th>
-                <th className="py-3 px-4 text-right">Gross (IQD)</th>
+                <th className="py-3 px-4 text-right">Gross GMV (IQD)</th>
                 <th className="py-3 px-4 text-right">Zeedo Fee (10%)</th>
                 <th className="py-3 px-4 text-right">Net Payable</th>
                 <th className="py-3 px-4 text-right">Balance Due</th>
@@ -664,11 +633,8 @@ export const FinancialCockpitView: React.FC = () => {
                           {item.lotsCount} lots
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-900">
-                        ${item.grossUsd.toLocaleString()}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-slate-600">
-                        {item.grossIqd.toLocaleString()}
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
+                        {item.grossIqd.toLocaleString()} د.ع
                       </td>
                       <td className="py-3.5 px-4 text-right font-mono text-rose-600">
                         -{item.commissionIqd.toLocaleString()} د.ع
@@ -717,7 +683,6 @@ export const FinancialCockpitView: React.FC = () => {
           seller={selectedSellerForPrint.seller}
           items={selectedSellerForPrint.items}
           settledAmountIqd={selectedSellerForPrint.settledAmountIqd}
-          marketRate={marketRate}
           onClose={() => setSelectedSellerForPrint(null)}
         />
       )}

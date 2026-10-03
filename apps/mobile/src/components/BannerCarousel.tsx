@@ -74,7 +74,7 @@ export const BannerCarousel: React.FC<BannerCarouselProps> = ({
   onSelectCategory,
 }) => {
   const isRtl = language !== 'en';
-  const [banners, setBanners] = useState<CmsBanner[]>(FALLBACK_BANNERS);
+  const [banners, setBanners] = useState<CmsBanner[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);

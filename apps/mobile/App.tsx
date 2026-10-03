@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, StatusBar, Platform, BackHandler, ToastAndroid } from 'react-native';
+import { StyleSheet, View, StatusBar, Platform, BackHandler, ToastAndroid, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from './src/store/useAppStore';
 import { AppTheme } from './src/theme/colors';
@@ -225,13 +225,16 @@ export default function App() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.container}>
+        <KeyboardAvoidingView 
+          style={styles.container} 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           {showHeader && <Header onSearchChange={setSearchQuery} />}
           <View style={styles.screenContainer}>{renderScreen()}</View>
           {showBottomNav && <BottomNav />}
           <AuthModal />
           <LocationModal />
-        </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </SafeAreaProvider>
   );

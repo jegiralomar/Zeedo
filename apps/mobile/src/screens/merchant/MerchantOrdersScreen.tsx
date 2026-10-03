@@ -28,59 +28,7 @@ import { MobileDriverManifestModal } from '../../components/merchant/MobileDrive
 export const MerchantOrdersScreen: React.FC = () => {
   const { setActiveScreen } = useAppStore();
 
-  const [orders, setOrders] = useState<MobileShippingOrderItem[]>([
-    {
-      id: 'ORD-98214',
-      awb: 'AWB-IQ-2026-98214',
-      lotTitle: 'Sony PlayStation 5 Pro 2TB Edition (عراقي أصلي)',
-      itemCondition: 'جديد بالكرتونة مختوم',
-      buyerName: 'كرار حيدر التميمي',
-      buyerPhone: '07701234567',
-      buyerCity: 'بغداد - المنصور',
-      buyerAddress: 'شارع 14 رمضان، قرب مول بغداد، زقاق 22',
-      buyerGpsLat: 33.3128,
-      buyerGpsLng: 44.3541,
-      codAmountIqd: 450000,
-      status: 'ready_for_dispatch',
-      sellerStoreName: 'متجر الكرادة للإلكترونيات',
-      sellerPhone: '0770 999 1122',
-      sellerCity: 'بغداد',
-    },
-    {
-      id: 'ORD-98102',
-      awb: 'AWB-IQ-2026-98102',
-      lotTitle: 'Apple iPhone 16 Pro Max 256GB Natural Titanium',
-      itemCondition: 'جديد مع الضمان العراقي الرسمي',
-      buyerName: 'علي المنصوري',
-      buyerPhone: '07802345678',
-      buyerCity: 'البصرة - العشار',
-      buyerAddress: 'شارع الكويت، مجاور مصرف الرافدين',
-      buyerGpsLat: 30.5085,
-      buyerGpsLng: 47.8189,
-      codAmountIqd: 820000,
-      status: 'ready_for_dispatch',
-      sellerStoreName: 'متجر الكرادة للإلكترونيات',
-      sellerPhone: '0770 999 1122',
-      sellerCity: 'بغداد',
-    },
-    {
-      id: 'ORD-97994',
-      awb: 'AWB-IQ-2026-97994',
-      lotTitle: 'Apple Watch Ultra 2 Titanium Case (GPS + Cellular)',
-      itemCondition: 'كالجديد (استخدام يومين فقط)',
-      buyerName: 'ريبوار كوران',
-      buyerPhone: '07504481234',
-      buyerCity: 'أربيل - دريم سيتي',
-      buyerAddress: 'فيلا 184، مجمع دريم سيتي السكني',
-      buyerGpsLat: 36.2062,
-      buyerGpsLng: 44.0094,
-      codAmountIqd: 560000,
-      status: 'with_courier',
-      sellerStoreName: 'متجر الكرادة للإلكترونيات',
-      sellerPhone: '0770 999 1122',
-      sellerCity: 'بغداد',
-    },
-  ]);
+  const [orders, setOrders] = useState<MobileShippingOrderItem[]>([]);
 
   // Modal States
   const [selectedSlipOrder, setSelectedSlipOrder] = useState<MobileShippingOrderItem | null>(null);

@@ -44,10 +44,10 @@ export const MobileDriverManifestModal: React.FC<MobileDriverManifestModalProps>
   merchantPhone = '0770 000 0000',
   merchantCity = 'بغداد',
 }) => {
-  const [carrierName, setCarrierName] = useState('شركة الزاجل للنقل السريع');
-  const [driverName, setDriverName] = useState('حيدر الكرخي (أبو فهد)');
-  const [driverPhone, setDriverPhone] = useState('07701234567');
-  const [vehiclePlate, setVehiclePlate] = useState('بغداد 84210');
+  const [carrierName, setCarrierName] = useState('');
+  const [driverName, setDriverName] = useState('');
+  const [driverPhone, setDriverPhone] = useState('');
+  const [vehiclePlate, setVehiclePlate] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [manifestCode, setManifestCode] = useState('');
 
