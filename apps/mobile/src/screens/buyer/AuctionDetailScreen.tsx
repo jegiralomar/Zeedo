@@ -119,6 +119,19 @@ export const AuctionDetailScreen: React.FC = () => {
     });
   }, [patchAuction]);
 
+  const [outbidBanner, setOutbidBanner] = useState<{ title: string; newBidIqd?: number } | null>(null);
+
+  const handleOutbidAlert = useCallback((payload: OutbidAlertPayload) => {
+    setOutbidBanner({
+      title: payload.auctionTitle,
+      newBidIqd: payload.newBidIqd,
+    });
+    // Auto dismiss in-app notification after 5 seconds
+    setTimeout(() => {
+      setOutbidBanner(null);
+    }, 5000);
+  }, []);
+
   useAuctionSocket(
     baseAuction?.id ?? null,
     currentUser?.id ?? null,
@@ -126,6 +139,7 @@ export const AuctionDetailScreen: React.FC = () => {
       onNewBid: handleNewBid,
       onTimerReset: handleTimerReset,
       onAuctionEnded: handleAuctionEnded,
+      onOutbidAlert: handleOutbidAlert,
       onConnected: () => setWsConnected(true),
       onDisconnected: () => setWsConnected(false),
     }
@@ -221,6 +235,23 @@ export const AuctionDetailScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* In-App Real-time Outbid Alert Banner */}
+      {outbidBanner && (
+        <View style={styles.outbidAlertBanner}>
+          <AlertCircle size={22} color="#FFFFFF" />
+          <View style={styles.winnerBannerText}>
+            <Text style={styles.winnerBannerTitle}>
+              {isRtl ? '⚡ تنبيه: تم تجاوز عطائك!' : '⚡ Outbid Alert!'}
+            </Text>
+            <Text style={styles.winnerBannerSub}>
+              {isRtl
+                ? `وصل المزاد إلى ${outbidBanner.newBidIqd?.toLocaleString() || ''} د.ع — زايد الآن لاستعادة الصدارة!`
+                : `New top bid: ${outbidBanner.newBidIqd?.toLocaleString() || ''} IQD — Bid now to take the lead!`}
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Winner Announcement Banner — appears when WS broadcasts AUCTION_ENDED */}
       {isEnded && wsWinner && (
         <View style={styles.winnerBanner}>
@@ -271,8 +302,8 @@ export const AuctionDetailScreen: React.FC = () => {
           <AlertCircle size={16} color="#D97706" />
           <Text style={styles.antiSnipingText}>
             {isRtl
-              ? 'قاعدة تمديد الدقيقة الأخيرة: أي مزايدة في آخر 60 ثانية تمدد وقت المزاد 60 ثانية إضافية لمنع القنص.'
-              : 'Soft-Close Rule: Any bid placed in the final 60 seconds extends the auction by 60s to prevent sniping.'}
+              ? 'قاعدة منع القنص: أي مزايدة تتم في آخر 60 ثانية تعيد ضبط العداد تلقائياً إلى 60 ثانية كاملة.'
+              : 'Anti-Sniping Rule: Any bid placed with less than 60 seconds left resets the timer back to 60 seconds.'}
           </Text>
         </View>
 
@@ -547,6 +578,15 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontWeight: '600',
     letterSpacing: 0.3,
+  },
+  // Outbid alert banner (in-app real-time)
+  outbidAlertBanner: {
+    backgroundColor: '#DC2626',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
   },
   // Winner banner
   winnerBanner: {

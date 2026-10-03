@@ -1,6 +1,5 @@
 import { getDb, initDatabaseSchema } from '@/lib/db';
 import { broadcastLiveEvent } from '@/lib/realtime';
-import { sendOutbidAlert } from '@/lib/whatsappAlerts';
 import { normalizeIraqiPhone } from '@/lib/whatsapp';
 import { handleCorsOptions, jsonResponse } from '@/lib/cors';
 import { verifySessionToken } from '@/lib/session';
@@ -221,7 +220,7 @@ export async function POST(request: Request) {
       data: broadcastPayload,
     }).catch(() => {});
 
-    // If there was a previous leader, dispatch personal outbid alert
+    // If there was a previous leader, dispatch in-app real-time outbid alert
     if (
       previousHighestBidder &&
       previousHighestBidder.id &&
@@ -237,23 +236,6 @@ export async function POST(request: Request) {
           outbidAt: now.toISOString(),
         },
       }).catch(() => {});
-
-      if (previousHighestBidder.phone) {
-        // Parse real item title from multilingual JSONB
-        const titlesObj = auction.titles
-          ? (typeof auction.titles === 'string' ? JSON.parse(auction.titles) : auction.titles)
-          : {};
-        const itemTitle = titlesObj.ar || titlesObj.en || titlesObj.ckb || 'سلعة المزاد';
-
-        sendOutbidAlert({
-          buyerPhone: previousHighestBidder.phone,
-          buyerName: previousHighestBidder.name || 'عزيزنا المزايد',
-          auctionTitle: itemTitle,
-          newBidAmountUsd: Math.round(newBid / 1510),
-          newBidAmountIqd: newBid,
-          auctionId,
-        }).catch(() => {});
-      }
     }
 
     return respond({
