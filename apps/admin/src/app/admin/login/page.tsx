@@ -53,27 +53,28 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#F4F6F5] flex flex-col justify-center items-center p-6 relative overflow-hidden">
       {/* Background Decorative Blur Orbs */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#072F1F]/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#B4F105]/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#F83758]/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#4392F9]/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#072F1F] text-[#B4F105] shadow-xl mb-1 border border-white/10">
-            <svg className="w-8 h-8 fill-[#B4F105]" viewBox="0 0 100 100">
-              <g transform="translate(50,50)">
-                <rect x="-6" y="-45" width="12" height="90" rx="6" ry="6" fill="#B4F105" />
-                <rect x="-6" y="-45" width="12" height="90" rx="6" ry="6" fill="#B4F105" transform="rotate(60)" />
-                <rect x="-6" y="-45" width="12" height="90" rx="6" ry="6" fill="#B4F105" transform="rotate(120)" />
-              </g>
-            </svg>
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center">
+            <img 
+              src="/brand/zeedo-logo-horizontal.png" 
+              alt="ZEEDO" 
+              className="h-12 w-auto object-contain drop-shadow-sm" 
+            />
           </div>
-          <h1 className="text-2xl font-black text-[#0B130F] tracking-tight">
-            ZEEDO <span className="text-[#072F1F]">ADMIN CONSOLE</span>
-          </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Operations & Moderation Console
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-[#FFF1F3] text-[#F83758] border border-[#FFE4E8]">
+              ADMIN CONSOLE
+            </span>
+            <span className="text-xs text-slate-400 font-medium">•</span>
+            <span className="text-xs text-slate-500 font-medium">
+              Operations & Moderation
+            </span>
+          </div>
         </div>
 
         {/* Login Card */}

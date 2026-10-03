@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>زيدو | أول منصة مزادات حية في العراق — Bid. Win. Own.</title>
 <meta name="description" content="زيدو — المنصة الأولى للمزادات الحية في العراق. زايد، اربح، واستلم سلعتك بالدفع نقداً عند الباب مع حق الفحص الكامل قبل الدفع."/>
-<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="icon" type="image/png" href="/brand/zeedo-app-icon.png"/>
+<link rel="apple-touch-icon" href="/brand/zeedo-app-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -1670,6 +1671,109 @@ a {
 }
 
 /* ═══════════════════════════════════════════
+   SITE FOOTER
+═══════════════════════════════════════════ */
+.site-footer {
+  background: #080D1A;
+  color: #94A3B8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 64px 24px 36px;
+  position: relative;
+  z-index: 10;
+}
+.footer-in {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.2fr;
+  gap: 48px;
+  margin-bottom: 48px;
+}
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+}
+@media (max-width: 580px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+.footer-logo-img {
+  height: 42px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+.footer-tagline {
+  font-size: 15px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+  letter-spacing: -0.2px;
+}
+.footer-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #64748B;
+  max-width: 380px;
+  margin-bottom: 20px;
+}
+.footer-col-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #FFFFFF;
+  margin-bottom: 18px;
+}
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-links a {
+  color: #94A3B8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.footer-links a:hover {
+  color: var(--primary);
+}
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: #475569;
+}
+.footer-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-size: 11px;
+  color: #E2E8F0;
+}
+
+/* ═══════════════════════════════════════════
    LANGUAGE DISPLAY HELPERS
 ═══════════════════════════════════════════ */
 .t { display: none !important; }
@@ -1690,11 +1794,11 @@ a {
 <!-- ══ TOP NAVIGATION BAR ══════════════════════ -->
 <header class="top-nav" id="topNav">
   <div class="nav-backdrop"></div>
-  <div class="brand-badge">
-    <img src="assets/zeedo_logo.png" alt="Zeedo" class="brand-logo-img"/>
+  <a href="#hero" class="brand-badge" style="text-decoration:none;">
+    <img src="/brand/zeedo-app-icon.png" alt="Zeedo" class="brand-logo-img"/>
     <span class="brand-name">ZEEDO</span>
     <span class="brand-tag">LIVE</span>
-  </div>
+  </a>
   <div class="lang-sw" role="navigation">
     <button class="lb active" data-lang="ar" onclick="setLang('ar')">عربي</button>
     <button class="lb" data-lang="ckb" onclick="setLang('ckb')">کوردی</button>
@@ -1791,7 +1895,7 @@ a {
             <!-- Zeedo App Live Header -->
             <div class="app-header">
               <div class="app-header-title">
-                <span>🔨</span>
+                <img src="/brand/zeedo-app-icon.png" alt="Zeedo" style="width:20px;height:20px;border-radius:6px;object-fit:cover;vertical-align:middle;display:inline-block;margin-inline-end:6px;box-shadow:0 2px 6px rgba(0,0,0,0.15);"/>
                 <span class="t ari">مزاد حي مباشر</span>
                 <span class="t eni">Live Auction</span>
                 <span class="t ckbi">موزایەدەی ڕاستەوخۆ</span>
@@ -2202,6 +2306,98 @@ a {
     </div>
   </div>
 </section>
+
+<!-- ══ SITE FOOTER ══════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-in">
+    <div class="footer-grid">
+      <!-- Col 1: Brand & Logo -->
+      <div>
+        <a href="#hero" style="display:inline-block;">
+          <img src="/brand/zeedo-logo-horizontal-white.png" alt="ZEEDO Live Auctions" class="footer-logo-img"/>
+        </a>
+        <div class="footer-tagline">
+          <span class="t ari">زايد. اربح. امتلك.</span>
+          <span class="t eni">Bid. Win. Own.</span>
+          <span class="t ckbi">موزایەدە بکە. بیبە بەرەوە. ببە بە خاوەنی.</span>
+        </div>
+        <p class="footer-desc">
+          <span class="t ar">المنصة الأولى والأكثر أماناً للمزادات الحية في العراق. فحص كامل للمنتج عند باب بيتك ودفع نقدي 100% عند الاستلام مع تغطية شاملة لكافة المحافظات.</span>
+          <span class="t en">Iraq's premier live auction mobile ecosystem. 100% Cash on Delivery, full doorstep unboxing guarantee, and nationwide delivery across all 18 governorates.</span>
+          <span class="t ckb">یەکەمین و ئەمینترین پلاتفۆرمی موزایەدەی ڕاستەوخۆ لە عێراق. پشکنینی تەواوی کاڵا لە بەردەم دەرگا و پارەدانی ١٠٠٪ نەقد لە کاتی وەرگرتن.</span>
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="footer-badge-pill">🇮🇶 ١٨ محافظة عراقية</div>
+          <div class="footer-badge-pill">🛡️ فحص قبل الدفع</div>
+          <div class="footer-badge-pill">⚡ Soft-Close 60s</div>
+        </div>
+      </div>
+
+      <!-- Col 2: Navigation -->
+      <div>
+        <div class="footer-col-title">
+          <span class="t ari">روابط سريعة</span>
+          <span class="t eni">Quick Links</span>
+          <span class="t ckbi">بەستەری خێرا</span>
+        </div>
+        <ul class="footer-links">
+          <li><a href="#auctions"><span class="t ari">المزادات الجارية</span><span class="t eni">Live Auctions</span><span class="t ckbi">موزایەدەکان</span></a></li>
+          <li><a href="#how"><span class="t ari">كيف يعمل زيدو؟</span><span class="t eni">How It Works</span><span class="t ckbi">چۆن کار دەکات؟</span></a></li>
+          <li><a href="#guarantee"><span class="t ari">ضمان الفحص عند الباب</span><span class="t eni">Inspection Guarantee</span><span class="t ckbi">ئەمینی پشکنین</span></a></li>
+          <li><a href="#faq"><span class="t ari">الأسئلة الشائعة</span><span class="t eni">FAQ</span><span class="t ckbi">پرسیارە باوەکان</span></a></li>
+          <li><a href="/admin"><span class="t ari">لوحة تحكم الإدارة</span><span class="t eni">Admin Console</span><span class="t ckbi">کۆنسۆڵی بەڕێوەبردن</span></a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: For Merchants & Support -->
+      <div>
+        <div class="footer-col-title">
+          <span class="t ari">للتجار والدعم</span>
+          <span class="t eni">Merchants & Care</span>
+          <span class="t ckbi">بۆ بازرگانان</span>
+        </div>
+        <ul class="footer-links">
+          <li><a href="https://wa.me/9647508813641?text=مرحباً، أود التسجيل كتاجر في منصة زيدو للمزادات" target="_blank" rel="noopener"><span class="t ari">واتسآب التجار: 9647508813641+</span><span class="t eni">WhatsApp: +964 750 881 3641</span><span class="t ckbi">واتسئاپ: 9647508813641+</span></a></li>
+          <li><a href="mailto:support@zeedo.bid">support@zeedo.bid</a></li>
+          <li><a href="#merchant"><span class="t ari">عمولة عادلة ٥ - ١٠٪</span><span class="t eni">Fair 5–10% Commission</span><span class="t ckbi">کۆمیشنی دادپەروەرانە</span></a></li>
+          <li><a href="/brand-identity.html" target="_blank"><span class="t ari">دليل الهوية البصرية</span><span class="t eni">Brand Guidelines</span><span class="t ckbi">ڕێبەری براند</span></a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: App Download -->
+      <div>
+        <div class="footer-col-title">
+          <span class="t ari">حمل التطبيق الآن</span>
+          <span class="t eni">Get The App</span>
+          <span class="t ckbi">ئەپەکە دابەزێنە</span>
+        </div>
+        <p style="font-size:12px;color:#64748B;line-height:1.6;margin-bottom:14px;">
+          <span class="t ar">تطبيق أندرويد متوفر للتحميل المباشر بصيغة APK بأحدث إصدار.</span>
+          <span class="t en">Android APK available for instant, secure direct download.</span>
+          <span class="t ckb">ئەپی ئەندرۆید بەردەستە بۆ دابەزاندنی ڕاستەوخۆ بە فۆرماتی APK.</span>
+        </p>
+        <a href="/zeedo.apk" class="dl-btn direct" style="display:inline-flex;padding:10px 18px;font-size:13px;" download="zeedo.apk">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 3v13m0 0l-5-5m5 5l5-5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="t ari">تحميل ZEEDO APK</span>
+          <span class="t eni">Download ZEEDO APK</span>
+          <span class="t ckbi">داگرتنی ZEEDO APK</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Bottom Copyright -->
+    <div class="footer-bottom">
+      <div>
+        © 2026 ZEEDO Iraq. <span class="t ari">جميع الحقوق محفوظة.</span><span class="t eni">All rights reserved.</span><span class="t ckbi">هەموو مافەکان پارێزراون.</span>
+      </div>
+      <div style="display:flex;gap:18px;">
+        <span>📍 بغداد (الجادرية)</span>
+        <span>📍 أربيل (دريم سيتي)</span>
+        <span>⚡ 100% Cash on Delivery</span>
+      </div>
+    </div>
+  </div>
+</footer>
 
 <!-- ═══════════════════════════════════════════
      CLIENT INTERACTIVITY & LOGIC

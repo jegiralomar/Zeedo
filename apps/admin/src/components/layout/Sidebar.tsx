@@ -182,8 +182,8 @@ export const Sidebar: React.FC = () => {
         {/* Brand Header */}
         <div className={`p-4 border-b border-[#ECEFF3] flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
           <Link href={pathPrefix || '/'} className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center p-1.5 shadow-xs group-hover:scale-105 transition-transform shrink-0">
-              <img src="/brand/zeedo-icon.png" alt="ZEEDO" className="w-full h-full object-contain" />
+            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center p-1 shadow-xs group-hover:scale-105 transition-transform shrink-0 overflow-hidden">
+              <img src="/brand/zeedo-app-icon.png" alt="ZEEDO" className="w-full h-full object-contain rounded-lg" />
             </div>
             {!collapsed && (
               <div className="min-w-0">

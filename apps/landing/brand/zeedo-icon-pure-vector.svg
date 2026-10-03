@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="zArrowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#F83758" />
+      <stop offset="45%" stopColor="#F83758" />
+      <stop offset="85%" stopColor="#4392F9" />
+      <stop offset="100%" stopColor="#3B82F6" />
+    </linearGradient>
+  </defs>
+  <!-- Top Z Stroke -->
+  <path d="M 40 40 L 120 40 C 120 40 120 62 120 62 L 68 62 L 68 84 L 40 84 Z" fill="#F83758" />
+  <!-- Bottom Z Foot & Bracket -->
+  <path d="M 40 136 L 68 136 L 68 158 L 132 158 L 132 108 L 156 108 L 156 182 L 40 182 Z" fill="#4392F9" />
+  <!-- Center Diagonal Rising Arrow -->
+  <path d="M 50 152 L 126 58 L 110 44 L 176 34 L 166 100 L 148 84 L 72 178 Z" fill="url(#zArrowGrad)" />
+</svg>
