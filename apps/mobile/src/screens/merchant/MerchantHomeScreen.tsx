@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Linking,
+  Platform,
 } from 'react-native';
 import {
   Store,
@@ -17,6 +19,8 @@ import {
   ShieldCheck,
   ChevronRight,
   Gavel,
+  Printer,
+  QrCode,
 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
@@ -140,6 +144,25 @@ export const MerchantHomeScreen: React.FC = () => {
               <Text style={styles.timerText}>ينتهي خلال 45 دقيقة</Text>
             </View>
           </View>
+          
+          {/* Quick Print QR for Inventory */}
+          <TouchableOpacity
+            style={styles.lotPrintBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              const trackUrl = `https://zeedo.bid/track/${item.id}`;
+              if (Platform.OS === 'web' && typeof window !== 'undefined' && window.print) {
+                window.print();
+              } else {
+                Linking.openURL(trackUrl).catch((err) => console.warn(err));
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <Printer size={15} color="#0B130F" />
+            <Text style={styles.lotPrintBtnText}>QR</Text>
+          </TouchableOpacity>
+
           <ChevronRight size={18} color={AppTheme.colors.textMuted} />
         </TouchableOpacity>
       ))}
@@ -340,6 +363,20 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 10,
     color: AppTheme.colors.textMuted,
+  },
+  lotPrintBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#B4F105',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  lotPrintBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0B130F',
   },
 });
 

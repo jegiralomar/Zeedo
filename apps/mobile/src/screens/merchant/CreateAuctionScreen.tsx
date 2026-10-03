@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
+  Linking,
+  Platform,
 } from 'react-native';
 import {
   ArrowLeft,
@@ -21,6 +23,7 @@ import {
   ShieldCheck,
   Eye,
   RefreshCw,
+  Printer,
 } from 'lucide-react-native';
 import { AppTheme } from '../../theme/colors';
 import { useAppStore } from '../../store/useAppStore';
@@ -536,6 +539,27 @@ export const CreateAuctionScreen: React.FC<CreateAuctionScreenProps> = ({ onBack
                   ? 'اطبع هذا الكود والصقه على المنتج للمخزن. بعد انتهاء المزاد وبيعه، يتحدث الكود تلقائياً بمعلومات المشتري وموقع الخريطة (Google Maps) للسائق. رسم نشر المزاد (1,000 د.ع).' 
                   : 'Print and attach this QR to your item for inventory. Once sold, this QR updates with buyer details & Google Maps location for your delivery driver. Listing fee: 1,000 IQD.'}
               </Text>
+
+              {/* Print Button for QR Code */}
+              <TouchableOpacity
+                style={styles.printQrBtn}
+                onPress={() => {
+                  const printUrl = `https://zeedo.bid/track/${createdAuctionId}`;
+                  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.print) {
+                    window.print();
+                  } else {
+                    Linking.openURL(printUrl).catch((err) => {
+                      console.warn('Failed to open print QR link:', err);
+                    });
+                  }
+                }}
+                activeOpacity={0.85}
+              >
+                <Printer size={18} color="#0B130F" />
+                <Text style={styles.printQrBtnText}>
+                  {isRtl ? 'طباعة باركود المنتج (Print QR)' : 'Print Inventory QR Code'}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
@@ -884,5 +908,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#334155',
+  },
+  printQrBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#B4F105',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+    width: '100%',
+  },
+  printQrBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0B130F',
   },
 });
