@@ -523,18 +523,18 @@ export const CreateAuctionScreen: React.FC<CreateAuctionScreenProps> = ({ onBack
 
             <View style={{ alignItems: 'center', marginVertical: 20 }}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 10 }}>
-                {isRtl ? 'كود التتبع اللوجستي (اطبعه للمنتج)' : 'Logistics QR Code (Print & attach)'}
+                {isRtl ? 'كود المخزن والتوصيل الذكي (اطبعه للمنتج)' : 'Inventory & Smart Delivery QR Code'}
               </Text>
               <View style={{ padding: 10, backgroundColor: 'white', borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 3 }}>
                 <Image 
-                  source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://zeedo.iq/logistics/${createdAuctionId}` }} 
+                  source={{ uri: `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://zeedo.bid/track/${createdAuctionId}` }} 
                   style={{ width: 180, height: 180 }} 
                 />
               </View>
               <Text style={{ fontSize: 11, color: '#64748B', textAlign: 'center', marginTop: 12, paddingHorizontal: 20 }}>
                 {isRtl 
-                  ? 'قم بطباعة هذا الكود وإلصاقه على السلعة. بعد البيع سيتم تحديثه تلقائياً بمعلومات المشتري وموقع التوصيل للمندوب.' 
-                  : 'Print and stick this QR to your item. After sale, it auto-syncs buyer details and GPS location for your driver.'}
+                  ? 'اطبع هذا الكود والصقه على المنتج للمخزن. بعد انتهاء المزاد وبيعه، يتحدث الكود تلقائياً بمعلومات المشتري وموقع الخريطة (Google Maps) للسائق. رسم نشر المزاد (1,000 د.ع).' 
+                  : 'Print and attach this QR to your item for inventory. Once sold, this QR updates with buyer details & Google Maps location for your delivery driver. Listing fee: 1,000 IQD.'}
               </Text>
             </View>
 

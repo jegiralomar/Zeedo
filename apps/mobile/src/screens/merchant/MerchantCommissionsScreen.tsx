@@ -22,25 +22,25 @@ export const MerchantCommissionsScreen: React.FC = () => {
 
   const ledger = [
     {
-      id: 'LED-01',
+      id: 'FEE-01',
       date: 'اليوم، 14:10',
-      description: 'Zeedo Platform Fee (10%) - Sony PS5 Pro',
+      description: 'عمولة بيع مزاد (5%) - Sony PS5 Slim',
       type: 'debit',
-      amountIqd: -45000,
+      amountIqd: 22500,
     },
     {
-      id: 'LED-02',
-      date: 'اليوم، 13:55',
-      description: 'COD Doorstep Clearance - iPhone 16 Pro Max',
-      type: 'credit',
-      amountIqd: 820000,
+      id: 'POST-02',
+      date: 'اليوم، 12:00',
+      description: 'رسم نشر سلعة جديدة (1,000 د.ع) - iPhone 16 Pro',
+      type: 'debit',
+      amountIqd: 1000,
     },
     {
-      id: 'LED-03',
-      date: 'أمس، 18:20',
-      description: 'ZainCash Direct Advance Payout',
-      type: 'settled',
-      amountIqd: -500000,
+      id: 'POST-03',
+      date: 'أمس، 18:30',
+      description: 'رسم نشر سلعة جديدة (1,000 د.ع) - AirPods Pro 2',
+      type: 'debit',
+      amountIqd: 1000,
     },
   ];
 
@@ -58,15 +58,15 @@ export const MerchantCommissionsScreen: React.FC = () => {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Payout Balance Card */}
+        {/* Platform Fees Payable Card */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>READY FOR WITHDRAWAL</Text>
-          <Text style={styles.balanceAmount}>275,000 د.ع</Text>
-          <Text style={styles.balanceSub}>Disbursed via ZainCash, FIB or QiCard within 24 hours</Text>
+          <Text style={styles.balanceLabel}>FEES OWED TO ZEEDO (عمولات ورسوم النشر المستحقة)</Text>
+          <Text style={styles.balanceAmount}>14,500 د.ع</Text>
+          <Text style={styles.balanceSub}>تشمل رسوم نشر السلع (1,000 د.ع لكل سلعة) + نسبة العمولة على السلع المباعة. تدفع عبر زين كاش أو FIB</Text>
         </View>
 
         {/* Ledger Entries */}
-        <Text style={styles.sectionTitle}>Transaction & Commission Ledger</Text>
+        <Text style={styles.sectionTitle}>سجل العمولات ورسوم النشر</Text>
         <View style={styles.ledgerList}>
           {ledger.map((item) => (
             <View key={item.id} style={styles.ledgerItem}>
@@ -77,10 +77,10 @@ export const MerchantCommissionsScreen: React.FC = () => {
               <Text
                 style={[
                   styles.itemAmount,
-                  item.amountIqd > 0 ? styles.creditText : styles.debitText,
+                  styles.debitText,
                 ]}
               >
-                {item.amountIqd > 0 ? `+${item.amountIqd.toLocaleString()}` : item.amountIqd.toLocaleString()} د.ع
+                {item.amountIqd.toLocaleString()} د.ع
               </Text>
             </View>
           ))}

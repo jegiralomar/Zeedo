@@ -55,17 +55,18 @@ export const MerchantHomeScreen: React.FC = () => {
       <View style={styles.kpiGrid}>
         {/* Gross Sales */}
         <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>GROSS VOLUME (GMV)</Text>
+          <Text style={styles.kpiLabel}>CASH COLLECTED (DIRECT COD)</Text>
           <Text style={styles.kpiValueIqd}>{totalGrossIqd.toLocaleString()} د.ع</Text>
+          <Text style={styles.kpiSub}>Collected directly by you at doorstep</Text>
         </View>
 
-        {/* Net Earnings (90%) */}
+        {/* Platform Fees Owed (1,000 IQD listing + Commission) */}
         <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>NET EARNINGS (90%)</Text>
-          <Text style={[styles.kpiValueIqd, { color: AppTheme.colors.green }]}>
-            {netEarningsIqd.toLocaleString()} د.ع
+          <Text style={styles.kpiLabel}>PLATFORM FEES OWED</Text>
+          <Text style={[styles.kpiValueIqd, { color: '#DC2626' }]}>
+            {(Math.round(totalGrossIqd * 0.05) + (myLots.length * 1000)).toLocaleString()} د.ع
           </Text>
-          <Text style={styles.kpiSub}>After 10% platform fee</Text>
+          <Text style={styles.kpiSub}>1,000 د.ع listing fee + commission</Text>
         </View>
       </View>
 
