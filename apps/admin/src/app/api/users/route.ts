@@ -162,3 +162,44 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  const adminAuth = verifyAdminRequest(request);
+  if (!adminAuth.isAuthorized) {
+    return NextResponse.json({ success: false, error: 'Unauthorized: Admin authentication required' }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('id');
+    const all = searchParams.get('all') === 'true';
+
+    const sql = getDb();
+    if (!sql) {
+      return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 503 });
+    }
+
+    if (all) {
+      const deleted = await sql`DELETE FROM users RETURNING id, phone, name`;
+      return NextResponse.json({
+        success: true,
+        message: `Deleted all registered accounts (${deleted.length} accounts deleted)`,
+        deletedCount: deleted.length,
+      });
+    }
+
+    if (userId) {
+      const deleted = await sql`DELETE FROM users WHERE id = ${userId} RETURNING id, phone, name`;
+      return NextResponse.json({
+        success: true,
+        message: `Deleted account ${userId}`,
+        deleted,
+      });
+    }
+
+    return NextResponse.json({ success: false, error: 'Specify ?all=true or ?id=<userId>' }, { status: 400 });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
