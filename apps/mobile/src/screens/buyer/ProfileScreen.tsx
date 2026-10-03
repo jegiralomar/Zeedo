@@ -240,24 +240,35 @@ export const ProfileScreen: React.FC = () => {
         <Text style={styles.userPhone}>{currentUser.phone}</Text>
 
         <View style={styles.badgesRow}>
-          {currentUser.gender && (
-            <View style={styles.genderBadge}>
-              <Text style={styles.genderBadgeText}>
-                {currentUser.gender === 'female'
-                  ? (isRtl ? 'أنثى' : 'Female')
-                  : (isRtl ? 'ذكر' : 'Male')}
+          {currentUser.role === 'merchant' ? (
+            <View style={[styles.kycBadge, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
+              <ShieldCheck size={14} color="#059669" />
+              <Text style={[styles.kycBadgeText, { color: '#15803D', fontWeight: '800' }]}>
+                {isRtl ? 'حساب تاجر معتمد (PRO MERCHANT)' : 'Verified Merchant (PRO MERCHANT)'}
               </Text>
             </View>
-          )}
+          ) : (
+            <>
+              {currentUser.gender && (
+                <View style={styles.genderBadge}>
+                  <Text style={styles.genderBadgeText}>
+                    {currentUser.gender === 'female'
+                      ? (isRtl ? 'أنثى' : 'Female')
+                      : (isRtl ? 'ذكر' : 'Male')}
+                  </Text>
+                </View>
+              )}
 
-          <View style={styles.kycBadge}>
-            <ShieldCheck size={14} color="#059669" />
-            <Text style={styles.kycBadgeText}>
-              {currentUser.kycStatus === 'verified'
-                ? (isRtl ? 'حساب موثق بالبطاقة الوطنية' : 'KYC Verified Bidder')
-                : (isRtl ? 'حساب مؤكد برقم الهاتف' : 'Verified Phone Account')}
-            </Text>
-          </View>
+              <View style={styles.kycBadge}>
+                <ShieldCheck size={14} color="#059669" />
+                <Text style={styles.kycBadgeText}>
+                  {currentUser.kycStatus === 'verified'
+                    ? (isRtl ? 'حساب موثق بالبطاقة الوطنية' : 'KYC Verified Bidder')
+                    : (isRtl ? 'حساب مؤكد برقم الهاتف' : 'Verified Phone Account')}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
 

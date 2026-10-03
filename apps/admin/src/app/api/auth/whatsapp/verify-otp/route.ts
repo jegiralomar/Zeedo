@@ -29,18 +29,36 @@ export async function POST(req: NextRequest) {
       const sql = getDb();
 
       let userRecord: any = null;
+      let merchantRecord: any = null;
+
       if (sql) {
         try {
+          // 1. Check if this phone belongs to a provisioned merchant/seller
+          const merchantRows = await sql`
+            SELECT * FROM sellers 
+            WHERE REPLACE(phone, ' ', '') = ${canonicalPhone.replace(/\s+/g, '')}
+               OR phone = ${canonicalPhone}
+            LIMIT 1;
+          `;
+          if (merchantRows.length > 0) {
+            merchantRecord = merchantRows[0];
+          }
+
           // Ensure is_blocked column exists
           await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE`.catch(() => {});
+
+          const initialRole = merchantRecord ? 'merchant' : 'buyer';
+          const initialName = merchantRecord ? merchantRecord.store_name : 'مشترك زيدو';
+          const initialCity = merchantRecord ? merchantRecord.city : 'العراق';
 
           const rows = await sql`
             INSERT INTO users (
               id, phone, name, city, role, kyc_status, created_at, updated_at
             ) VALUES (
-              ${defaultUserId}, ${canonicalPhone}, 'مشترك زيدو', 'العراق', 'buyer', 'verified', NOW(), NOW()
+              ${defaultUserId}, ${canonicalPhone}, ${initialName}, ${initialCity}, ${initialRole}, 'verified', NOW(), NOW()
             )
             ON CONFLICT (phone) DO UPDATE SET
+              role = CASE WHEN users.role = 'merchant' OR ${initialRole} = 'merchant' THEN 'merchant' ELSE users.role END,
               updated_at = NOW()
             RETURNING *;
           `;
@@ -60,7 +78,7 @@ export async function POST(req: NextRequest) {
       }
 
       const effectiveUserId = userRecord?.id || defaultUserId;
-      const effectiveRole = userRecord?.role || 'buyer';
+      const effectiveRole = merchantRecord ? 'merchant' : (userRecord?.role || 'buyer');
 
       const { createSessionToken } = await import('@/lib/session');
       const sessionToken = createSessionToken({
@@ -91,11 +109,14 @@ export async function POST(req: NextRequest) {
         user: {
           id: effectiveUserId,
           phone: canonicalPhone,
-          name: userRecord?.name || 'مشترك زيدو',
+          name: merchantRecord ? merchantRecord.store_name : (userRecord?.name || 'مشترك زيدو'),
           gender: userRecord?.gender || undefined,
           avatar: userRecord?.avatar || undefined,
-          city: userRecord?.city || 'العراق',
+          city: merchantRecord ? merchantRecord.city : (userRecord?.city || 'العراق'),
           role: effectiveRole,
+          storeName: merchantRecord ? merchantRecord.store_name : undefined,
+          sellerId: merchantRecord ? merchantRecord.id : undefined,
+          commissionRate: merchantRecord ? Number(merchantRecord.commission_rate) : undefined,
           kycStatus: userRecord?.kyc_status || 'verified',
           totalBids: Number(userRecord?.total_bids || 0),
           totalWins: Number(userRecord?.total_wins || 0),

@@ -204,17 +204,29 @@ export const AuthModal: React.FC = () => {
 
       if (response.ok && data.isValid) {
         const token = data.sessionToken || `tok-${Date.now()}`;
+        const isMerchant = data.user?.role === 'merchant';
+
         const user: MobileUser = {
           id: data.user?.id || `usr-${phone.replace(/\D/g, '')}`,
-          name: data.user?.name || (isRtl ? 'مشترك جديد' : 'New Member'),
+          name: data.user?.name || (isMerchant ? (data.user?.storeName || 'متجر معتمد') : (isRtl ? 'مشترك جديد' : 'New Member')),
           phone: data.user?.phone || phone.trim(),
           city: data.user?.city || 'العراق',
-          role: 'buyer',
+          role: isMerchant ? 'merchant' : 'buyer',
+          storeName: data.user?.storeName,
+          commissionRate: data.user?.commissionRate,
           kycStatus: 'verified',
           gender: data.user?.gender,
           avatar: data.user?.avatar,
           deliveryLocation: data.user?.deliveryLocation,
         };
+
+        // If Merchant, sign in directly to merchant workspace without forcing buyer wizard
+        if (isMerchant) {
+          loginWithSession(token, user);
+          resetState();
+          closeAuthModal();
+          return;
+        }
 
         if (data.user?.name && data.user?.name !== 'مشترك جديد' && data.user?.name !== 'مشترك زيدو') {
           setFullName(data.user.name);
@@ -229,7 +241,7 @@ export const AuthModal: React.FC = () => {
 
         setPendingSession({ token, user });
 
-        // Forcibly advance to Step 2 (Profile Setup)
+        // Forcibly advance to Step 2 (Profile Setup) for new buyers
         setStep('profile');
       } else {
         setErrorMessage(
