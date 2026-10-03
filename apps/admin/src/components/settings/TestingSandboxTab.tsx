@@ -101,10 +101,14 @@ export const TestingSandboxTab: React.FC = () => {
   };
 
   // 2. Action: Purge Test Data
-  const handlePurgeTestData = async () => {
-    setLoadingAction('purging');
+  const handlePurgeTestData = async (fullReset = false) => {
+    setLoadingAction(fullReset ? 'purging-full' : 'purging');
     try {
-      const res = await fetch('/api/testing/purge', { method: 'POST' });
+      const res = await fetch('/api/testing/purge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullReset }),
+      });
       const data = await res.json();
       if (data.success) {
         await Promise.all([
@@ -115,7 +119,9 @@ export const TestingSandboxTab: React.FC = () => {
         ]);
         addToast(
           'success',
-          `Purged ${data.deleted?.auctions || 0} auctions, ${data.deleted?.merchants || 0} merchants, and ${data.deleted?.buyers || 0} buyers.`
+          fullReset
+            ? 'Complete factory reset applied! All demo data cleared.'
+            : `Purged ${data.deleted?.auctions || 0} auctions, ${data.deleted?.merchants || 0} merchants, and ${data.deleted?.buyers || 0} buyers.`
         );
       } else {
         addToast('error', data.error || 'Failed to purge test data');
@@ -409,13 +415,22 @@ export const TestingSandboxTab: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePurgeTestData}
+              onClick={() => handlePurgeTestData(false)}
               disabled={loadingAction !== null}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
-              title="Deletes all generated test data from PostgreSQL and local store"
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 border border-white/20 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
+              title="Deletes test-flagged records from PostgreSQL and local store"
             >
-              <Trash2 className="w-4 h-4" />
-              <span>{loadingAction === 'purging' ? 'Purging...' : 'Purge Test Data'}</span>
+              <Trash2 className="w-4 h-4 text-slate-300" />
+              <span>{loadingAction === 'purging' ? 'Purging...' : 'Purge Test Records'}</span>
+            </button>
+            <button
+              onClick={() => handlePurgeTestData(true)}
+              disabled={loadingAction !== null}
+              className="px-3.5 py-2 rounded-xl bg-rose-500/30 hover:bg-rose-500/50 text-rose-200 border border-rose-500/60 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
+              title="Factory reset: clears all demo auctions, bids, orders, receipts, tickets, and accounts"
+            >
+              <Trash2 className="w-4 h-4 text-rose-400" />
+              <span>{loadingAction === 'purging-full' ? 'Resetting...' : 'Factory Reset (All Data)'}</span>
             </button>
           </div>
         </div>

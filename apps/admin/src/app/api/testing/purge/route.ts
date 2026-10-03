@@ -15,40 +15,62 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 503 });
     }
 
-    // 1. Delete test bids
-    await sql`DELETE FROM bids WHERE id LIKE 'test-%' OR id LIKE 'bid-test-%'`;
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      // Body is optional
+    }
 
-    // 2. Delete test auctions
-    const deletedAuctions = await sql`
-      DELETE FROM auctions 
-      WHERE is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'auc-test-%'
-      RETURNING id
-    `;
+    const isFullReset = body?.fullReset === true || body?.mode === 'factory_reset';
 
-    // 3. Delete test merchants (never delete sel-01 default merchant)
-    const deletedSellers = await sql`
-      DELETE FROM sellers 
-      WHERE (is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'sel-test-%') AND id != 'sel-01'
-      RETURNING id
-    `;
+    let deletedAuctions: any[] = [];
+    let deletedSellers: any[] = [];
+    let deletedUsers: any[] = [];
+    let deletedReceipts: any[] = [];
 
-    // 4. Delete test buyers
-    const deletedUsers = await sql`
-      DELETE FROM users 
-      WHERE is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'usr-test-%'
-      RETURNING id
-    `;
+    if (isFullReset) {
+      // Full complete factory reset (clean slate)
+      await sql`TRUNCATE TABLE bids, won_orders, merchant_payouts_ledger, merchant_receipts, support_messages, support_tickets, kyc_verifications, auctions, users CASCADE`;
+      deletedSellers = await sql`DELETE FROM sellers WHERE id != 'sel-01' RETURNING id`;
+    } else {
+      // 1. Delete test bids & orders
+      await sql`DELETE FROM bids WHERE id LIKE 'test-%' OR id LIKE 'bid-test-%' OR auction_id LIKE 'test-%' OR auction_id LIKE 'auc-test-%'`;
+      await sql`DELETE FROM won_orders WHERE id LIKE 'test-%' OR id LIKE 'ord-test-%' OR auction_id LIKE 'test-%' OR auction_id LIKE 'auc-test-%'`;
+      await sql`DELETE FROM merchant_payouts_ledger WHERE auction_id LIKE 'test-%' OR auction_id LIKE 'auc-test-%' OR seller_id LIKE 'sel-test-%'`;
 
-    // 5. Delete test receipts
-    const deletedReceipts = await sql`
-      DELETE FROM merchant_receipts 
-      WHERE is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'rcpt-test-%'
-      RETURNING id
-    `;
+      // 2. Delete test auctions
+      deletedAuctions = await sql`
+        DELETE FROM auctions 
+        WHERE is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'auc-test-%'
+        RETURNING id
+      `;
+
+      // 3. Delete test merchants (never delete sel-01 default merchant)
+      deletedSellers = await sql`
+        DELETE FROM sellers 
+        WHERE (is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'sel-test-%') AND id != 'sel-01'
+        RETURNING id
+      `;
+
+      // 4. Delete test buyers
+      deletedUsers = await sql`
+        DELETE FROM users 
+        WHERE is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'usr-test-%'
+        RETURNING id
+      `;
+
+      // 5. Delete test receipts
+      deletedReceipts = await sql`
+        DELETE FROM merchant_receipts 
+        WHERE is_test = TRUE OR id LIKE 'test-%' OR id LIKE 'rcpt-test-%' OR seller_id LIKE 'sel-test-%'
+        RETURNING id
+      `;
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'All test entities successfully purged from database',
+      message: isFullReset ? 'Complete factory reset applied: all demo data wiped' : 'All test entities successfully purged from database',
       deleted: {
         auctions: deletedAuctions.length,
         merchants: deletedSellers.length,
@@ -57,7 +79,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (err: any) {
-    console.error('Error purging test data:', err);
+    console.error('Error purging data:', err);
     return NextResponse.json({ success: false, error: err.message || 'Internal error' }, { status: 500 });
   }
 }
